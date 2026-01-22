@@ -1,0 +1,3 @@
+- DRY (Don't Repeat Yourself) 原则：避免重复代码。
+- SRP (Single Responsibility Principle) 原则：每个模块、函数或类应该只有一个职责。
+- KISS (Keep It Simple, Stupid) 原则：保持代码简单、直接，避免复杂的逻辑。
