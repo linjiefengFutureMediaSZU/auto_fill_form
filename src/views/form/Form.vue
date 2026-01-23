@@ -67,8 +67,7 @@
           <div class="selection-footer">
             <div class="selected-count">已选择 {{ selectedAccountIds.length }} 个账号</div>
             <div class="selection-actions">
-              <el-button size="small" @click="selectAllAccounts">全选</el-button>
-              <el-button size="small" @click="clearAccountSelection">取消全选</el-button>
+              <el-button size="small" @click="toggleSelectAll">{{ isAllSelected ? '取消全选' : '全选' }}</el-button>
             </div>
           </div>
         </div>
@@ -150,6 +149,14 @@
             <div class="form-url">
               <el-tag size="small" class="form-type-tag">{{ selectedTemplate.form_type }}</el-tag>
               <a :href="selectedTemplate.form_url" target="_blank" class="form-link">{{ selectedTemplate.form_url }}</a>
+            </div>
+            
+            <!-- 表单嵌入预览 -->
+            <div class="form-iframe-preview">
+              <h4 class="preview-title">表单预览</h4>
+              <div class="iframe-container">
+                <iframe :src="selectedTemplate.form_url" frameborder="0" class="form-iframe"></iframe>
+              </div>
             </div>
             
             <!-- 字段匹配区 -->
@@ -379,6 +386,7 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAccountStore, useFormStore } from '../../stores'
 import { Refresh, Search, MagicStick, View, Edit, EditPen, CopyDocument, Plus, Delete } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 // 路由
 const router = useRouter()
@@ -444,6 +452,13 @@ const filteredAccounts = computed(() => {
   })
 })
 
+// 计算是否已全选
+const isAllSelected = computed(() => {
+  const activeAccounts = filteredAccounts.value.filter(a => a.status === 1)
+  if (activeAccounts.length === 0) return false
+  return selectedAccountIds.value.length === activeAccounts.length
+})
+
 // 筛选后的表单模板
 const filteredTemplates = computed(() => {
   return templates.value.filter(template => {
@@ -495,15 +510,16 @@ const selectAccount = (accountId) => {
   }
 }
 
-// 全选账号
-const selectAllAccounts = () => {
+// 切换全选/取消全选
+const toggleSelectAll = () => {
   const activeAccounts = filteredAccounts.value.filter(a => a.status === 1)
-  selectedAccountIds.value = activeAccounts.map(a => a.id)
-}
-
-// 取消全选账号
-const clearAccountSelection = () => {
-  selectedAccountIds.value = []
+  if (selectedAccountIds.value.length === activeAccounts.length) {
+    // 已全选，执行取消全选
+    selectedAccountIds.value = []
+  } else {
+    // 未全选，执行全选
+    selectedAccountIds.value = activeAccounts.map(a => a.id)
+  }
 }
 
 // 选择表单模板
@@ -701,26 +717,59 @@ onMounted(() => {
     margin-bottom: var(--spacing-lg);
   }
 
+  .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card > .section-header {
+    flex-shrink: 0;
+  }
+
+  .card > .account-search {
+    flex-shrink: 0;
+  }
+
+  .card > .account-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .card > .form-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .card > .form-preview {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .card > .selection-footer {
+    flex-shrink: 0;
+  }
+
   .form-fill-container {
     display: flex;
     gap: var(--spacing-lg);
     height: calc(100vh - 200px);
 
     .account-selection {
-      width: 25%;
-      min-width: 280px;
-      max-width: 320px;
+      flex: 0.7;
+      min-width: 220px;
+      max-width: 280px;
     }
 
     .form-link-selection {
-      width: 25%;
-      min-width: 280px;
-      max-width: 320px;
+      flex: 0.7;
+      min-width: 220px;
+      max-width: 280px;
     }
 
     .form-preview-fill {
-      flex: 1;
-      min-width: 400px;
+      flex: 1.6;
+      min-width: 300px;
     }
   }
 
@@ -868,6 +917,29 @@ onMounted(() => {
 
         &:hover {
           text-decoration: underline;
+        }
+      }
+    }
+
+    .form-iframe-preview {
+      margin-bottom: var(--spacing-lg);
+
+      .preview-title {
+        font-size: var(--font-size-sm);
+        font-weight: 500;
+        margin-bottom: var(--spacing-md);
+      }
+
+      .iframe-container {
+        border: 1px solid var(--border-color-light);
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+        min-height: 500px;
+
+        .form-iframe {
+          width: 100%;
+          height: 100%;
+          min-height: 500px;
         }
       }
     }

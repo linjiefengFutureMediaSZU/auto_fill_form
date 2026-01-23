@@ -3,43 +3,12 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h2 class="title">账号管理</h2>
-      <div class="header-actions">
-        <el-button type="primary" @click="openAddAccountDialog">
-          <el-icon><Plus /></el-icon>
-          新增账号
-        </el-button>
-        <el-dropdown>
-          <el-button>
-            <el-icon><More /></el-icon>
-            批量操作
-            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="handleBatchImport">
-                <el-icon><Upload /></el-icon>
-                批量导入
-              </el-dropdown-item>
-              <el-dropdown-item @click="handleBatchExport">
-                <el-icon><Download /></el-icon>
-                批量导出
-              </el-dropdown-item>
-              <el-dropdown-item @click="handleBatchModify">
-                <el-icon><Edit /></el-icon>
-                批量修改
-              </el-dropdown-item>
-              <el-dropdown-item divided @click="handleBatchDelete">
-                <el-icon><Delete /></el-icon>
-                批量删除
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
     </div>
 
+
+
     <!-- 搜索筛选区 -->
-    <div class="search-filter card">
+    <div class="search-filter card" style="margin-bottom: 20px;">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="关键词搜索">
           <el-input
@@ -47,6 +16,7 @@
             placeholder="账号昵称/博主姓名"
             clearable
             @keyup.enter="handleSearch"
+            style="width: 200px;"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -54,7 +24,7 @@
           </el-input>
         </el-form-item>
         <el-form-item label="账号类型">
-          <el-select v-model="searchForm.account_type" placeholder="选择账号类型" clearable>
+          <el-select v-model="searchForm.account_type" placeholder="选择账号类型" clearable style="width: 150px;">
             <el-option label="抖音" value="抖音" />
             <el-option label="小红书" value="小红书" />
             <el-option label="视频号" value="视频号" />
@@ -63,7 +33,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="账号状态">
-          <el-select v-model="searchForm.status" placeholder="选择账号状态" clearable>
+          <el-select v-model="searchForm.status" placeholder="选择账号状态" clearable style="width: 150px;">
             <el-option label="正常" value="1" />
             <el-option label="暂停" value="2" />
             <el-option label="过期" value="0" />
@@ -82,159 +52,104 @@
       </el-form>
     </div>
 
-    <!-- 主内容区：左侧账号列表，右侧分组管理 -->
-    <div class="account-content">
-      <!-- 左侧：账号列表 -->
-      <div class="account-list-area">
-        <div class="card">
-          <!-- 列表头部 -->
-          <div class="list-header">
-            <div class="list-info">
-              <span>共 {{ filteredAccounts.length }} 个账号</span>
-              <span v-if="selectedAccountIds.length > 0">
-                已选择 {{ selectedAccountIds.length }} 个
-              </span>
-            </div>
-            <div class="list-actions">
-              <el-button size="small" @click="selectAllAccounts">
-                全选
-              </el-button>
-              <el-button size="small" @click="clearAllSelection">
-                取消全选
-              </el-button>
-              <el-select v-model="pagination.pageSize" size="small" @change="handlePageSizeChange">
-                <el-option label="10条/页" value="10" />
-                <el-option label="20条/页" value="20" />
-                <el-option label="50条/页" value="50" />
-              </el-select>
-            </div>
-          </div>
-
-          <!-- 账号表格 -->
-          <el-table
-            v-loading="loading"
-            :data="pagedAccounts"
-            style="width: 100%"
-            @selection-change="handleSelectionChange"
-            border
-          >
-            <el-table-column type="selection" width="55" />
-            <el-table-column prop="id" label="ID" width="80" />
-            <el-table-column prop="account_nickname" label="账号昵称" min-width="120">
-              <template #default="scope">
-                <div class="account-info">
-                  <span class="nickname">{{ scope.row.account_nickname }}</span>
-                  <span class="type-tag">{{ scope.row.account_type }}</span>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="blogger_name" label="博主姓名" width="100" />
-            <el-table-column prop="fans_count" label="粉丝量" width="100">
-              <template #default="scope">
-                {{ formatNumber(scope.row.fans_count) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="quote_single" label="单条报价" width="100">
-              <template #default="scope">
-                ¥{{ scope.row.quote_single.toFixed(2) }}
-              </template>
-            </el-table-column>
-            <el-table-column prop="status" label="状态" width="100">
-              <template #default="scope">
-                <el-tag
-                  :type="getTagType(scope.row.status)"
-                  size="small"
-                >
-                  {{ getStatusText(scope.row.status) }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="group_id" label="分组" width="120">
-              <template #default="scope">
-                {{ getGroupName(scope.row.group_id) }}
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" width="180" fixed="right">
-              <template #default="scope">
-                <el-button
-                  size="small"
-                  type="primary"
-                  @click="openEditAccountDialog(scope.row)"
-                >
-                  <el-icon><Edit /></el-icon>
-                  编辑
-                </el-button>
-                <el-button
-                  size="small"
-                  type="danger"
-                  @click="handleDeleteAccount(scope.row.id)"
-                >
-                  <el-icon><Delete /></el-icon>
-                  删除
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-
-          <!-- 分页 -->
-          <div class="pagination">
-            <el-pagination
-              v-model:current-page="pagination.currentPage"
-              v-model:page-size="pagination.pageSize"
-              :page-sizes="[10, 20, 50]"
-              layout="total, sizes, prev, pager, next, jumper"
-              :total="filteredAccounts.length"
-              @size-change="handlePageSizeChange"
-              @current-change="handleCurrentPageChange"
-            />
-          </div>
-        </div>
+    <!-- 账号管理功能 -->
+    <div class="account-management card" style="margin-bottom: 20px;">
+      <h3 class="subtitle">账号管理功能</h3>
+      <div class="header-actions" style="margin-top: 10px; display: flex; gap: 16px; align-items: center;">
+        <el-button type="primary" @click="openAddAccountDialog">
+          <el-icon><Plus /></el-icon>
+          新增账号
+        </el-button>
+        <el-button type="warning" @click="toggleFieldManager">
+          <el-icon><Edit /></el-icon>
+          字段管理
+        </el-button>
+        <el-button type="primary" @click="handleBatchImport">
+          <el-icon><Upload /></el-icon>
+          批量导入
+        </el-button>
+        <el-button type="success" @click="handleBatchExport">
+          <el-icon><Download /></el-icon>
+          批量导出
+        </el-button>
+        <el-button type="warning" @click="handleBatchModify">
+          <el-icon><Edit /></el-icon>
+          批量修改
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete">
+          <el-icon><Delete /></el-icon>
+          批量删除
+        </el-button>
       </div>
+    </div>
 
-      <!-- 右侧：分组管理 -->
-      <div class="group-management">
-        <div class="card">
-          <div class="group-header">
-            <h3 class="subtitle">账号分组</h3>
-            <el-button size="small" type="primary" @click="openAddGroupDialog">
-              <el-icon><Plus /></el-icon>
-              新增分组
-            </el-button>
-          </div>
-          <div class="group-list">
-            <el-tree
-              v-loading="groupLoading"
-              :data="groups"
-              :props="groupTreeProps"
-              node-key="id"
-              default-expand-all
-              @node-click="handleGroupClick"
+    <!-- 字段管理面板 -->
+    <div v-if="fieldManagerVisible" class="field-manager-panel card" style="margin-bottom: 20px; padding: 20px;">
+      <dynamic-field-manager v-model="customFields" />
+    </div>
+
+    <!-- 账号列表 -->
+    <div class="account-list-area card" style="margin-bottom: 20px;">
+      <!-- 账号表格 -->
+      <el-table
+        v-loading="loading"
+        :data="pagedAccounts"
+        style="width: 100%"
+        @selection-change="handleSelectionChange"
+        border
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="account_nickname" label="账号昵称" min-width="150">
+          <template #default="scope">
+            <div class="account-info">
+              <span class="nickname">{{ scope.row.account_nickname }}</span>
+              <span class="type-tag">{{ scope.row.account_type }}</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="blogger_name" label="博主姓名" width="120" />
+        <el-table-column prop="fans_count" label="粉丝量" width="120">
+          <template #default="scope">
+            {{ formatNumber(scope.row.fans_count) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="quote_single" label="单条报价" width="120">
+          <template #default="scope">
+            ¥{{ scope.row.quote_single.toFixed(2) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="120">
+          <template #default="scope">
+            <el-tag
+              :type="getTagType(scope.row.status)"
+              size="small"
             >
-              <template #default="{ node, data }">
-                <div class="group-node">
-                  <span>{{ node.label }}</span>
-                  <span class="account-count">({{ getAccountCountByGroup(data.id) }})</span>
-                  <div class="group-node-actions">
-                    <el-button
-                      size="mini"
-                      @click.stop="openEditGroupDialog(data)"
-                    >
-                      <el-icon><Edit /></el-icon>
-                    </el-button>
-                    <el-button
-                      size="mini"
-                      type="danger"
-                      @click.stop="handleDeleteGroup(data.id)"
-                    >
-                      <el-icon><Delete /></el-icon>
-                    </el-button>
-                  </div>
-                </div>
-              </template>
-            </el-tree>
-          </div>
-        </div>
-      </div>
+              {{ getStatusText(scope.row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="scope">
+            <el-button
+              size="small"
+              type="primary"
+              @click="openEditAccountDialog(scope.row)"
+            >
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              @click="handleDeleteAccount(scope.row.id)"
+            >
+              <el-icon><Delete /></el-icon>
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
     <!-- 新增/编辑账号弹窗 -->
@@ -250,83 +165,9 @@
         label-width="100px"
         class="account-form"
       >
-        <!-- 基础信息 -->
-        <el-collapse v-model="activeCollapseNames" class="form-collapse">
-          <el-collapse-item title="基础信息" name="basic">
-            <el-form-item label="博主姓名" prop="blogger_name">
-              <el-input v-model="accountForm.blogger_name" placeholder="请输入博主姓名" />
-            </el-form-item>
-            <el-form-item label="账号昵称" prop="account_nickname">
-              <el-input v-model="accountForm.account_nickname" placeholder="请输入账号昵称" />
-            </el-form-item>
-            <el-form-item label="账号类型" prop="account_type">
-              <el-select v-model="accountForm.account_type" placeholder="请选择账号类型">
-                <el-option label="抖音" value="抖音" />
-                <el-option label="小红书" value="小红书" />
-                <el-option label="视频号" value="视频号" />
-                <el-option label="微博" value="微博" />
-                <el-option label="B站" value="B站" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="账号ID">
-              <el-input v-model="accountForm.account_id" placeholder="请输入账号平台ID" />
-            </el-form-item>
-            <el-form-item label="主页链接" prop="homepage_url">
-              <el-input v-model="accountForm.homepage_url" placeholder="请输入账号主页链接" />
-            </el-form-item>
-          </el-collapse-item>
+        <!-- 动态表单 -->
+        <dynamic-form v-model="accountForm" :fields="customFields" />
 
-          <!-- 运营数据 -->
-          <el-collapse-item title="运营数据" name="data">
-            <el-form-item label="粉丝量" prop="fans_count">
-              <el-input-number v-model="accountForm.fans_count" :min="0" placeholder="请输入粉丝量" />
-            </el-form-item>
-            <el-form-item label="平均阅读量">
-              <el-input-number v-model="accountForm.avg_read_count" :min="0" placeholder="请输入平均阅读量" />
-            </el-form-item>
-            <el-form-item label="平均点赞量">
-              <el-input-number v-model="accountForm.like_count" :min="0" placeholder="请输入平均点赞量" />
-            </el-form-item>
-            <el-form-item label="平均评论量">
-              <el-input-number v-model="accountForm.comment_count" :min="0" placeholder="请输入平均评论量" />
-            </el-form-item>
-          </el-collapse-item>
-
-          <!-- 合作信息 -->
-          <el-collapse-item title="合作信息" name="cooperation">
-            <el-form-item label="单条报价" prop="quote_single">
-              <el-input-number v-model="accountForm.quote_single" :min="0" :step="0.01" placeholder="请输入单条报价" />
-            </el-form-item>
-            <el-form-item label="套餐报价">
-              <el-input-number v-model="accountForm.quote_package" :min="0" :step="0.01" placeholder="请输入套餐报价" />
-            </el-form-item>
-            <el-form-item label="合作形式">
-              <el-select v-model="accountForm.cooperation_type" multiple placeholder="请选择合作形式">
-                <el-option label="图文" value="图文" />
-                <el-option label="视频" value="视频" />
-                <el-option label="直播" value="直播" />
-              </el-select>
-            </el-form-item>
-            <el-form-item label="是否接受置换">
-              <el-switch v-model="accountForm.is_swap" />
-            </el-form-item>
-            <el-form-item label="联系方式">
-              <el-input v-model="accountForm.contact" placeholder="请输入联系方式" />
-            </el-form-item>
-          </el-collapse-item>
-
-          <!-- 备注信息 -->
-          <el-collapse-item title="备注信息" name="remark">
-            <el-form-item label="备注">
-              <el-input
-                v-model="accountForm.remark"
-                type="textarea"
-                rows="3"
-                placeholder="请输入备注信息"
-              />
-            </el-form-item>
-          </el-collapse-item>
-        </el-collapse>
 
         <!-- 分组和状态 -->
         <el-form-item label="账号分组">
@@ -390,9 +231,12 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useAccountStore } from '../../stores'
 import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import DynamicFieldManager from '../../components/DynamicFieldManager.vue'
+import DynamicForm from '../../components/DynamicForm.vue'
 
 // 状态管理
 const accountStore = useAccountStore()
@@ -406,6 +250,89 @@ const isEditMode = ref(false)
 const isEditGroupMode = ref(false)
 const selectedAccountIds = ref([])
 const activeCollapseNames = ref(['basic'])
+const fieldManagerVisible = ref(false)
+const customFields = ref([
+  {
+    id: '1',
+    label: '微信号',
+    name: 'wechat',
+    type: 'text',
+    group: 'basic',
+    placeholder: '请输入微信号',
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '2',
+    label: '邮箱',
+    name: 'email',
+    type: 'text',
+    group: 'basic',
+    placeholder: '请输入邮箱地址',
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '3',
+    label: '平均互动率',
+    name: 'interaction_rate',
+    type: 'number',
+    group: 'data',
+    placeholder: '请输入平均互动率',
+    defaultValue: '0',
+    required: false
+  },
+  {
+    id: '4',
+    label: '内容类型',
+    name: 'content_type',
+    type: 'text',
+    group: 'data',
+    placeholder: '请输入内容类型',
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '5',
+    label: '合作次数',
+    name: 'cooperation_count',
+    type: 'number',
+    group: 'cooperation',
+    placeholder: '请输入合作次数',
+    defaultValue: '0',
+    required: false
+  },
+  {
+    id: '6',
+    label: '返点比例',
+    name: 'commission_rate',
+    type: 'number',
+    group: 'cooperation',
+    placeholder: '请输入返点比例',
+    defaultValue: '0',
+    required: false
+  },
+  {
+    id: '7',
+    label: '账号特点',
+    name: 'account_features',
+    type: 'text',
+    group: 'remark',
+    placeholder: '请输入账号特点',
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '8',
+    label: '运营策略',
+    name: 'operation_strategy',
+    type: 'text',
+    group: 'remark',
+    placeholder: '请输入运营策略',
+    defaultValue: '',
+    required: false
+  }
+])
 
 // 搜索表单
 const searchForm = reactive({
@@ -431,7 +358,7 @@ const accountForm = reactive({
   avg_read_count: 0,
   like_count: 0,
   comment_count: 0,
-  quote_single: 0,
+  quote_single: [0],
   quote_package: 0,
   cooperation_type: [],
   is_swap: false,
@@ -591,6 +518,34 @@ const handleGroupClick = (data) => {
   console.log('Group clicked:', data)
 }
 
+// 切换字段管理面板
+const toggleFieldManager = () => {
+  fieldManagerVisible.value = !fieldManagerVisible.value
+}
+
+// 保存字段配置到本地存储
+const saveFieldConfig = () => {
+  localStorage.setItem('customFields', JSON.stringify(customFields.value))
+}
+
+// 从本地存储加载字段配置
+const loadFieldConfig = () => {
+  const savedFields = localStorage.getItem('customFields')
+  if (savedFields) {
+    customFields.value = JSON.parse(savedFields)
+  }
+}
+
+// 添加单条报价项
+const addQuoteItem = () => {
+  accountForm.quote_single.push(0)
+}
+
+// 删除单条报价项
+const removeQuoteItem = (index) => {
+  accountForm.quote_single.splice(index, 1)
+}
+
 // 打开新增账号弹窗
 const openAddAccountDialog = () => {
   isEditMode.value = false
@@ -606,7 +561,7 @@ const openAddAccountDialog = () => {
   accountForm.avg_read_count = 0
   accountForm.like_count = 0
   accountForm.comment_count = 0
-  accountForm.quote_single = 0
+  accountForm.quote_single = [0]
   accountForm.quote_package = 0
   accountForm.is_swap = false
   accountForm.status = 1
@@ -621,6 +576,10 @@ const openEditAccountDialog = (account) => {
   // 处理合作形式数组
   if (typeof accountForm.cooperation_type === 'string') {
     accountForm.cooperation_type = accountForm.cooperation_type.split(',')
+  }
+  // 处理单条报价数组
+  if (!Array.isArray(accountForm.quote_single)) {
+    accountForm.quote_single = [accountForm.quote_single || 0]
   }
   accountDialogVisible.value = true
 }
@@ -637,11 +596,20 @@ const saveAccount = async () => {
       accountForm.cooperation_type = accountForm.cooperation_type.join(',')
     }
     
+    // 处理单条报价（取第一个值用于存储）
+    const originalQuoteSingle = [...accountForm.quote_single]
+    if (Array.isArray(accountForm.quote_single)) {
+      accountForm.quote_single = accountForm.quote_single[0] || 0
+    }
+    
     if (isEditMode.value) {
       accountStore.updateAccount(accountForm.id, accountForm)
     } else {
       accountStore.addAccount(accountForm)
     }
+    
+    // 恢复原始的报价数组
+    accountForm.quote_single = originalQuoteSingle
     
     accountDialogVisible.value = false
     ElMessage.success(isEditMode.value ? '账号编辑成功' : '账号新增成功')
@@ -771,7 +739,14 @@ onMounted(() => {
     // 默认分组
     accountStore.addGroup({ group_name: '默认分组', description: '默认账号分组' })
   }
+  // 加载字段配置
+  loadFieldConfig()
 })
+
+// 监听字段配置变化，自动保存
+watch(customFields, () => {
+  saveFieldConfig()
+}, { deep: true })
 </script>
 
 <style scoped lang="scss">
@@ -888,6 +863,33 @@ onMounted(() => {
   .account-form {
     .form-collapse {
       margin-bottom: var(--spacing-md);
+    }
+  }
+
+  .field-manager-panel {
+    margin-bottom: var(--spacing-md);
+    .dynamic-field-manager {
+      .manager-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+      }
+      .field-list {
+        margin-top: var(--spacing-md);
+        .field-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: var(--spacing-sm);
+          border: 1px solid var(--border-color);
+          border-radius: var(--border-radius);
+          margin-bottom: var(--spacing-xs);
+          &:hover {
+            background-color: var(--bg-color-light);
+          }
+        }
+      }
     }
   }
 

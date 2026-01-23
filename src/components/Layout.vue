@@ -45,7 +45,8 @@
         </el-menu-item>
       </el-menu>
       <div class="collapse-btn" @click="toggleCollapse">
-        <el-icon>{{ isCollapse ? ArrowRight : ArrowLeft }}</el-icon>
+        <el-icon v-if="isCollapse"><ArrowRight /></el-icon>
+        <el-icon v-else><ArrowLeft /></el-icon>
       </div>
     </el-aside>
 
@@ -62,14 +63,15 @@
         <div class="top-bar-right">
           <el-dropdown>
             <span class="user-info">
-              <el-avatar size="small">Admin</el-avatar>
+              <el-avatar size="small"><span>Admin</span></el-avatar>
               <span v-if="!isCollapse">管理员</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>个人中心</el-dropdown-item>
                 <el-dropdown-item @click="toggleTheme">
-                  <el-icon><MoonNight v-if="!isDarkTheme" /><Sunny v-else /></el-icon>
+                  <el-icon v-if="!isDarkTheme"><MoonNight /></el-icon>
+                  <el-icon v-else><Sunny /></el-icon>
                   <span>{{ isDarkTheme ? '切换浅色主题' : '切换深色主题' }}</span>
                 </el-dropdown-item>
                 <el-dropdown-item divided>退出登录</el-dropdown-item>
@@ -172,6 +174,16 @@ onUnmounted(() => {
         text-color: #e0e0e0;
         active-text-color: #409EFF;
       }
+
+      .collapse-btn {
+        background-color: #242424;
+        border-color: #333;
+
+        &:hover {
+          background-color: #2c3e50;
+          border-color: #444;
+        }
+      }
     }
 
     .top-bar {
@@ -196,6 +208,7 @@ onUnmounted(() => {
   border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
+  position: relative;
   transition: width 0.3s ease;
 
   &.collapsed {
@@ -232,18 +245,18 @@ onUnmounted(() => {
 
   .collapse-btn {
     position: absolute;
-    right: -10px;
-    top: 20px;
-    width: 20px;
-    height: 20px;
-    background-color: #ffffff;
+    right: 10px;
+    bottom: 20px;
+    width: 24px;
+    height: 24px;
+    background-color: #f5f7fa;
     border: 1px solid #e4e7ed;
-    border-radius: 50%;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
     z-index: 10;
 
     &:hover {

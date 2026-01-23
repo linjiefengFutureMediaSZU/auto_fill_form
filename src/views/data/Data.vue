@@ -7,6 +7,49 @@
 
     <!-- 标签页 -->
     <el-tabs v-model="activeTab" class="data-tabs">
+      <!-- 填报数据管理标签页 -->
+      <el-tab-pane label="填报数据管理" name="fillData">
+        <div class="fill-data-management">
+          <div class="card">
+            <div class="section-header">
+              <h3 class="subtitle">填报数据概览</h3>
+              <div class="header-actions">
+                <el-button type="primary" @click="handleExportFillData">
+                  <el-icon><Download /></el-icon>
+                  导出数据
+                </el-button>
+              </div>
+            </div>
+
+            <!-- 数据统计卡片 -->
+            <div class="stats-cards">
+              <div class="stat-card">
+                <div class="stat-value">{{ totalFillCount }}</div>
+                <div class="stat-label">总填报次数</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{{ successFillCount }}</div>
+                <div class="stat-label">成功次数</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{{ failFillCount }}</div>
+                <div class="stat-label">失败次数</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{{ successRate }}%</div>
+                <div class="stat-label">成功率</div>
+              </div>
+            </div>
+
+            <!-- 每日填报数量折线图 -->
+            <div class="fill-chart">
+              <h4 class="chart-title">每日填报表单数量</h4>
+              <div ref="fillDataChartRef" class="chart-container"></div>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+
       <!-- 备份管理标签页 -->
       <el-tab-pane label="备份管理" name="backup">
         <div class="backup-management">
@@ -210,6 +253,12 @@
                 <el-empty description="暂无日志记录" />
               </div>
             </div>
+
+            <!-- 每日填报数量折线图 -->
+            <div class="fill-chart">
+              <h4 class="chart-title">每日填报表单数量</h4>
+              <div ref="fillChartRef" class="chart-container"></div>
+            </div>
           </div>
         </div>
       </el-tab-pane>
@@ -319,9 +368,11 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
 import { useDataStore, useAccountStore, useFormStore } from '../../stores'
 import { Upload, Setting, Download, Delete, DocumentCopy, Search, Refresh } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import * as echarts from 'echarts'
 
 // 状态管理
 const dataStore = useDataStore()
@@ -329,12 +380,16 @@ const accountStore = useAccountStore()
 const formStore = useFormStore()
 
 // 响应式数据
-const activeTab = ref('backup')
+const activeTab = ref('fillData')
 const backupLoading = ref(false)
 const logLoading = ref(false)
 const backupSettingsDialogVisible = ref(false)
 const restoreDialogVisible = ref(false)
 const selectedBackup = ref(null)
+const fillChartRef = ref(null)
+const fillDataChartRef = ref(null)
+let fillChart = null
+let fillDataChart = null
 
 // 日志搜索表单
 const logSearchForm = reactive({
@@ -388,6 +443,58 @@ const filteredLogs = computed(() => {
     }
     return true
   })
+})
+
+// 填报数据统计
+const totalFillCount = computed(() => {
+  return logs.value.length
+})
+
+const successFillCount = computed(() => {
+  return logs.value.filter(log => log.fill_result === '成功').length
+})
+
+const failFillCount = computed(() => {
+  return logs.value.filter(log => log.fill_result === '失败').length
+})
+
+const successRate = computed(() => {
+  if (logs.value.length === 0) return 0
+  return Math.round((successFillCount.value / totalFillCount.value) * 100)
+})
+
+// 每日填报数据
+const dailyFillData = computed(() => {
+  const dailyMap = new Map()
+  
+  // 按日期分组
+  logs.value.forEach(log => {
+    const date = new Date(log.fill_time).toISOString().split('T')[0]
+    if (dailyMap.has(date)) {
+      dailyMap.set(date, dailyMap.get(date) + 1)
+    } else {
+      dailyMap.set(date, 1)
+    }
+  })
+  
+  // 转换为数组并排序
+  const sortedData = Array.from(dailyMap.entries())
+    .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+  
+  // 生成最近7天的数据（如果没有数据则填充0）
+  const last7Days = []
+  const today = new Date()
+  
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(today.getDate() - i)
+    const dateStr = date.toISOString().split('T')[0]
+    
+    const count = dailyMap.get(dateStr) || 0
+    last7Days.push({ date: dateStr, count })
+  }
+  
+  return last7Days
 })
 
 // 方法
@@ -541,9 +648,159 @@ const handleCleanLogs = () => {
     // 模拟清理过程
     dataStore.cleanExpiredLogs(0) // 清理所有日志
     ElMessage.success('日志清理成功')
+    // 更新图表
+    updateFillChart()
+    updateFillDataChart()
   }).catch(() => {
     // 取消清理
   })
+}
+
+// 导出填报数据
+const handleExportFillData = () => {
+  if (logs.value.length === 0) {
+    ElMessage.warning('暂无数据可导出')
+    return
+  }
+  ElMessage.info('数据导出功能开发中')
+}
+
+// 初始化填报数据图表（日志管理标签页）
+const initFillChart = () => {
+  if (fillChartRef.value) {
+    fillChart = echarts.init(fillChartRef.value)
+    updateFillChart()
+  }
+}
+
+// 更新填报数据图表（日志管理标签页）
+const updateFillChart = () => {
+  if (!fillChart) return
+  
+  const data = dailyFillData.value
+  const dates = data.map(item => item.date)
+  const counts = data.map(item => item.count)
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: '{b}: {c} 次'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates
+    },
+    yAxis: {
+      type: 'value',
+      minInterval: 1
+    },
+    series: [
+      {
+        name: '填报表单数量',
+        type: 'line',
+        data: counts,
+        smooth: true,
+        itemStyle: {
+          color: '#409EFF'
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            {
+              offset: 0,
+              color: 'rgba(64, 158, 255, 0.5)'
+            },
+            {
+              offset: 1,
+              color: 'rgba(64, 158, 255, 0.1)'
+            }
+          ])
+        }
+      }
+    ]
+  }
+  
+  fillChart.setOption(option)
+}
+
+// 初始化填报数据管理图表
+const initFillDataChart = () => {
+  if (fillDataChartRef.value) {
+    fillDataChart = echarts.init(fillDataChartRef.value)
+    updateFillDataChart()
+  }
+}
+
+// 更新填报数据管理图表
+const updateFillDataChart = () => {
+  if (!fillDataChart) return
+  
+  const data = dailyFillData.value
+  const dates = data.map(item => item.date)
+  const counts = data.map(item => item.count)
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: '{b}: {c} 次'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: dates
+    },
+    yAxis: {
+      type: 'value',
+      minInterval: 1
+    },
+    series: [
+      {
+        name: '填报表单数量',
+        type: 'line',
+        data: counts,
+        smooth: true,
+        itemStyle: {
+          color: '#409EFF'
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            {
+              offset: 0,
+              color: 'rgba(64, 158, 255, 0.5)'
+            },
+            {
+              offset: 1,
+              color: 'rgba(64, 158, 255, 0.1)'
+            }
+          ])
+        }
+      }
+    ]
+  }
+  
+  fillDataChart.setOption(option)
+}
+
+// 监听窗口大小变化
+const handleResize = () => {
+  if (fillChart) {
+    fillChart.resize()
+  }
+  if (fillDataChart) {
+    fillDataChart.resize()
+  }
 }
 
 // 生命周期
@@ -562,6 +819,27 @@ onMounted(() => {
     }
     dataStore.addBackup(defaultBackup)
   }
+  
+  // 初始化图表
+  setTimeout(() => {
+    initFillChart()
+    initFillDataChart()
+  }, 100)
+  
+  // 添加窗口大小变化监听
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  // 移除窗口大小变化监听
+  window.removeEventListener('resize', handleResize)
+  // 销毁图表实例
+  if (fillChart) {
+    fillChart.dispose()
+  }
+  if (fillDataChart) {
+    fillDataChart.dispose()
+  }
 })
 </script>
 
@@ -574,6 +852,52 @@ onMounted(() => {
   .data-tabs {
     .el-tabs__content {
       padding-top: var(--spacing-lg);
+    }
+  }
+
+  .stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+
+    .stat-card {
+      background-color: var(--bg-color-white);
+      border-radius: var(--border-radius-md);
+      padding: var(--spacing-lg);
+      box-shadow: var(--box-shadow-light);
+      text-align: center;
+
+      .stat-value {
+        font-size: var(--font-size-xl);
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: var(--spacing-xs);
+      }
+
+      .stat-label {
+        font-size: var(--font-size-sm);
+        color: var(--text-color-secondary);
+      }
+    }
+  }
+
+  .fill-chart {
+    margin-top: var(--spacing-lg);
+
+    .chart-title {
+      font-size: var(--font-size-md);
+      font-weight: 500;
+      margin-bottom: var(--spacing-md);
+      color: var(--text-color-primary);
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 300px;
+      border-radius: var(--border-radius-md);
+      background-color: var(--bg-color-white);
+      box-shadow: var(--box-shadow-light);
     }
   }
 

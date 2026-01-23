@@ -1,0 +1,246 @@
+<template>
+  <div class="dynamic-field-manager">
+    <!-- 字段管理标题 -->
+    <div class="manager-header">
+      <h3>字段管理</h3>
+      <el-button type="primary" size="small" @click="openAddFieldDialog">添加字段</el-button>
+    </div>
+
+    <!-- 字段列表 -->
+    <div class="field-list">
+      <div v-for="(field, index) in fields" :key="field.id" class="field-item">
+        <div class="field-info">
+          <el-tag size="small" :type="getFieldTypeTagType(field.type)">{{ field.type }}</el-tag>
+          <span class="field-label">{{ field.label }}</span>
+          <span class="field-name">{{ field.name }}</span>
+        </div>
+        <div class="field-actions">
+          <el-button type="primary" size="small" @click="openEditFieldDialog(field)" style="margin-right: 8px;">编辑</el-button>
+          <el-button type="danger" size="small" @click="removeField(index)">删除</el-button>
+        </div>
+      </div>
+      <div v-if="fields.length === 0" class="empty-fields">
+        <el-empty description="暂无自定义字段" />
+      </div>
+    </div>
+
+    <!-- 添加/编辑字段弹窗 -->
+    <el-dialog
+      v-model="fieldDialogVisible"
+      :title="isEditFieldMode ? '编辑字段' : '添加字段'"
+      width="500px"
+    >
+      <el-form :model="fieldForm" label-width="80px">
+        <el-form-item label="字段标签">
+          <el-input v-model="fieldForm.label" placeholder="请输入字段标签" />
+        </el-form-item>
+        <el-form-item label="字段名称">
+          <el-input v-model="fieldForm.name" placeholder="请输入字段名称（英文）" />
+        </el-form-item>
+        <el-form-item label="字段类型">
+          <el-select v-model="fieldForm.type" placeholder="请选择字段类型">
+            <el-option label="文本" value="text" />
+            <el-option label="数字" value="number" />
+            <el-option label="选择" value="select" />
+            <el-option label="开关" value="switch" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="字段分组">
+          <el-select v-model="fieldForm.group" placeholder="请选择字段分组">
+            <el-option label="基础信息" value="basic" />
+            <el-option label="运营数据" value="data" />
+            <el-option label="合作信息" value="cooperation" />
+            <el-option label="备注信息" value="remark" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="占位符">
+          <el-input v-model="fieldForm.placeholder" placeholder="请输入占位符文本" />
+        </el-form-item>
+        <el-form-item label="默认值">
+          <el-input v-model="fieldForm.defaultValue" placeholder="请输入默认值" />
+        </el-form-item>
+        <el-form-item label="是否必填">
+          <el-switch v-model="fieldForm.required" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="fieldDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveField">保存</el-button>
+        </span>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+
+// Props
+const props = defineProps({
+  modelValue: {
+    type: Array,
+    default: () => []
+  }
+})
+
+// Emits
+const emit = defineEmits(['update:modelValue'])
+
+// 响应式数据
+const fields = ref([...props.modelValue])
+const fieldDialogVisible = ref(false)
+const isEditFieldMode = ref(false)
+const editingFieldIndex = ref(-1)
+
+// 字段表单
+const fieldForm = reactive({
+  label: '',
+  name: '',
+  type: 'text',
+  group: 'basic',
+  placeholder: '',
+  defaultValue: '',
+  required: false
+})
+
+// 计算属性
+const getFieldTypeTagType = (type) => {
+  const typeMap = {
+    text: 'info',
+    number: 'success',
+    select: 'warning',
+    switch: 'danger'
+  }
+  return typeMap[type] || 'info'
+}
+
+// 方法
+const openAddFieldDialog = () => {
+  isEditFieldMode.value = false
+  editingFieldIndex.value = -1
+  // 重置表单
+  Object.keys(fieldForm).forEach(key => {
+    fieldForm[key] = ''
+  })
+  fieldForm.type = 'text'
+  fieldForm.group = 'basic'
+  fieldForm.required = false
+  fieldDialogVisible.value = true
+}
+
+const openEditFieldDialog = (field) => {
+  isEditFieldMode.value = true
+  editingFieldIndex.value = fields.value.findIndex(f => f.id === field.id)
+  // 复制字段数据到表单
+  Object.assign(fieldForm, field)
+  fieldDialogVisible.value = true
+}
+
+const saveField = () => {
+  // 验证必填字段
+  if (!fieldForm.label || !fieldForm.name) {
+    ElMessage.warning('字段标签和字段名称不能为空')
+    return
+  }
+
+  // 生成唯一ID
+  const fieldId = isEditFieldMode.value ? fieldForm.id : Date.now().toString()
+
+  // 构建字段对象
+  const newField = {
+    id: fieldId,
+    label: fieldForm.label,
+    name: fieldForm.name,
+    type: fieldForm.type,
+    group: fieldForm.group,
+    placeholder: fieldForm.placeholder,
+    defaultValue: fieldForm.defaultValue,
+    required: fieldForm.required
+  }
+
+  // 保存字段
+  if (isEditFieldMode.value) {
+    fields.value[editingFieldIndex.value] = newField
+  } else {
+    fields.value.push(newField)
+  }
+
+  // 更新父组件
+  emit('update:modelValue', [...fields.value])
+  
+  // 关闭弹窗
+  fieldDialogVisible.value = false
+  ElMessage.success(isEditFieldMode.value ? '字段编辑成功' : '字段添加成功')
+}
+
+const removeField = (index) => {
+  fields.value.splice(index, 1)
+  emit('update:modelValue', [...fields.value])
+  ElMessage.success('字段删除成功')
+}
+</script>
+
+<style scoped lang="scss">
+.dynamic-field-manager {
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f9f9f9;
+
+  .manager-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  .field-list {
+    .field-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background-color: #ffffff;
+      border: 1px solid #e4e7ed;
+      border-radius: 4px;
+      margin-bottom: 10px;
+
+      &:hover {
+        border-color: #409EFF;
+      }
+
+      .field-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .field-label {
+          font-weight: 500;
+          min-width: 100px;
+        }
+
+        .field-name {
+          color: #606266;
+          font-size: 14px;
+        }
+      }
+
+      .field-actions {
+        display: flex;
+      }
+    }
+
+    .empty-fields {
+      padding: 40px 0;
+    }
+  }
+}
+</style>

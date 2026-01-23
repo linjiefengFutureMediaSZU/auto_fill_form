@@ -231,6 +231,7 @@
 <script setup>
 import { ref, computed, reactive } from 'vue'
 import { Search, User, EditPen, List, DataAnalysis, Setting, Upload, Check } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 // 响应式数据
 const activeTab = ref('manual')
@@ -283,7 +284,7 @@ const faqs = [
     id: '5',
     category: 'formList',
     question: '如何批量导入表单链接？',
-    answer: '点击"批量操作"下拉菜单，选择"批量导入"，在弹出的对话框中，粘贴多个表单链接（每行一个），选择归属文件夹和表单类型，点击导入即可。'
+    answer: '点击"批量导入"按钮，在弹出的对话框中，粘贴多个表单链接（每行一个），选择归属文件夹和表单类型，点击导入即可。'
   },
   {
     id: '6',

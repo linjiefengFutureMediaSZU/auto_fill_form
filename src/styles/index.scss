@@ -212,6 +212,13 @@ body {
   padding: var(--spacing-lg);
 }
 
+/* 按钮样式 */
+.button-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
 /* 响应式布局 */
 @media (max-width: 768px) {
   .container {
@@ -228,5 +235,9 @@ body {
   
   .subtitle {
     font-size: var(--font-size-sm);
+  }
+  
+  .button-row {
+    flex-wrap: wrap;
   }
 }

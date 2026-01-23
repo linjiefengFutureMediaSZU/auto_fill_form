@@ -257,6 +257,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useSettingsStore } from '../../stores'
 import { Check, Download } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 // 状态管理
 const settingsStore = useSettingsStore()

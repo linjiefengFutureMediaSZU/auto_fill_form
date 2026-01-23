@@ -8,29 +8,18 @@
           <el-icon><Plus /></el-icon>
           新增表单
         </el-button>
-        <el-dropdown>
-          <el-button>
-            <el-icon><More /></el-icon>
-            批量操作
-            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="handleBatchImport">
-                <el-icon><Upload /></el-icon>
-                批量导入
-              </el-dropdown-item>
-              <el-dropdown-item @click="handleBatchExport">
-                <el-icon><Download /></el-icon>
-                批量导出
-              </el-dropdown-item>
-              <el-dropdown-item divided @click="handleBatchDelete">
-                <el-icon><Delete /></el-icon>
-                批量删除
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <el-button type="primary" @click="handleBatchImport">
+          <el-icon><Upload /></el-icon>
+          批量导入
+        </el-button>
+        <el-button type="success" @click="handleBatchExport">
+          <el-icon><Download /></el-icon>
+          批量导出
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete">
+          <el-icon><Delete /></el-icon>
+          批量删除
+        </el-button>
       </div>
     </div>
 
@@ -51,9 +40,17 @@
 
           <!-- 文件夹列表 -->
           <div class="folder-list">
+            <!-- 全部表单选项 -->
+            <div 
+              class="folder-node all-forms-node" :class="{ active: !selectedFolderId }"
+              @click="handleAllFormsClick"
+            >
+              <span>全部表单</span>
+              <span class="form-count">({{ forms.length }})</span>
+            </div>
             <el-tree
               v-loading="folderLoading"
-              :data="folders"
+              :data="sortedFolders"
               :props="folderTreeProps"
               node-key="id"
               default-expand-all
@@ -167,31 +164,33 @@
                   {{ scope.row.last_fill_time ? formatDate(scope.row.last_fill_time) : '-' }}
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="180" fixed="right">
+              <el-table-column label="操作" width="200" fixed="right">
                 <template #default="scope">
-                  <el-button
-                    size="small"
-                    type="primary"
-                    @click="navigateToFill(scope.row.id)"
-                  >
-                    <el-icon><EditPen /></el-icon>
-                    去填写
-                  </el-button>
-                  <el-button
-                    size="small"
-                    @click="openEditFormDialog(scope.row)"
-                  >
-                    <el-icon><Edit /></el-icon>
-                    编辑
-                  </el-button>
-                  <el-button
-                    size="small"
-                    type="danger"
-                    @click="handleDeleteForm(scope.row.id)"
-                  >
-                    <el-icon><Delete /></el-icon>
-                    删除
-                  </el-button>
+                  <div class="table-actions">
+                    <el-button
+                      size="small"
+                      type="primary"
+                      @click="navigateToFill(scope.row.id)"
+                    >
+                      <el-icon><EditPen /></el-icon>
+                      去填写
+                    </el-button>
+                    <el-button
+                      size="small"
+                      @click="openEditFormDialog(scope.row)"
+                    >
+                      <el-icon><Edit /></el-icon>
+                      编辑
+                    </el-button>
+                    <el-button
+                      size="small"
+                      type="danger"
+                      @click="handleDeleteForm(scope.row.id)"
+                    >
+                      <el-icon><Delete /></el-icon>
+                      删除
+                    </el-button>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
@@ -267,13 +266,13 @@
         </el-form-item>
         <el-form-item label="归属文件夹" prop="folder_id">
           <el-select v-model="formForm.folder_id" placeholder="请选择文件夹">
-            <el-option
-              v-for="folder in folders"
-              :key="folder.id"
-              :label="folder.folder_name"
-              :value="folder.id"
-            />
-          </el-select>
+              <el-option
+                v-for="folder in sortedFolders"
+                :key="folder.id"
+                :label="folder.folder_name"
+                :value="folder.id"
+              />
+            </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -308,7 +307,7 @@
         <el-form-item label="归属文件夹" prop="folder_id">
           <el-select v-model="batchImportForm.folder_id" placeholder="请选择文件夹">
             <el-option
-              v-for="folder in folders"
+              v-for="folder in sortedFolders"
               :key="folder.id"
               :label="folder.folder_name"
               :value="folder.id"
@@ -341,6 +340,7 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFormStore } from '../../stores'
 import { Plus, More, Upload, Download, Delete, ArrowDown, Search, EditPen, Edit, DocumentCopy } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 路由
 const router = useRouter()
@@ -409,6 +409,11 @@ const batchImportFormRef = ref(null)
 
 // 计算属性
 const folders = computed(() => formStore.folders)
+const sortedFolders = computed(() => {
+  return [...folders.value].sort((a, b) => {
+    return new Date(b.created_at) - new Date(a.created_at)
+  })
+})
 const forms = computed(() => formStore.templates)
 const selectedFolder = computed(() => {
   return folders.value.find(f => f.id === selectedFolderId.value)
@@ -476,6 +481,11 @@ const getFormCountByFolder = (folderId) => {
 // 点击文件夹
 const handleFolderClick = (folder) => {
   selectedFolderId.value = folder.id
+}
+
+// 点击全部表单
+const handleAllFormsClick = () => {
+  selectedFolderId.value = null
 }
 
 // 选择表单
@@ -608,7 +618,7 @@ const handleDeleteForm = (id) => {
 const handleBatchImport = () => {
   // 重置批量导入表单
   batchImportForm.formUrls = ''
-  batchImportForm.folder_id = selectedFolderId.value || (folders.value.length > 0 ? folders.value[0].id : '')
+  batchImportForm.folder_id = selectedFolderId.value || (sortedFolders.value.length > 0 ? sortedFolders.value[0].id : '')
   batchImportForm.form_type = ''
   batchImportDialogVisible.value = true
 }
@@ -720,12 +730,36 @@ onMounted(() => {
     .folder-management {
       width: 300px;
       min-width: 280px;
+      height: 100%;
     }
 
     .form-link-list {
       flex: 1;
       min-width: 400px;
+      height: 100%;
     }
+  }
+
+  .card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card > .section-header {
+    flex-shrink: 0;
+  }
+
+  .card > .folder-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none;
+  }
+
+  .card > .form-table-container {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none;
   }
 
   .section-header {
@@ -733,18 +767,35 @@ onMounted(() => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-md);
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
   }
 
   .folder-list {
-    max-height: 500px;
     overflow-y: auto;
   }
 
-  .folder-node {
+  .folder-node,
+  .all-forms-node {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    margin-bottom: var(--spacing-xs);
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+
+    &:hover {
+      background-color: var(--bg-color-light);
+      border-color: var(--border-color);
+    }
 
     .form-count {
       font-size: var(--font-size-xs);
@@ -764,13 +815,21 @@ onMounted(() => {
     }
   }
 
+  .all-forms-node {
+    font-weight: 500;
+  }
+
+  .all-forms-node.active {
+    background-color: rgba(64, 158, 255, 0.1);
+    border-color: var(--primary-color);
+  }
+
   .form-search {
     width: 200px;
     margin-right: var(--spacing-md);
   }
 
   .form-table-container {
-    max-height: 500px;
     overflow-y: auto;
   }
 
@@ -804,6 +863,12 @@ onMounted(() => {
     font-size: var(--font-size-xs);
     color: var(--text-color-secondary);
     margin-top: var(--spacing-xs);
+  }
+
+  .table-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
   }
 
   @media (max-width: 1200px) {
