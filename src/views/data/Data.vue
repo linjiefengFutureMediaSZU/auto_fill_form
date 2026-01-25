@@ -895,7 +895,7 @@ onUnmounted(() => {
     .chart-container {
       width: 100%;
       height: 300px;
-      border-radius: var(--border-radius-md);
+      border-radius: var(--border-radius-xl);
       background-color: var(--bg-color-white);
       box-shadow: var(--box-shadow-light);
     }

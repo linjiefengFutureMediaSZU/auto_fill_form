@@ -40,14 +40,16 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">
-            <el-icon><Search /></el-icon>
-            搜索
-          </el-button>
-          <el-button @click="resetSearch">
-            <el-icon><Refresh /></el-icon>
-            重置
-          </el-button>
+          <el-tooltip content="搜索" placement="top">
+            <el-button circle size="small" type="primary" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+            </el-button>
+          </el-tooltip>
+          <el-tooltip content="重置" placement="top">
+            <el-button circle size="small" @click="resetSearch">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </el-tooltip>
         </el-form-item>
       </el-form>
     </div>
@@ -56,30 +58,50 @@
     <div class="account-management card" style="margin-bottom: 20px;">
       <h3 class="subtitle">账号管理功能</h3>
       <div class="header-actions" style="margin-top: 10px; display: flex; gap: 16px; align-items: center;">
-        <el-button type="primary" @click="openAddAccountDialog">
-          <el-icon><Plus /></el-icon>
-          新增账号
-        </el-button>
-        <el-button type="warning" @click="toggleFieldManager">
-          <el-icon><Edit /></el-icon>
-          字段管理
-        </el-button>
-        <el-button type="primary" @click="handleBatchImport">
-          <el-icon><Upload /></el-icon>
-          批量导入
-        </el-button>
-        <el-button type="success" @click="handleBatchExport">
-          <el-icon><Download /></el-icon>
-          批量导出
-        </el-button>
-        <el-button type="warning" @click="handleBatchModify">
-          <el-icon><Edit /></el-icon>
-          批量修改
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete">
-          <el-icon><Delete /></el-icon>
-          批量删除
-        </el-button>
+        <el-tooltip content="新增账号" placement="top">
+          <el-button circle size="small" type="primary" plain @click="openAddAccountDialog">
+            <el-icon><Plus /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="字段管理" placement="top">
+          <el-button circle size="small" type="warning" plain @click="toggleFieldManager">
+            <el-icon><Edit /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="列展示" placement="top">
+          <el-popover placement="bottom" title="列展示设置" :width="200" trigger="click">
+            <template #reference>
+              <el-button circle size="small" type="info" plain>
+                <el-icon><Setting /></el-icon>
+              </el-button>
+            </template>
+            <el-checkbox-group v-model="visibleColumns">
+              <div v-for="col in availableColumns" :key="col.prop" style="margin-bottom: 5px;">
+                <el-checkbox :label="col.prop">{{ col.label }}</el-checkbox>
+              </div>
+            </el-checkbox-group>
+          </el-popover>
+        </el-tooltip>
+        <el-tooltip content="批量导入" placement="top">
+          <el-button circle size="small" type="primary" plain @click="handleBatchImport">
+            <el-icon><Upload /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="批量导出" placement="top">
+          <el-button circle size="small" type="success" plain @click="handleBatchExport">
+            <el-icon><Download /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="批量修改" placement="top">
+          <el-button circle size="small" type="warning" plain @click="handleBatchModify">
+            <el-icon><Edit /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="批量删除" placement="top">
+          <el-button circle size="small" type="danger" plain @click="handleBatchDelete">
+            <el-icon><Delete /></el-icon>
+          </el-button>
+        </el-tooltip>
       </div>
     </div>
 
@@ -98,9 +120,9 @@
         @selection-change="handleSelectionChange"
         border
       >
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="account_nickname" label="账号昵称" min-width="150">
+        <el-table-column type="selection" width="55" :resizable="false" />
+        <el-table-column v-if="visibleColumns.includes('id')" prop="id" label="ID" width="80" :resizable="false" />
+        <el-table-column v-if="visibleColumns.includes('account_nickname')" prop="account_nickname" label="账号昵称" min-width="180" :resizable="false">
           <template #default="scope">
             <div class="account-info">
               <span class="nickname">{{ scope.row.account_nickname }}</span>
@@ -108,18 +130,18 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="blogger_name" label="博主姓名" width="120" />
-        <el-table-column prop="fans_count" label="粉丝量" width="120">
+        <el-table-column v-if="visibleColumns.includes('blogger_name')" prop="blogger_name" label="博主姓名" width="120" :resizable="false" />
+        <el-table-column v-if="visibleColumns.includes('fans_count')" prop="fans_count" label="粉丝量" width="120" :resizable="false">
           <template #default="scope">
             {{ formatNumber(scope.row.fans_count) }}
           </template>
         </el-table-column>
-        <el-table-column prop="quote_single" label="单条报价" width="120">
+        <el-table-column v-if="visibleColumns.includes('quote_single')" prop="quote_single" label="单条报价" width="120" :resizable="false">
           <template #default="scope">
             ¥{{ scope.row.quote_single.toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="120">
+        <el-table-column v-if="visibleColumns.includes('status')" prop="status" label="状态" width="100" :resizable="false">
           <template #default="scope">
             <el-tag
               :type="getTagType(scope.row.status)"
@@ -129,24 +151,45 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+
+        <!-- 自定义字段 -->
+        <template v-for="field in customFields" :key="field.id">
+          <el-table-column
+            v-if="visibleColumns.includes(field.name)"
+            :prop="field.name"
+            :label="field.label"
+            min-width="120"
+            :resizable="false"
+            show-overflow-tooltip
+          />
+        </template>
+
+        <el-table-column label="操作" width="120" fixed="right" :resizable="false" align="center">
           <template #default="scope">
-            <el-button
-              size="small"
-              type="primary"
-              @click="openEditAccountDialog(scope.row)"
-            >
-              <el-icon><Edit /></el-icon>
-              编辑
-            </el-button>
-            <el-button
-              size="small"
-              type="danger"
-              @click="handleDeleteAccount(scope.row.id)"
-            >
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
+            <div class="table-actions" style="display: flex; justify-content: center; gap: 8px;">
+              <el-tooltip content="编辑" placement="top">
+                <el-button
+                  circle
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="openEditAccountDialog(scope.row)"
+                >
+                  <el-icon><Edit /></el-icon>
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="删除" placement="top">
+                <el-button
+                  circle
+                  size="small"
+                  type="danger"
+                  plain
+                  @click="handleDeleteAccount(scope.row.id)"
+                >
+                  <el-icon><Delete /></el-icon>
+                </el-button>
+              </el-tooltip>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -233,7 +276,7 @@
 <script setup>
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useAccountStore } from '../../stores'
-import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown } from '@element-plus/icons-vue'
+import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown, Setting } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DynamicFieldManager from '../../components/DynamicFieldManager.vue'
 import DynamicForm from '../../components/DynamicForm.vue'
@@ -333,6 +376,25 @@ const customFields = ref([
     required: false
   }
 ])
+
+// 标准列定义
+const standardColumns = [
+  { label: 'ID', prop: 'id' },
+  { label: '账号昵称', prop: 'account_nickname' },
+  { label: '博主姓名', prop: 'blogger_name' },
+  { label: '粉丝量', prop: 'fans_count' },
+  { label: '单条报价', prop: 'quote_single' },
+  { label: '状态', prop: 'status' }
+]
+
+// 可见列设置
+const visibleColumns = ref(['id', 'account_nickname', 'blogger_name', 'fans_count', 'quote_single', 'status'])
+
+// 所有可用列
+const availableColumns = computed(() => {
+  const customCols = customFields.value.map(f => ({ label: f.label, prop: f.name }))
+  return [...standardColumns, ...customCols]
+})
 
 // 搜索表单
 const searchForm = reactive({
@@ -741,7 +803,22 @@ onMounted(() => {
   }
   // 加载字段配置
   loadFieldConfig()
+
+  // 初始化可见列
+  const savedCols = localStorage.getItem('accountVisibleColumns')
+  if (savedCols) {
+    visibleColumns.value = JSON.parse(savedCols)
+  } else {
+    // 默认显示所有标准列和自定义列
+    const allProps = availableColumns.value.map(c => c.prop)
+    visibleColumns.value = allProps
+  }
 })
+
+// 监听可见列变化，自动保存
+watch(visibleColumns, () => {
+  localStorage.setItem('accountVisibleColumns', JSON.stringify(visibleColumns.value))
+}, { deep: true })
 
 // 监听字段配置变化，自动保存
 watch(customFields, () => {
@@ -750,160 +827,207 @@ watch(customFields, () => {
 </script>
 
 <style scoped lang="scss">
+/* 统一的页面容器 */
 .account-page {
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0; /* 移除可能的默认内边距 */
+}
 
-    .header-actions {
-      display: flex;
-      gap: var(--spacing-sm);
-    }
-  }
+/* 顶部标题区 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
 
-  .search-filter {
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .account-content {
-    display: flex;
-    gap: var(--spacing-lg);
-
-    .account-list-area {
-      flex: 1;
-    }
-
-    .group-management {
-      width: 300px;
-      min-width: 280px;
-    }
-  }
-
-  .list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-md);
-
-    .list-info {
-      display: flex;
-      gap: var(--spacing-md);
-      font-size: var(--font-size-sm);
-      color: var(--text-color-secondary);
-    }
-
-    .list-actions {
-      display: flex;
-      gap: var(--spacing-xs);
-    }
-  }
-
-  .pagination {
-    margin-top: var(--spacing-md);
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .group-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-md);
-  }
-
-  .group-list {
-    max-height: 500px;
-    overflow-y: auto;
-  }
-
-  .group-node {
+  .title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color-primary);
+    margin: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    width: 100%;
+    gap: 12px;
 
-    .account-count {
-      font-size: var(--font-size-xs);
-      color: var(--text-color-secondary);
-      margin-left: var(--spacing-xs);
+    &::before {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 24px;
+      background: var(--primary-color);
+      border-radius: 3px;
     }
+  }
+}
 
-    .group-node-actions {
-      display: flex;
-      gap: var(--spacing-xs);
-      opacity: 0;
-      transition: opacity 0.3s ease;
+/* 通用卡片样式优化 */
+.card {
+  background: var(--bg-color-white);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--box-shadow-light);
+  border: 1px solid var(--border-color-light);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: var(--box-shadow);
+  }
+}
+
+/* 搜索筛选区 */
+.search-filter {
+  padding: 24px 24px 0; /* 底部padding由margin-bottom撑开 */
+  
+  .search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .el-form-item {
+      margin-bottom: 24px; /* 统一底部间距 */
+      margin-right: 0;
     }
+  }
+}
 
-    &:hover .group-node-actions {
-      opacity: 1;
+/* 账号管理功能区 */
+.account-management {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .subtitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 16px;
+      background: var(--primary-color);
+      border-radius: 2px;
     }
   }
 
-  .account-info {
+  .header-actions {
     display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-
-    .nickname {
+    gap: 12px;
+    flex-wrap: wrap;
+    
+    .el-button {
+      margin-left: 0; /* 移除默认左边距 */
+      border-radius: 8px;
+      padding: 10px 20px;
+      height: auto;
       font-weight: 500;
-    }
 
-    .type-tag {
-      font-size: var(--font-size-xs);
-      color: var(--primary-color);
-      background-color: rgba(64, 158, 255, 0.1);
-      padding: 2px 6px;
-      border-radius: var(--border-radius-sm);
-    }
-  }
-
-  .account-form {
-    .form-collapse {
-      margin-bottom: var(--spacing-md);
-    }
-  }
-
-  .field-manager-panel {
-    margin-bottom: var(--spacing-md);
-    .dynamic-field-manager {
-      .manager-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--spacing-md);
-      }
-      .field-list {
-        margin-top: var(--spacing-md);
-        .field-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: var(--spacing-sm);
-          border: 1px solid var(--border-color);
-          border-radius: var(--border-radius);
-          margin-bottom: var(--spacing-xs);
-          &:hover {
-            background-color: var(--bg-color-light);
-          }
-        }
+      .el-icon {
+        margin-right: 6px;
       }
     }
   }
+}
 
-  @media (max-width: 1200px) {
-    .account-content {
+/* 账号列表区 */
+.account-list-area {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px; /* 最小高度 */
+
+  /* 表格样式覆盖 */
+  :deep(.el-table) {
+    flex: 1;
+    --el-table-header-bg-color: var(--bg-color-light);
+    --el-table-header-text-color: var(--text-color-primary);
+    --el-table-row-hover-bg-color: var(--primary-color-light-9);
+
+    th.el-table__cell {
+      font-weight: 600;
+      height: 54px;
+      background-color: var(--bg-color-light);
+    }
+
+    .el-table__row {
+      height: 60px; /* 增加行高 */
+    }
+
+    /* 账号信息组合样式 */
+    .account-info {
+      display: flex;
       flex-direction: column;
+      gap: 4px;
 
-      .group-management {
-        width: 100%;
+      .nickname {
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--text-color-primary);
       }
 
-      .group-list {
-        max-height: 300px;
+      .type-tag {
+        font-size: 12px;
+        color: var(--text-color-secondary);
+        background: var(--bg-color-page);
+        padding: 2px 6px;
+        border-radius: 4px;
+        width: fit-content;
       }
+    }
+
+    /* 操作按钮优化 */
+    .el-button.is-circle {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      
+      .el-icon {
+        font-size: 18px;
+      }
+
+      &:hover {
+        background: var(--bg-color-page);
+      }
+
+      &--primary { color: var(--primary-color); }
+      &--danger { color: var(--danger-color); }
+    }
+  }
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .search-filter .search-form {
+    flex-direction: column;
+    
+    .el-form-item {
+      width: 100%;
+      margin-right: 0;
+      
+      .el-input, .el-select {
+        width: 100% !important;
+      }
+    }
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .el-button {
+      width: 100%;
     }
   }
 }

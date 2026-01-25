@@ -4,22 +4,26 @@
     <div class="page-header">
       <h2 class="title">表单列表</h2>
       <div class="header-actions">
-        <el-button type="primary" @click="openAddFormDialog">
-          <el-icon><Plus /></el-icon>
-          新增表单
-        </el-button>
-        <el-button type="primary" @click="handleBatchImport">
-          <el-icon><Upload /></el-icon>
-          批量导入
-        </el-button>
-        <el-button type="success" @click="handleBatchExport">
-          <el-icon><Download /></el-icon>
-          批量导出
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete">
-          <el-icon><Delete /></el-icon>
-          批量删除
-        </el-button>
+        <el-tooltip content="新增表单" placement="bottom">
+          <el-button circle size="small" type="primary" plain @click="openAddFormDialog">
+            <el-icon><Plus /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="批量导入" placement="bottom">
+          <el-button circle size="small" type="primary" plain @click="handleBatchImport">
+            <el-icon><Upload /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="批量导出" placement="bottom">
+          <el-button circle size="small" type="success" plain @click="handleBatchExport">
+            <el-icon><Download /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip content="批量删除" placement="bottom">
+          <el-button circle size="small" type="danger" plain @click="handleBatchDelete">
+            <el-icon><Delete /></el-icon>
+          </el-button>
+        </el-tooltip>
       </div>
     </div>
 
@@ -31,10 +35,11 @@
           <div class="section-header">
             <h3 class="subtitle">文件夹管理</h3>
             <div class="header-actions">
-              <el-button size="small" type="primary" @click="openAddFolderDialog">
-                <el-icon><Plus /></el-icon>
-                新建文件夹
-              </el-button>
+              <el-tooltip content="新建文件夹" placement="top">
+                <el-button circle size="small" type="primary" plain @click="openAddFolderDialog">
+                  <el-icon><Plus /></el-icon>
+                </el-button>
+              </el-tooltip>
             </div>
           </div>
 
@@ -45,7 +50,7 @@
               class="folder-node all-forms-node" :class="{ active: !selectedFolderId }"
               @click="handleAllFormsClick"
             >
-              <span>全部表单</span>
+              <span class="node-label">全部表单</span>
               <span class="form-count">({{ forms.length }})</span>
             </div>
             <el-tree
@@ -59,18 +64,23 @@
             >
               <template #default="{ node, data }">
                 <div class="folder-node">
-                  <span>{{ node.label }}</span>
+                  <span class="node-label">{{ node.label }}</span>
                   <span class="form-count">({{ getFormCountByFolder(data.id) }})</span>
                   <div class="folder-node-actions">
                     <el-button
-                      size="mini"
+                      circle
+                      size="small"
+                      type="primary"
+                      plain
                       @click.stop="openEditFolderDialog(data)"
                     >
                       <el-icon><Edit /></el-icon>
                     </el-button>
                     <el-button
-                      size="mini"
+                      circle
+                      size="small"
                       type="danger"
+                      plain
                       @click.stop="handleDeleteFolder(data.id)"
                     >
                       <el-icon><Delete /></el-icon>
@@ -117,20 +127,20 @@
               @selection-change="handleFormSelectionChange"
               border
             >
-              <el-table-column type="selection" width="55" />
-              <el-table-column prop="template_name" label="表单名称" min-width="150">
+              <el-table-column type="selection" width="55" :resizable="false" />
+              <el-table-column prop="template_name" label="表单名称" min-width="180" :resizable="false">
                 <template #default="scope">
                   <div class="form-name">
                     {{ scope.row.template_name }}
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="form_type" label="表单类型" width="100">
+              <el-table-column prop="form_type" label="表单类型" width="100" :resizable="false">
                 <template #default="scope">
                   <el-tag size="small">{{ scope.row.form_type }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="form_url" label="表单链接" min-width="200">
+              <el-table-column prop="form_url" label="表单链接" min-width="250" :resizable="false">
                 <template #default="scope">
                   <el-popover
                     placement="top"
@@ -142,54 +152,67 @@
                     </template>
                     <div class="form-url-popover">
                       <p>{{ scope.row.form_url }}</p>
-                      <el-button
-                        size="mini"
-                        type="primary"
-                        @click="copyFormUrl(scope.row.form_url)"
-                      >
-                        <el-icon><DocumentCopy /></el-icon>
-                  复制链接
-                      </el-button>
+                      <el-tooltip content="复制链接" placement="top">
+                        <el-button
+                          circle
+                          size="small"
+                          type="primary"
+                          plain
+                          @click="copyFormUrl(scope.row.form_url)"
+                        >
+                          <el-icon><DocumentCopy /></el-icon>
+                        </el-button>
+                      </el-tooltip>
                     </div>
                   </el-popover>
                 </template>
               </el-table-column>
-              <el-table-column prop="created_at" label="添加时间" width="150">
+              <el-table-column prop="created_at" label="添加时间" width="160" :resizable="false">
                 <template #default="scope">
                   {{ formatDate(scope.row.created_at) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="last_fill_time" label="最后填写时间" width="150">
+              <el-table-column prop="last_fill_time" label="最后填写时间" width="160" :resizable="false">
                 <template #default="scope">
                   {{ scope.row.last_fill_time ? formatDate(scope.row.last_fill_time) : '-' }}
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="200" fixed="right">
+              <el-table-column label="操作" width="160" fixed="right" :resizable="false" align="center">
                 <template #default="scope">
-                  <div class="table-actions">
-                    <el-button
-                      size="small"
-                      type="primary"
-                      @click="navigateToFill(scope.row.id)"
-                    >
-                      <el-icon><EditPen /></el-icon>
-                      去填写
-                    </el-button>
-                    <el-button
-                      size="small"
-                      @click="openEditFormDialog(scope.row)"
-                    >
-                      <el-icon><Edit /></el-icon>
-                      编辑
-                    </el-button>
-                    <el-button
-                      size="small"
-                      type="danger"
-                      @click="handleDeleteForm(scope.row.id)"
-                    >
-                      <el-icon><Delete /></el-icon>
-                      删除
-                    </el-button>
+                  <div class="table-actions" style="display: flex; justify-content: center; gap: 8px;">
+                    <el-tooltip content="去填写" placement="top">
+                      <el-button
+                        circle
+                        size="small"
+                        type="primary"
+                        plain
+                        @click="navigateToFill(scope.row.id)"
+                      >
+                        <el-icon><EditPen /></el-icon>
+                      </el-button>
+                    </el-tooltip>
+                    <el-tooltip content="编辑" placement="top">
+                      <el-button
+                        circle
+                        size="small"
+                        type="warning"
+                        plain
+                        @click="openEditFormDialog(scope.row)"
+                      >
+                        <el-icon><Edit /></el-icon>
+                      </el-button>
+                    </el-tooltip>
+                    <el-tooltip content="删除" placement="top">
+                      <el-button
+                        circle
+                        size="small"
+                        type="danger"
+                        plain
+                        @click="handleDeleteForm(scope.row.id)"
+                      >
+                        <el-icon><Delete /></el-icon>
+                      </el-button>
+                    </el-tooltip>
                   </div>
                 </template>
               </el-table-column>
@@ -339,7 +362,7 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFormStore } from '../../stores'
-import { Plus, More, Upload, Download, Delete, ArrowDown, Search, EditPen, Edit, DocumentCopy } from '@element-plus/icons-vue'
+import { Plus, More, Upload, Download, Delete, ArrowDown, Search, EditPen, Edit, DocumentCopy, Folder, FolderOpened, MoreFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 路由
@@ -710,11 +733,36 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .form-list-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-lg);
+    padding: 0 var(--spacing-xs);
+
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-color-primary);
+      position: relative;
+      padding-left: 16px;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 20px;
+        background: var(--primary-color);
+        border-radius: 2px;
+      }
+    }
 
     .header-actions {
       display: flex;
@@ -725,48 +773,52 @@ onMounted(() => {
   .form-list-container {
     display: flex;
     gap: var(--spacing-lg);
-    height: calc(100vh - 200px);
+    flex: 1;
+    overflow: hidden; // 防止整体滚动
 
     .folder-management {
-      width: 300px;
-      min-width: 280px;
-      height: 100%;
+      width: 360px;
+      min-width: 360px;
+      display: flex;
+      flex-direction: column;
     }
 
     .form-link-list {
       flex: 1;
-      min-width: 400px;
-      height: 100%;
+      min-width: 0; // 防止 flex 子项溢出
+      display: flex;
+      flex-direction: column;
     }
   }
 
   .card {
-    height: 100%;
+    background: var(--bg-color-white);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--box-shadow-light);
     display: flex;
     flex-direction: column;
-  }
+    height: 100%;
+    transition: box-shadow 0.3s ease;
+    border: 1px solid var(--border-color-lighter);
 
-  .card > .section-header {
-    flex-shrink: 0;
-  }
-
-  .card > .folder-list {
-    flex: 1;
-    overflow-y: auto;
-    max-height: none;
-  }
-
-  .card > .form-table-container {
-    flex: 1;
-    overflow-y: auto;
-    max-height: none;
+    &:hover {
+      box-shadow: var(--box-shadow);
+    }
   }
 
   .section-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color-lighter);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-md);
+    flex-shrink: 0;
+
+    .subtitle {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-color-primary);
+    }
 
     .header-actions {
       display: flex;
@@ -776,116 +828,176 @@ onMounted(() => {
   }
 
   .folder-list {
+    flex: 1;
     overflow-y: auto;
+    padding: var(--spacing-md);
+  }
+
+  // 自定义滚动条
+  .custom-scrollbar {
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+    &:hover::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  // 文件夹节点样式重构
+  :deep(.el-tree) {
+    background: transparent;
+  }
+  
+  :deep(.el-tree-node__content) {
+    height: auto; // 让内容决定高度
+    padding: 0 !important; // 移除默认 padding，我们在内部控制
+    background: transparent !important;
+    margin-bottom: 4px;
   }
 
   .folder-node,
   .all-forms-node {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     width: 100%;
-    padding: var(--spacing-sm);
-    border-radius: var(--border-radius-md);
+    padding: 10px 12px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-bottom: var(--spacing-xs);
-    transition: all 0.3s ease;
-    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    color: var(--text-color-regular);
+    position: relative;
+    user-select: none;
 
     &:hover {
       background-color: var(--bg-color-light);
-      border-color: var(--border-color);
+      color: var(--primary-color);
+      
+      .folder-node-actions {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    &.active {
+      background-color: rgba(64, 158, 255, 0.08);
+      color: var(--primary-color);
+      font-weight: 500;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 16px;
+        background-color: var(--primary-color);
+        border-radius: 0 2px 2px 0;
+      }
+    }
+
+    .node-icon {
+      font-size: 18px;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .node-label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      min-width: 0; // 确保 flex 子项可以正确收缩
     }
 
     .form-count {
-      font-size: var(--font-size-xs);
+      font-size: 12px;
       color: var(--text-color-secondary);
-      margin-left: var(--spacing-xs);
+      background: var(--bg-color-light);
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 8px;
     }
 
     .folder-node-actions {
       display: flex;
-      gap: var(--spacing-xs);
+      gap: 4px;
+      margin-left: 8px;
       opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    &:hover .folder-node-actions {
-      opacity: 1;
+      transform: translateX(10px);
+      transition: all 0.2s ease;
     }
   }
 
   .all-forms-node {
-    font-weight: 500;
-  }
-
-  .all-forms-node.active {
-    background-color: rgba(64, 158, 255, 0.1);
-    border-color: var(--primary-color);
-  }
-
-  .form-search {
-    width: 200px;
-    margin-right: var(--spacing-md);
+    margin-bottom: 4px;
   }
 
   .form-table-container {
+    flex: 1;
     overflow-y: auto;
+    padding: 0; // 表格贴边
+
+    :deep(.el-table) {
+      --el-table-border-color: var(--border-color-lighter);
+      
+      th.el-table__cell {
+        background-color: var(--bg-color-light);
+        color: var(--text-color-regular);
+        font-weight: 600;
+        height: 50px;
+      }
+
+      .el-table__row {
+        height: 60px; // 增加行高
+      }
+    }
   }
 
   .form-name {
     font-weight: 500;
+    font-size: 14px;
+    color: var(--text-color-primary);
   }
 
   .form-link {
     color: var(--primary-color);
     text-decoration: none;
-    font-size: var(--font-size-sm);
-    word-break: break-all;
+    font-size: 13px;
+    transition: opacity 0.2s;
 
     &:hover {
-      text-decoration: underline;
+      opacity: 0.8;
     }
-  }
-
-  .form-url-popover {
-    p {
-      margin-bottom: var(--spacing-sm);
-      word-break: break-all;
-    }
-  }
-
-  .empty-state {
-    padding: var(--spacing-xl) 0;
-  }
-
-  .form-tip {
-    font-size: var(--font-size-xs);
-    color: var(--text-color-secondary);
-    margin-top: var(--spacing-xs);
   }
 
   .table-actions {
     display: flex;
-    gap: var(--spacing-xs);
-    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
   }
 
+  .empty-state {
+    padding: 60px 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  // 响应式
   @media (max-width: 1200px) {
     .form-list-container {
       flex-direction: column;
-      height: auto;
-
-      .folder-management {
+      overflow-y: auto;
+      
+      .folder-management,
+      .form-link-list {
         width: 100%;
-      }
-
-      .folder-list {
-        max-height: 300px;
-      }
-
-      .form-table-container {
-        max-height: 400px;
+        min-height: 400px;
       }
     }
   }

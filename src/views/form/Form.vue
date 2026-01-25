@@ -4,10 +4,11 @@
     <div class="page-header">
       <h2 class="title">表单填写</h2>
       <div class="header-actions">
-        <el-button type="primary" @click="refreshFormList">
-          <el-icon><Refresh /></el-icon>
-          刷新表单列表
-        </el-button>
+        <el-tooltip content="刷新表单列表" placement="bottom">
+          <el-button circle size="small" type="primary" plain @click="refreshFormList">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </el-tooltip>
       </div>
     </div>
 
@@ -110,12 +111,17 @@
                 </div>
               </div>
               <div class="form-actions">
-                <el-button
-                  size="mini"
-                  @click.stop="editFieldMapping(template)"
-                >
-                  <el-icon><Edit /></el-icon>
-                </el-button>
+                <el-tooltip content="编辑字段匹配" placement="top">
+                  <el-button
+                    circle
+                    size="small"
+                    type="primary"
+                    plain
+                    @click.stop="editFieldMapping(template)"
+                  >
+                    <el-icon><Edit /></el-icon>
+                  </el-button>
+                </el-tooltip>
               </div>
             </div>
             <div v-if="filteredTemplates.length === 0" class="empty-state">
@@ -133,14 +139,16 @@
               {{ selectedTemplate ? selectedTemplate.template_name : '表单预览' }}
             </h3>
             <div class="header-actions" v-if="selectedTemplate">
-              <el-button size="small" @click="autoMapFields">
-                <el-icon><MagicStick /></el-icon>
-                自动匹配
-              </el-button>
-              <el-button size="small" type="primary" @click="previewMapping">
-                <el-icon><View /></el-icon>
-                预览匹配
-              </el-button>
+              <el-tooltip content="自动匹配" placement="top">
+                <el-button circle size="small" type="primary" plain @click="autoMapFields">
+                  <el-icon><MagicStick /></el-icon>
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="预览匹配" placement="top">
+                <el-button circle size="small" type="primary" plain @click="previewMapping">
+                  <el-icon><View /></el-icon>
+                </el-button>
+              </el-tooltip>
             </div>
           </div>
 
@@ -308,15 +316,18 @@
             </el-form-item>
           </el-form>
         </div>
-        <el-button
-          type="primary"
-          size="small"
-          @click="addMappingItem"
-          class="add-mapping-button"
-        >
-          <el-icon><Plus /></el-icon>
-          添加字段
-        </el-button>
+        <el-tooltip content="添加字段" placement="top">
+          <el-button
+            circle
+            size="small"
+            type="primary"
+            plain
+            @click="addMappingItem"
+            class="add-mapping-button"
+          >
+            <el-icon><Plus /></el-icon>
+          </el-button>
+        </el-tooltip>
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -757,14 +768,14 @@ onMounted(() => {
 
     .account-selection {
       flex: 0.7;
-      min-width: 220px;
-      max-width: 280px;
+      min-width: 260px;
+      max-width: 350px;
     }
 
     .form-link-selection {
       flex: 0.7;
-      min-width: 220px;
-      max-width: 280px;
+      min-width: 260px;
+      max-width: 350px;
     }
 
     .form-preview-fill {
