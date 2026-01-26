@@ -1,0 +1,387 @@
+<template>
+  <div class="login-container" :class="{ 'dark-theme': isDarkTheme }">
+    <div class="login-card">
+      <!-- 登录卡片头部 -->
+      <div class="login-header">
+        <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=auto%20fill%20form%20tool%20logo%2C%20simple%20modern%20design%2C%20blue%20color%20scheme&image_size=square_hd" alt="Logo" class="login-logo" />
+        <h1 class="login-title">自动填写工具</h1>
+        <p class="login-subtitle">多账号表单自动填写解决方案</p>
+      </div>
+      
+      <!-- 登录表单 -->
+      <el-form
+        ref="loginFormRef"
+        :model="loginForm"
+        :rules="rules"
+        class="login-form"
+      >
+        <el-form-item prop="username">
+          <el-input
+            v-model="loginForm.username"
+            placeholder="请输入用户名"
+            size="large"
+          >
+            <template #prefix>
+              <el-icon><User /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        
+        <el-form-item prop="password">
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="请输入密码"
+            show-password
+            size="large"
+          >
+            <template #prefix>
+              <el-icon><Lock /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        
+        <el-form-item class="remember-me">
+          <el-checkbox v-model="loginForm.remember">
+            记住我
+          </el-checkbox>
+          <el-link type="primary" class="forgot-password">忘记密码？</el-link>
+        </el-form-item>
+        
+        <el-form-item>
+          <el-button
+            type="primary"
+            native-type="submit"
+            class="login-button"
+            size="large"
+            :loading="loading"
+            @click="handleLogin"
+          >
+            登录
+          </el-button>
+        </el-form-item>
+        
+        <el-form-item>
+          <el-button
+            type="info"
+            class="register-button"
+            size="large"
+            @click="handleRegister"
+          >
+            注册
+          </el-button>
+        </el-form-item>
+      </el-form>
+      
+      <!-- 登录卡片底部 -->
+      <div class="login-footer">
+        <p class="copyright">© 2026 自动填写工具. 保留所有权利.</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAccountStore } from '../../stores/account'
+import { useSettingsStore } from '../../stores/settings'
+import { User, Lock } from '@element-plus/icons-vue'
+
+// 状态管理
+const settingsStore = useSettingsStore()
+
+// 计算属性
+const isDarkTheme = computed(() => {
+  return settingsStore.general.theme === 'dark'
+})
+
+// 状态管理
+const accountStore = useAccountStore()
+const router = useRouter()
+
+// 响应式数据
+const loginForm = reactive({
+  username: '',
+  password: '',
+  remember: false
+})
+
+const loading = ref(false)
+const loginFormRef = ref(null)
+
+// 表单验证规则
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' }
+  ]
+}
+
+// 方法
+/**
+ * 处理登录逻辑
+ */
+const handleLogin = async () => {
+  // 表单验证
+  if (!loginFormRef.value) return
+  
+  try {
+    await loginFormRef.value.validate()
+    loading.value = true
+    
+    // 模拟登录请求
+    setTimeout(() => {
+      // 登录成功后设置用户信息
+      accountStore.setUserInfo({
+        username: loginForm.username,
+        name: '管理员'
+      })
+      
+      // 保存登录状态
+      accountStore.setLoginStatus(true)
+      
+      // 跳转到首页
+      router.push('/account')
+      loading.value = false
+    }, 1000)
+  } catch (error) {
+    console.error('登录验证失败:', error)
+    loading.value = false
+  }
+}
+
+/**
+ * 处理注册跳转
+ */
+const handleRegister = () => {
+  router.push('/register')
+}
+</script>
+
+<style scoped lang="scss">
+.login-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f7fa;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 32px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+
+  .login-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+  }
+
+  .login-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 4px;
+  }
+
+  .login-subtitle {
+    font-size: 14px;
+    color: #909399;
+  }
+}
+
+.login-form {
+  margin-bottom: 24px;
+
+  .el-form-item {
+    margin-bottom: 16px;
+  }
+}
+
+.remember-me {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .forgot-password {
+    font-size: 14px;
+  }
+}
+
+.login-button {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  }
+}
+
+.register-button {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(144, 147, 153, 0.3);
+  }
+}
+
+.login-footer {
+  text-align: center;
+
+  .copyright {
+    font-size: 12px;
+    color: #C0C4CC;
+  }
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .login-card {
+    margin: 0 16px;
+    padding: 24px;
+  }
+
+  .login-header {
+    .login-logo {
+      width: 60px;
+      height: 60px;
+    }
+
+    .login-title {
+      font-size: 18px;
+    }
+  }
+}
+
+/* 动画效果 */
+.login-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 深色主题样式 */
+.login-container.dark-theme {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+
+  // 全局div样式，确保所有嵌套div都继承深色主题样式
+  div {
+    &:not(.el-form-item):not(.el-checkbox__input) {
+      background-color: inherit;
+      color: inherit;
+    }
+  }
+
+  .login-card {
+    background-color: #242424;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .login-header {
+    .login-title {
+      color: #e0e0e0;
+    }
+    .login-subtitle {
+      color: #b0b0b0;
+    }
+  }
+
+  .login-form {
+    background-color: inherit;
+  }
+
+  .remember-me {
+    .forgot-password {
+      color: #409eff;
+    }
+  }
+
+  .login-footer {
+    .copyright {
+      color: #666;
+    }
+  }
+
+  .el-form {
+    .el-form-item {
+      .el-form-item__label {
+        color: #e0e0e0;
+      }
+    }
+  }
+
+  .el-input {
+    .el-input__wrapper {
+      background-color: #2c2c2c;
+      border-color: #333;
+      box-shadow: none;
+      &:hover {
+        border-color: #409eff;
+      }
+      &.is-focus {
+        border-color: #409eff;
+        box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+      }
+      .el-input__inner {
+        color: #e0e0e0;
+      }
+    }
+  }
+
+  .el-checkbox {
+    .el-checkbox__label {
+      color: #e0e0e0;
+    }
+    .el-checkbox__input {
+      .el-checkbox__inner {
+        border-color: #409eff;
+        background-color: #2c2c2c;
+        &:hover {
+          border-color: #66b1ff;
+        }
+      }
+      &.is-checked {
+        .el-checkbox__inner {
+          border-color: #409eff;
+          background-color: #409eff;
+        }
+      }
+    }
+  }
+}
+</style>

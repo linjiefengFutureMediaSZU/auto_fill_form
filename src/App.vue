@@ -1,9 +1,10 @@
 <template>
-  <Layout />
+  <!-- 直接使用router-view，让路由配置决定显示内容 -->
+  <router-view />
 </template>
 
 <script setup>
-import Layout from './components/Layout.vue'
+// 移除Layout的默认导入，让路由配置决定是否使用Layout
 </script>
 
 <style>

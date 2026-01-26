@@ -195,7 +195,14 @@ export const useAccountStore = defineStore('account', {
       }
     ],
     // 当前选中的账号
-    selectedAccounts: []
+    selectedAccounts: [],
+    // 用户信息
+    userInfo: {
+      username: '',
+      name: ''
+    },
+    // 登录状态
+    isLoggedIn: false
   }),
   getters: {
     // 获取正常状态的账号
@@ -205,6 +212,14 @@ export const useAccountStore = defineStore('account', {
     // 根据分组获取账号
     getAccountsByGroup: (state) => (groupId) => {
       return state.accounts.filter(account => account.group_id === groupId)
+    },
+    // 获取用户信息
+    getUserInfo: (state) => {
+      return state.userInfo
+    },
+    // 获取登录状态
+    getLoginStatus: (state) => {
+      return state.isLoggedIn
     }
   },
   actions: {
@@ -263,6 +278,37 @@ export const useAccountStore = defineStore('account', {
           account.group_id = null
         }
       })
+    },
+    // 设置用户信息
+    setUserInfo(userInfo) {
+      this.userInfo = userInfo
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
+    },
+    // 设置登录状态
+    setLoginStatus(status) {
+      this.isLoggedIn = status
+      localStorage.setItem('isLoggedIn', status.toString())
+    },
+    // 退出登录
+    logout() {
+      this.userInfo = {
+        username: '',
+        name: ''
+      }
+      this.isLoggedIn = false
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('isLoggedIn')
+    },
+    // 初始化登录状态
+    initLoginStatus() {
+      const savedUserInfo = localStorage.getItem('userInfo')
+      const savedLoginStatus = localStorage.getItem('isLoggedIn')
+      
+      if (savedUserInfo) {
+        this.userInfo = JSON.parse(savedUserInfo)
+      }
+      
+      this.isLoggedIn = savedLoginStatus === 'true'
     }
   }
 })

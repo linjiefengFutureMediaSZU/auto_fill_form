@@ -1,5 +1,5 @@
 <template>
-  <div class="settings-page">
+  <div class="settings-page" :class="{ 'dark-theme': isDarkTheme }">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2 class="title">基础设置</h2>
@@ -171,48 +171,6 @@
         </el-form>
       </div>
 
-      <!-- 账号安全设置 -->
-      <div class="card">
-        <h3 class="subtitle">账号安全设置</h3>
-        <el-form
-          :model="securitySettings"
-          :rules="securitySettingsRules"
-          ref="securitySettingsFormRef"
-          label-width="120px"
-          class="settings-form"
-        >
-          <el-form-item label="启用密码">
-            <el-switch v-model="securitySettings.passwordEnabled" />
-          </el-form-item>
-          <el-form-item label="当前密码" v-if="securitySettings.passwordEnabled">
-            <el-input
-              v-model="securitySettings.currentPassword"
-              type="password"
-              placeholder="请输入当前密码"
-            />
-          </el-form-item>
-          <el-form-item label="新密码" v-if="securitySettings.passwordEnabled">
-            <el-input
-              v-model="securitySettings.newPassword"
-              type="password"
-              placeholder="请输入新密码"
-            />
-            <div class="form-tip">密码长度至少6位</div>
-          </el-form-item>
-          <el-form-item label="确认密码" v-if="securitySettings.passwordEnabled">
-            <el-input
-              v-model="securitySettings.confirmPassword"
-              type="password"
-              placeholder="请确认新密码"
-            />
-          </el-form-item>
-          <el-form-item label="预留邮箱">
-            <el-input v-model="securitySettings.email" placeholder="请输入邮箱地址" />
-            <div class="form-tip">用于找回密码</div>
-          </el-form-item>
-        </el-form>
-      </div>
-
       <!-- 版本信息 -->
       <div class="card">
         <h3 class="subtitle">版本信息</h3>
@@ -254,13 +212,18 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useSettingsStore } from '../../stores'
 import { Check, Download } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 // 状态管理
 const settingsStore = useSettingsStore()
+
+// 计算属性
+const isDarkTheme = computed(() => {
+  return settingsStore.general.theme === 'dark'
+})
 
 // 响应式数据
 const onlineDeploymentEnabled = ref(false)
@@ -327,15 +290,6 @@ const fillSettingsRules = {
   requiredFieldAlert: [{ required: true, message: '请选择提醒方式', trigger: 'change' }]
 }
 
-// 安全设置
-const securitySettings = reactive({
-  passwordEnabled: true,
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: '',
-  email: 'admin@example.com'
-})
-
 // 版本信息
 const versionInfo = reactive({
   current: '1.0.0',
@@ -348,26 +302,8 @@ const generalSettingsFormRef = ref(null)
 const localDeploymentFormRef = ref(null)
 const onlineDeploymentFormRef = ref(null)
 const fillSettingsFormRef = ref(null)
-const securitySettingsFormRef = ref(null)
 
 // 方法
-// 验证确认密码
-const validateConfirmPassword = (rule, value, callback) => {
-  if (value !== securitySettings.newPassword) {
-    callback(new Error('两次输入的密码不一致'))
-  } else {
-    callback()
-  }
-}
-
-// 安全设置验证规则
-const securitySettingsRules = {
-  currentPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
-  newPassword: [{ required: true, message: '请输入新密码', trigger: 'blur' }, { min: 6, message: '密码长度至少6位', trigger: 'blur' }],
-  confirmPassword: [{ required: true, message: '请确认新密码', trigger: 'blur' }, { validator: validateConfirmPassword, trigger: 'blur' }],
-  email: [{ required: true, message: '请输入邮箱地址', trigger: 'blur' }, { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }]
-}
-
 // 切换主题
 const handleThemeChange = (theme) => {
   // 这里可以添加切换主题的逻辑
@@ -403,20 +339,10 @@ const saveAllSettings = async () => {
       await fillSettingsFormRef.value.validate()
     }
     
-    // 验证安全设置
-    if (securitySettingsFormRef.value) {
-      await securitySettingsFormRef.value.validate()
-    }
-    
     // 保存设置
     settingsStore.updateGeneralSettings(generalSettings)
     settingsStore.updateLocalDeploymentSettings(localDeploymentSettings)
     settingsStore.updateFillSettings(fillSettings)
-    settingsStore.updateSecuritySettings({
-      passwordEnabled: securitySettings.passwordEnabled,
-      password: securitySettings.newPassword || securitySettings.password,
-      email: securitySettings.email
-    })
     
     ElMessage.success('设置已保存，部分设置需重启应用生效')
   } catch (error) {
@@ -435,10 +361,6 @@ onMounted(() => {
   Object.assign(generalSettings, settingsStore.general)
   Object.assign(localDeploymentSettings, settingsStore.deployment.local)
   Object.assign(fillSettings, settingsStore.fill)
-  Object.assign(securitySettings, {
-    passwordEnabled: settingsStore.security.passwordEnabled,
-    email: settingsStore.security.email
-  })
   Object.assign(versionInfo, settingsStore.version)
 })
 </script>
@@ -529,6 +451,182 @@ onMounted(() => {
     display: flex;
     justify-content: center;
     margin-top: var(--spacing-lg);
+  }
+
+  /* 深色主题样式 */
+  &.dark-theme {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+
+    // 全局div样式，确保所有嵌套div都继承深色主题样式
+    div {
+      &:not(.el-form-item):not(.el-input__wrapper):not(.el-select-dropdown__item):not(.el-alert__content) {
+        background-color: inherit;
+        color: inherit;
+      }
+    }
+
+    .page-header {
+      .title {
+        color: #e0e0e0;
+      }
+    }
+
+    .settings-container {
+      background-color: inherit;
+    }
+
+    .card {
+      background-color: #242424;
+      border-color: #333;
+
+      .subtitle {
+        color: #e0e0e0;
+        border-bottom: 1px solid #333;
+      }
+    }
+
+    .settings-form {
+      background-color: inherit;
+    }
+
+    .deployment-section {
+      border-top: 1px solid #333;
+
+      .section-header {
+        background-color: inherit;
+
+        .section-title {
+          color: #b0b0b0;
+        }
+      }
+
+      .section-title {
+        color: #b0b0b0;
+      }
+
+      .database-config {
+        background-color: inherit;
+      }
+
+      .online-deployment {
+        background-color: inherit;
+      }
+    }
+
+    .form-tip {
+      color: #808080;
+    }
+
+    .unit {
+      color: #808080;
+    }
+
+    .version-info {
+      background-color: inherit;
+
+      .info-item {
+        background-color: inherit;
+
+        .label {
+          color: #b0b0b0;
+        }
+
+        .value {
+          color: #e0e0e0;
+
+          &.update-available {
+            color: #409EFF;
+          }
+        }
+      }
+    }
+
+    .save-button-container {
+      background-color: inherit;
+    }
+
+    .el-input__wrapper {
+      background-color: #2a2a2a;
+      border-color: #333;
+
+      .el-input__inner {
+        color: #e0e0e0;
+      }
+
+      &:hover {
+        border-color: #444;
+      }
+
+      &.is-focus {
+        border-color: #409EFF;
+      }
+    }
+
+    .el-select .el-input__wrapper {
+      background-color: #2a2a2a;
+      border-color: #333;
+
+      .el-input__inner {
+        color: #e0e0e0;
+      }
+
+      &:hover {
+        border-color: #444;
+      }
+
+      &.is-focus {
+        border-color: #409EFF;
+      }
+    }
+
+    .el-select-dropdown {
+      background-color: #242424;
+      border-color: #333;
+
+      .el-select-dropdown__item {
+        color: #e0e0e0;
+
+        &:hover {
+          background-color: #333;
+        }
+
+        &.selected {
+          background-color: #409EFF;
+        }
+      }
+    }
+
+    .el-input-number {
+      .el-input__wrapper {
+        background-color: #2a2a2a;
+        border-color: #333;
+
+        .el-input__inner {
+          color: #e0e0e0;
+        }
+
+        &:hover {
+          border-color: #444;
+        }
+
+        &.is-focus {
+          border-color: #409EFF;
+        }
+      }
+    }
+
+    .el-alert {
+      background-color: #2a2a2a;
+      border-color: #333;
+
+      .el-alert__title {
+        color: #e0e0e0;
+      }
+      .el-alert__content {
+        color: #b0b0b0;
+      }
+    }
   }
 }
 </style>

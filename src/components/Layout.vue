@@ -13,14 +13,18 @@
       <el-menu
         :default-active="activeMenu"
         class="sidebar-menu"
-        background-color="#f5f7fa"
-        text-color="#303133"
-        active-text-color="#409EFF"
+        :background-color="isDarkTheme ? '#242424' : '#f5f7fa'"
+        :text-color="isDarkTheme ? '#e0e0e0' : '#303133'"
+        :active-text-color="'#409EFF'"
         :collapse="isCollapse"
         router
       >
-        <el-menu-item index="/account">
+        <el-menu-item index="/profile">
           <el-icon><User /></el-icon>
+          <template #title>个人中心</template>
+        </el-menu-item>
+        <el-menu-item index="/account">
+          <el-icon><UserFilled /></el-icon>
           <template #title>账号管理</template>
         </el-menu-item>
         <el-menu-item index="/form">
@@ -61,20 +65,27 @@
           </span>
         </div>
         <div class="top-bar-right">
+          <el-button 
+            type="primary" 
+            circle 
+            @click="toggleTheme"
+            class="theme-toggle-button"
+            :class="{ 'dark-theme': isDarkTheme }"
+          >
+            <el-icon v-if="isDarkTheme"><Sunny /></el-icon>
+            <el-icon v-else><MoonNight /></el-icon>
+          </el-button>
           <el-dropdown>
             <span class="user-info">
-              <el-avatar size="small"><span>Admin</span></el-avatar>
-              <span v-if="!isCollapse">管理员</span>
+              <el-avatar size="small" :src="userInfo.avatar">
+                <span v-if="!userInfo.avatar">{{ userInfo.name ? userInfo.name.charAt(0) : 'A' }}</span>
+              </el-avatar>
+              <span v-if="!isCollapse">{{ userInfo.name || '管理员' }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>个人中心</el-dropdown-item>
-                <el-dropdown-item @click="toggleTheme">
-                  <el-icon v-if="!isDarkTheme"><MoonNight /></el-icon>
-                  <el-icon v-else><Sunny /></el-icon>
-                  <span>{{ isDarkTheme ? '切换浅色主题' : '切换深色主题' }}</span>
-                </el-dropdown-item>
-                <el-dropdown-item divided>退出登录</el-dropdown-item>
+                <el-dropdown-item @click="handleProfile">个人中心</el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -91,13 +102,16 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useSettingsStore } from '../stores'
-import { User, Document, List, DataAnalysis, Setting, HelpFilled, ArrowLeft, ArrowRight, MoonNight, Sunny } from '@element-plus/icons-vue'
+import { useAccountStore } from '../stores/account'
+import { User, UserFilled, Document, List, DataAnalysis, Setting, HelpFilled, ArrowLeft, ArrowRight, MoonNight, Sunny } from '@element-plus/icons-vue'
 
 // 状态管理
 const settingsStore = useSettingsStore()
+const accountStore = useAccountStore()
 const route = useRoute()
+const router = useRouter()
 
 // 响应式数据
 const isCollapse = ref(false)
@@ -113,6 +127,10 @@ const isDarkTheme = computed(() => {
   return settingsStore.general.theme === 'dark'
 })
 
+const userInfo = computed(() => {
+  return accountStore.userInfo
+})
+
 // 方法
 const toggleCollapse = () => {
   isCollapse.value = !isCollapse.value
@@ -120,6 +138,18 @@ const toggleCollapse = () => {
 
 const toggleTheme = () => {
   settingsStore.toggleTheme()
+}
+
+const handleProfile = () => {
+  // 跳转到个人中心页面
+  router.push('/profile')
+}
+
+const handleLogout = () => {
+  // 调用退出登录方法
+  accountStore.logout()
+  // 跳转到登录页
+  router.push('/login')
 }
 
 const updateCurrentTime = () => {
@@ -136,6 +166,14 @@ const updateCurrentTime = () => {
 
 // 生命周期
 onMounted(() => {
+  // 初始化登录状态
+  accountStore.initLoginStatus()
+  
+  // 检查登录状态
+  if (!accountStore.isLoggedIn) {
+    router.push('/login')
+  }
+  
   updateCurrentTime()
   timeInterval = setInterval(updateCurrentTime, 1000)
 })
@@ -171,8 +209,6 @@ onUnmounted(() => {
 
       .sidebar-menu {
         background-color: #242424;
-        text-color: #e0e0e0;
-        active-text-color: #409EFF;
       }
 
       .collapse-btn {
@@ -298,6 +334,34 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 16px;
+
+    .theme-toggle-button {
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      &.dark-theme {
+        background-color: #409EFF;
+        border-color: #409EFF;
+
+        &:hover {
+          background-color: #66B1FF;
+          border-color: #66B1FF;
+        }
+      }
+
+      .el-icon {
+        transition: transform 0.5s ease;
+      }
+
+      &:active .el-icon {
+        transform: rotate(360deg);
+      }
+    }
 
     .user-info {
       display: flex;

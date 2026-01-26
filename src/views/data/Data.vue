@@ -1,5 +1,5 @@
 <template>
-  <div class="data-page">
+  <div class="data-page" :class="{ 'dark-theme': isDarkTheme }">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2 class="title">数据管理</h2>
@@ -370,6 +370,7 @@
 <script setup>
 import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
 import { useDataStore, useAccountStore, useFormStore } from '../../stores'
+import { useSettingsStore } from '../../stores/settings'
 import { Upload, Setting, Download, Delete, DocumentCopy, Search, Refresh } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as echarts from 'echarts'
@@ -378,6 +379,12 @@ import * as echarts from 'echarts'
 const dataStore = useDataStore()
 const accountStore = useAccountStore()
 const formStore = useFormStore()
+const settingsStore = useSettingsStore()
+
+// 计算属性
+const isDarkTheme = computed(() => {
+  return settingsStore.general.theme === 'dark'
+})
 
 // 响应式数据
 const activeTab = ref('fillData')
@@ -976,6 +983,382 @@ onUnmounted(() => {
         display: block;
         margin-bottom: var(--spacing-xs);
       }
+    }
+  }
+
+  /* 深色主题样式 */
+  &.dark-theme {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+
+    /* 确保所有div元素都有合适的背景色和文字颜色 */
+    div {
+      &:not(.el-table__cell):not(.el-form-item):not(.el-dialog__body):not(.el-dialog__footer):not(.el-collapse-item__content):not(.el-tree-node__content):not(.el-time-spinner__item):not(.el-date-table__cell) {
+        background-color: inherit;
+        color: inherit;
+      }
+    }
+
+    .page-header {
+      background-color: transparent;
+    }
+
+    .title {
+      color: #e0e0e0;
+
+      &::before {
+        background: #409EFF;
+      }
+    }
+
+    .subtitle {
+      color: #e0e0e0;
+    }
+
+    .section-header {
+      background-color: transparent;
+    }
+
+    .header-actions {
+      background-color: transparent;
+    }
+
+    .fill-data-management,
+    .backup-management,
+    .log-management {
+      background-color: transparent;
+    }
+
+    .stats-cards {
+      background-color: transparent;
+    }
+
+    .stat-card {
+      background-color: #242424;
+      border-color: #333;
+      box-shadow: none;
+
+      .stat-value {
+        color: #409EFF;
+      }
+
+      .stat-label {
+        color: #b0b0b0;
+      }
+    }
+
+    .fill-chart {
+      background-color: transparent;
+
+      .chart-title {
+        color: #e0e0e0;
+      }
+
+      .chart-container {
+        background-color: #242424;
+        box-shadow: none;
+      }
+    }
+
+    .card {
+      background-color: #242424;
+      border-color: #333;
+      box-shadow: none;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    .backup-list,
+    .log-list {
+      background-color: transparent;
+    }
+
+    .empty-state {
+      background-color: transparent;
+    }
+
+    .backup-path-popover {
+      background-color: #242424;
+      color: #e0e0e0;
+
+      p {
+        color: #e0e0e0;
+      }
+    }
+
+    .account-info,
+    .form-info {
+      background-color: transparent;
+      color: #e0e0e0;
+    }
+
+    .backup-data-info {
+      background-color: transparent;
+      color: #b0b0b0;
+    }
+
+    .log-search-form {
+      background-color: #2a2a2a;
+    }
+
+    .restore-dialog {
+      background-color: transparent;
+
+      .backup-info {
+        background-color: transparent;
+
+        h4 {
+          color: #e0e0e0;
+        }
+
+        .info-item {
+          background-color: transparent;
+
+          .label {
+            color: #b0b0b0;
+          }
+
+          .value {
+            color: #e0e0e0;
+          }
+        }
+      }
+
+      .restore-warning {
+        background-color: transparent;
+      }
+
+      .restore-options {
+        background-color: transparent;
+
+        h4 {
+          color: #e0e0e0;
+        }
+      }
+    }
+
+    .el-input__wrapper {
+      background-color: #2a2a2a;
+      border-color: #333;
+
+      .el-input__inner {
+        color: #e0e0e0;
+      }
+
+      &:hover {
+        border-color: #444;
+      }
+
+      &.is-focus {
+        border-color: #409EFF;
+      }
+    }
+
+    .el-select .el-input__wrapper {
+      background-color: #2a2a2a;
+      border-color: #333;
+
+      .el-input__inner {
+        color: #e0e0e0;
+      }
+
+      &:hover {
+        border-color: #444;
+      }
+
+      &.is-focus {
+        border-color: #409EFF;
+      }
+    }
+
+    .el-select-dropdown {
+      background-color: #242424;
+      border-color: #333;
+
+      .el-select-dropdown__item {
+        color: #e0e0e0;
+
+        &:hover {
+          background-color: #333;
+        }
+
+        &.selected {
+          background-color: #409EFF;
+        }
+      }
+    }
+
+    .el-table {
+      background-color: #242424;
+      color: #e0e0e0;
+      border-color: #333;
+
+      th.el-table__cell {
+        background-color: #1e1e1e;
+        color: #b0b0b0;
+        border-color: #333;
+      }
+
+      .el-table__row {
+        background-color: #242424;
+        color: #e0e0e0;
+        border-color: #333;
+
+        &:hover {
+          background-color: #2c2c2c;
+        }
+
+        &.current-row {
+          background-color: #2a2a2a;
+        }
+      }
+    }
+
+    .el-dialog {
+      background-color: #242424;
+      border-color: #333;
+
+      .el-dialog__title {
+        color: #e0e0e0;
+      }
+
+      .el-dialog__body {
+        color: #e0e0e0;
+      }
+
+      .el-dialog__footer {
+        border-top: 1px solid #333;
+      }
+    }
+
+    .el-form-item__label {
+      color: #b0b0b0;
+    }
+
+    .backup-path {
+      color: #b0b0b0;
+    }
+
+    .form-tip {
+      color: #808080;
+    }
+
+    .el-button {
+      &:not(.el-button--primary) {
+        background-color: #2a2a2a;
+        border-color: #333;
+        color: #e0e0e0;
+
+        &:hover {
+          background-color: #2c2c2c;
+          border-color: #444;
+        }
+      }
+    }
+
+    .el-tabs {
+      background-color: transparent;
+
+      .el-tabs__header {
+        border-bottom: 1px solid #333;
+
+        .el-tabs__item {
+          color: #b0b0b0;
+
+          &:hover {
+            color: #e0e0e0;
+          }
+
+          &.is-active {
+            color: #409EFF;
+            border-bottom-color: #409EFF;
+          }
+        }
+      }
+
+      .el-tabs__content {
+        background-color: #1a1a1a;
+      }
+    }
+
+    .el-checkbox__label {
+      color: #e0e0e0;
+    }
+
+    .el-time-picker__panel {
+      background-color: #242424;
+      border-color: #333;
+
+      .el-time-picker__header {
+        background-color: #1e1e1e;
+        border-bottom: 1px solid #333;
+
+        .el-time-picker__header-label {
+          color: #e0e0e0;
+        }
+      }
+
+      .el-time-spinner {
+        background-color: #242424;
+
+        .el-time-spinner__item {
+          color: #e0e0e0;
+
+          &:hover {
+            background-color: #333;
+          }
+
+          &.el-time-spinner__item--active {
+            color: #409EFF;
+          }
+        }
+      }
+    }
+
+    .el-date-picker {
+      background-color: #242424;
+      border-color: #333;
+
+      .el-picker-panel__header {
+        background-color: #1e1e1e;
+        border-bottom: 1px solid #333;
+
+        .el-date-picker__header-label {
+          color: #e0e0e0;
+        }
+      }
+
+      .el-date-table {
+        background-color: #242424;
+
+        th {
+          color: #b0b0b0;
+        }
+
+        td {
+          .el-date-table__cell {
+            color: #e0e0e0;
+
+            &:hover {
+              background-color: #333;
+            }
+
+            &.is-current {
+              .el-date-table__cell-inner {
+                background-color: #409EFF;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .el-popover {
+      background-color: #242424;
+      border-color: #333;
+      color: #e0e0e0;
     }
   }
 }
