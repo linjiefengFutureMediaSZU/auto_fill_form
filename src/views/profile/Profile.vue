@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-container" :class="{ 'dark-theme': isDarkTheme }">
+  <div class="profile-container">
     <!-- 页面标题 -->
     <div class="page-header">
       <h1 class="page-title">个人中心</h1>
@@ -144,17 +144,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAccountStore } from '../../stores/account'
-import { useSettingsStore } from '../../stores/settings'
 import { Lock, Message } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-
-// 状态管理
-const settingsStore = useSettingsStore()
-
-// 计算属性
-const isDarkTheme = computed(() => {
-  return settingsStore.general.theme === 'dark'
-})
 
 // 状态管理
 const accountStore = useAccountStore()
@@ -326,7 +317,7 @@ onMounted(() => {
 .profile-container {
   width: 100%;
   min-height: 100vh;
-  background-color: #f5f7fa;
+  background-color: var(--bg-color);
   padding: 24px;
 }
 
@@ -336,13 +327,13 @@ onMounted(() => {
   .page-title {
     font-size: 24px;
     font-weight: 600;
-    color: #303133;
+    color: var(--text-color-primary);
     margin-bottom: 8px;
   }
 
   .page-description {
     font-size: 14px;
-    color: #909399;
+    color: var(--text-color-secondary);
   }
 }
 
@@ -459,110 +450,6 @@ onMounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
-}
-
-/* 深色主题样式 */
-.dark-theme {
-  background-color: #1a1a1a;
-  color: #e0e0e0;
-
-  // 全局div样式，确保所有嵌套div都继承深色主题样式
-  div {
-    &:not(.el-form-item):not(.el-input__wrapper):not(.el-card__body):not(.el-card__header) {
-      background-color: inherit;
-      color: inherit;
-    }
-  }
-
-  .page-title {
-    color: #e0e0e0;
-  }
-
-  .page-description {
-    color: #b0b0b0;
-  }
-
-  .content-wrapper {
-    background-color: inherit;
-  }
-
-  .info-card,
-  .security-card {
-    background-color: #242424;
-    border-color: #333;
-
-    .card-header {
-      color: #e0e0e0;
-    }
-    .el-card__body {
-      background-color: #242424;
-    }
-  }
-
-  .user-info {
-    background-color: inherit;
-
-    .avatar-section {
-      background-color: inherit;
-
-      .user-name {
-        color: #e0e0e0;
-      }
-
-      .user-role {
-        color: #b0b0b0;
-      }
-    }
-
-    .info-section {
-      background-color: inherit;
-
-      .info-item {
-        background-color: #2a2a2a;
-
-        &:hover {
-          background-color: #333;
-        }
-
-        .info-label {
-          color: #b0b0b0;
-        }
-
-        .info-value {
-          color: #e0e0e0;
-
-          &.unset {
-            color: #808080;
-          }
-        }
-      }
-    }
-  }
-
-  .security-form {
-    background-color: inherit;
-  }
-
-  .el-input__wrapper {
-    background-color: #2a2a2a;
-    border-color: #333;
-
-    .el-input__inner {
-      color: #e0e0e0;
-    }
-
-    &:hover {
-      border-color: #444;
-    }
-
-    &.is-focus {
-      border-color: #409EFF;
-    }
-  }
-
-  .form-tip {
-    color: #808080;
-  }
 }
 
 /* 响应式布局 */

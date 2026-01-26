@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 export const useFormStore = defineStore('form', {
   state: () => ({
     // 表单文件夹（日期分组）
-    folders: [
+    folders: JSON.parse(localStorage.getItem('form_folders')) || [
       {
         id: 1,
         folder_name: '2026-01-22',
@@ -32,7 +32,7 @@ export const useFormStore = defineStore('form', {
       }
     ],
     // 表单模板
-    templates: [
+    templates: JSON.parse(localStorage.getItem('form_templates')) || [
       {
         id: 1,
         folder_id: 1,
@@ -125,7 +125,7 @@ export const useFormStore = defineStore('form', {
       }
     ],
     // 表单字段匹配规则
-    fieldMappings: [
+    fieldMappings: JSON.parse(localStorage.getItem('form_field_mappings')) || [
       {
         id: 1,
         template_id: 1,
@@ -168,16 +168,25 @@ export const useFormStore = defineStore('form', {
     }
   },
   actions: {
+    // 保存数据到 localStorage
+    saveToLocalStorage() {
+      localStorage.setItem('form_folders', JSON.stringify(this.folders))
+      localStorage.setItem('form_templates', JSON.stringify(this.templates))
+      localStorage.setItem('form_field_mappings', JSON.stringify(this.fieldMappings))
+    },
+
     // 添加文件夹
     addFolder(folder) {
       const newId = Math.max(...this.folders.map(f => f.id), 0) + 1
       this.folders.push({ id: newId, ...folder })
+      this.saveToLocalStorage()
     },
     // 更新文件夹
     updateFolder(id, folder) {
       const index = this.folders.findIndex(f => f.id === id)
       if (index !== -1) {
         this.folders[index] = { ...this.folders[index], ...folder }
+        this.saveToLocalStorage()
       }
     },
     // 删除文件夹
@@ -185,17 +194,20 @@ export const useFormStore = defineStore('form', {
       this.folders = this.folders.filter(f => f.id !== id)
       // 同时删除该文件夹下的表单模板
       this.templates = this.templates.filter(t => t.folder_id !== id)
+      this.saveToLocalStorage()
     },
     // 添加表单模板
     addTemplate(template) {
       const newId = Math.max(...this.templates.map(t => t.id), 0) + 1
       this.templates.push({ id: newId, ...template })
+      this.saveToLocalStorage()
     },
     // 更新表单模板
     updateTemplate(id, template) {
       const index = this.templates.findIndex(t => t.id === id)
       if (index !== -1) {
         this.templates[index] = { ...this.templates[index], ...template }
+        this.saveToLocalStorage()
       }
     },
     // 删除表单模板
@@ -203,22 +215,26 @@ export const useFormStore = defineStore('form', {
       this.templates = this.templates.filter(t => t.id !== id)
       // 同时删除该模板的字段匹配规则
       this.fieldMappings = this.fieldMappings.filter(m => m.template_id !== id)
+      this.saveToLocalStorage()
     },
     // 添加字段匹配规则
     addFieldMapping(mapping) {
       const newId = Math.max(...this.fieldMappings.map(m => m.id), 0) + 1
       this.fieldMappings.push({ id: newId, ...mapping })
+      this.saveToLocalStorage()
     },
     // 更新字段匹配规则
     updateFieldMapping(id, mapping) {
       const index = this.fieldMappings.findIndex(m => m.id === id)
       if (index !== -1) {
         this.fieldMappings[index] = { ...this.fieldMappings[index], ...mapping }
+        this.saveToLocalStorage()
       }
     },
     // 删除字段匹配规则
     deleteFieldMapping(id) {
       this.fieldMappings = this.fieldMappings.filter(m => m.id !== id)
+      this.saveToLocalStorage()
     },
     // 选择表单模板
     selectTemplate(id) {

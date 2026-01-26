@@ -1,5 +1,5 @@
 <template>
-  <div class="help-page" :class="{ 'dark-theme': isDarkTheme }">
+  <div class="help-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2 class="title">帮助与反馈</h2>
@@ -232,15 +232,6 @@
 import { ref, computed, reactive } from 'vue'
 import { Search, User, EditPen, List, DataAnalysis, Setting, Upload, Check } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { useSettingsStore } from '../../stores/settings'
-
-// 状态管理
-const settingsStore = useSettingsStore()
-
-// 计算属性
-const isDarkTheme = computed(() => {
-  return settingsStore.general.theme === 'dark'
-})
 
 // 响应式数据
 const activeTab = ref('manual')
@@ -454,154 +445,6 @@ const submitFeedback = async () => {
 
   .avatar-uploader {
     margin-top: var(--spacing-sm);
-  }
-
-  // 深色主题样式
-  &.dark-theme {
-    background-color: #1a1a1a;
-    color: #e0e0e0;
-
-    // 全局div样式，确保所有嵌套div都继承深色主题样式
-    div {
-      &:not(.el-table__cell):not(.el-form-item):not(.el-dialog__body):not(.el-dialog__footer):not(.el-collapse-item__content):not(.el-tree-node__content):not(.el-time-spinner__item):not(.el-date-table__cell):not(.el-select-dropdown__item):not(.el-tabs__content):not(.el-tabs__header) {
-        background-color: inherit;
-        color: inherit;
-      }
-    }
-
-    .page-header {
-      .title {
-        color: #e0e0e0;
-      }
-    }
-
-    .card {
-      background-color: #242424;
-      border-color: #333;
-    }
-
-    .section-header {
-      .subtitle {
-        color: #e0e0e0;
-      }
-      .feedback-tip {
-        color: #b0b0b0;
-      }
-    }
-
-    .manual-item {
-      border-bottom-color: #333;
-      .manual-title {
-        color: #e0e0e0;
-      }
-      .manual-content {
-        p {
-          color: #b0b0b0;
-        }
-        h5 {
-          color: #e0e0e0;
-        }
-      }
-    }
-
-    .faq-item {
-      .el-collapse-item__content {
-        background-color: #2c2c2c;
-        color: #b0b0b0;
-      }
-      .el-collapse-item__header {
-        color: #e0e0e0;
-        &:hover {
-          background-color: #2c2c2c;
-        }
-      }
-    }
-
-    .feedback-form {
-      .form-tip {
-        color: #b0b0b0;
-      }
-    }
-
-    .manual-content,
-    .faq-content,
-    .feedback-content {
-      background-color: inherit;
-    }
-
-    .manual-list,
-    .faq-list {
-      background-color: inherit;
-    }
-
-    // Element Plus 组件样式覆盖
-    .el-tabs {
-      .el-tabs__header {
-        border-bottom-color: #333;
-        .el-tabs__item {
-          color: #b0b0b0;
-          &.is-active {
-            color: #409eff;
-          }
-          &:hover {
-            color: #e0e0e0;
-          }
-        }
-      }
-      .el-tabs__content {
-        background-color: inherit;
-      }
-    }
-
-    .el-select-dropdown {
-      background-color: #242424;
-      border-color: #333;
-      .el-select-dropdown__item {
-        color: #e0e0e0;
-        &:hover {
-          background-color: #333;
-        }
-        &.selected {
-          background-color: rgba(64, 158, 255, 0.2);
-        }
-      }
-    }
-
-    .el-input {
-      .el-input__wrapper {
-        background-color: #2c2c2c;
-        border-color: #333;
-        box-shadow: none;
-        &:hover {
-          border-color: #409eff;
-        }
-        &.is-focus {
-          border-color: #409eff;
-          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-        }
-        .el-input__inner {
-          color: #e0e0e0;
-        }
-      }
-    }
-
-    .el-form {
-      .el-form-item {
-        .el-form-item__label {
-          color: #e0e0e0;
-        }
-      }
-    }
-
-    .el-upload {
-      .el-upload__tip {
-        color: #b0b0b0;
-      }
-    }
-
-    .el-collapse {
-      background-color: inherit;
-    }
   }
 }
 </style>

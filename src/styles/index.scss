@@ -54,6 +54,8 @@
   --height-lg: 44px;
 }
 
+@import './dark-theme.scss';
+
 /* 全局样式重置 */
 * {
   margin: 0;

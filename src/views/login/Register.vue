@@ -1,5 +1,5 @@
 <template>
-  <div class="login-container" :class="{ 'dark-theme': isDarkTheme }">
+  <div class="login-container">
     <div class="login-card">
       <!-- 注册卡片头部 -->
       <div class="login-header">
@@ -121,11 +121,6 @@ import { User, Lock, Message, Phone } from '@element-plus/icons-vue'
 
 // 状态管理
 const settingsStore = useSettingsStore()
-
-// 计算属性
-const isDarkTheme = computed(() => {
-  return settingsStore.general.theme === 'dark'
-})
 
 // 状态管理
 const accountStore = useAccountStore()
@@ -320,7 +315,7 @@ const handleLogin = () => {
 
   .copyright {
     font-size: 12px;
-    color: #C0C4CC;
+    color: var(--text-color-secondary);
   }
 }
 
@@ -363,91 +358,5 @@ const handleLogin = () => {
   }
 }
 
-/* 深色主题样式 */
-.login-container.dark-theme {
-  background-color: #1a1a1a;
-  color: #e0e0e0;
 
-  // 全局div样式，确保所有嵌套div都继承深色主题样式
-  div {
-    &:not(.el-form-item):not(.el-checkbox__input) {
-      background-color: inherit;
-      color: inherit;
-    }
-  }
-
-  .login-card {
-    background-color: #242424;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-
-  .login-header {
-    .login-title {
-      color: #e0e0e0;
-    }
-    .login-subtitle {
-      color: #b0b0b0;
-    }
-    .register-title {
-      color: #e0e0e0;
-    }
-  }
-
-  .login-form {
-    background-color: inherit;
-  }
-
-  .login-footer {
-    .copyright {
-      color: #666;
-    }
-  }
-
-  .el-form {
-    .el-form-item {
-      .el-form-item__label {
-        color: #e0e0e0;
-      }
-    }
-  }
-
-  .el-input {
-    .el-input__wrapper {
-      background-color: #2c2c2c;
-      border-color: #333;
-      box-shadow: none;
-      &:hover {
-        border-color: #409eff;
-      }
-      &.is-focus {
-        border-color: #409eff;
-        box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-      }
-      .el-input__inner {
-        color: #e0e0e0;
-      }
-    }
-  }
-
-  .el-checkbox {
-    .el-checkbox__label {
-      color: #e0e0e0;
-    }
-    .el-checkbox__input {
-      .el-checkbox__inner {
-        border-color: #409eff;
-        background-color: #2c2c2c;
-        &:hover {
-          border-color: #66b1ff;
-        }
-      }
-      &.is-checked {
-        .el-checkbox__inner {
-          border-color: #409eff;
-          background-color: #409eff;
-        }
-      }
-    }
-  }
-}
 </style>

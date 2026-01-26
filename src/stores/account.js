@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 export const useAccountStore = defineStore('account', {
   state: () => ({
     // 账号列表
-    accounts: [
+    accounts: JSON.parse(localStorage.getItem('accounts')) || [
       {
         id: 1,
         group_id: 1,
@@ -99,10 +99,10 @@ export const useAccountStore = defineStore('account', {
         comment_count: 150,
         quote_single: 800.00,
         quote_package: 3000.00,
-        cooperation_type: '图文,视频',
+        cooperation_type: '视频,直播',
         is_swap: 0,
         contact: '13500135001',
-        remark: '美食领域账号',
+        remark: '本地生活类账号',
         status: 1
       },
       {
@@ -167,7 +167,7 @@ export const useAccountStore = defineStore('account', {
       }
     ],
     // 账号分组
-    groups: [
+    groups: JSON.parse(localStorage.getItem('account_groups')) || [
       {
         id: 1,
         group_name: '抖音账号组',
@@ -197,12 +197,12 @@ export const useAccountStore = defineStore('account', {
     // 当前选中的账号
     selectedAccounts: [],
     // 用户信息
-    userInfo: {
+    userInfo: JSON.parse(localStorage.getItem('userInfo')) || {
       username: '',
       name: ''
     },
     // 登录状态
-    isLoggedIn: false
+    isLoggedIn: localStorage.getItem('isLoggedIn') === 'true'
   }),
   getters: {
     // 获取正常状态的账号
@@ -223,21 +223,30 @@ export const useAccountStore = defineStore('account', {
     }
   },
   actions: {
+    // 保存数据到 localStorage
+    saveToLocalStorage() {
+      localStorage.setItem('accounts', JSON.stringify(this.accounts))
+      localStorage.setItem('account_groups', JSON.stringify(this.groups))
+    },
+
     // 添加账号
     addAccount(account) {
       const newId = Math.max(...this.accounts.map(a => a.id), 0) + 1
       this.accounts.push({ id: newId, ...account })
+      this.saveToLocalStorage()
     },
     // 更新账号
     updateAccount(id, account) {
       const index = this.accounts.findIndex(a => a.id === id)
       if (index !== -1) {
         this.accounts[index] = { ...this.accounts[index], ...account }
+        this.saveToLocalStorage()
       }
     },
     // 删除账号
     deleteAccount(id) {
       this.accounts = this.accounts.filter(a => a.id !== id)
+      this.saveToLocalStorage()
     },
     // 选择账号
     selectAccount(id) {
@@ -261,12 +270,14 @@ export const useAccountStore = defineStore('account', {
     addGroup(group) {
       const newId = Math.max(...this.groups.map(g => g.id), 0) + 1
       this.groups.push({ id: newId, ...group })
+      this.saveToLocalStorage()
     },
     // 更新分组
     updateGroup(id, group) {
       const index = this.groups.findIndex(g => g.id === id)
       if (index !== -1) {
         this.groups[index] = { ...this.groups[index], ...group }
+        this.saveToLocalStorage()
       }
     },
     // 删除分组
@@ -278,6 +289,7 @@ export const useAccountStore = defineStore('account', {
           account.group_id = null
         }
       })
+      this.saveToLocalStorage()
     },
     // 设置用户信息
     setUserInfo(userInfo) {

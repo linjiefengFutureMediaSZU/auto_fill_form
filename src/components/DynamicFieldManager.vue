@@ -184,10 +184,11 @@ const removeField = (index) => {
 
 <style scoped lang="scss">
 .dynamic-field-manager {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 16px;
-  background-color: #f9f9f9;
+  background-color: var(--bg-color-light);
+  transition: all 0.3s ease;
 
   .manager-header {
     display: flex;
@@ -199,6 +200,7 @@ const removeField = (index) => {
       margin: 0;
       font-size: 16px;
       font-weight: 600;
+      color: var(--text-color-primary);
     }
   }
 
@@ -208,13 +210,14 @@ const removeField = (index) => {
       justify-content: space-between;
       align-items: center;
       padding: 12px;
-      background-color: #ffffff;
-      border: 1px solid #e4e7ed;
+      background-color: var(--bg-color-white);
+      border: 1px solid var(--border-color);
       border-radius: 4px;
       margin-bottom: 10px;
+      transition: all 0.3s ease;
 
       &:hover {
-        border-color: #409EFF;
+        border-color: var(--primary-color);
       }
 
       .field-info {
@@ -225,10 +228,11 @@ const removeField = (index) => {
         .field-label {
           font-weight: 500;
           min-width: 100px;
+          color: var(--text-color-primary);
         }
 
         .field-name {
-          color: #606266;
+          color: var(--text-color-regular);
           font-size: 14px;
         }
       }
@@ -240,6 +244,35 @@ const removeField = (index) => {
 
     .empty-fields {
       padding: 40px 0;
+    }
+  }
+}
+
+/* 深色模式适配 */
+:global(body.dark-theme) .dynamic-field-manager {
+  background-color: var(--bg-color-white);
+  border-color: var(--border-color);
+
+  .manager-header {
+    h3 {
+      color: var(--text-color-primary);
+    }
+  }
+
+  .field-list {
+    .field-item {
+      background-color: var(--bg-color-light);
+      border-color: var(--border-color);
+
+      .field-info {
+        .field-label {
+          color: var(--text-color-primary);
+        }
+
+        .field-name {
+          color: var(--text-color-regular);
+        }
+      }
     }
   }
 }

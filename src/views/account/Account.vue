@@ -1,5 +1,5 @@
 <template>
-  <div class="account-page" :class="{ 'dark-theme': isDarkTheme }">
+  <div class="account-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2 class="title">账号管理</h2>
@@ -25,11 +25,14 @@
         </el-form-item>
         <el-form-item label="账号类型">
           <el-select v-model="searchForm.account_type" placeholder="选择账号类型" clearable style="width: 150px;">
-            <el-option label="抖音" value="抖音" />
-            <el-option label="小红书" value="小红书" />
-            <el-option label="视频号" value="视频号" />
-            <el-option label="微博" value="微博" />
-            <el-option label="B站" value="B站" />
+            <el-option label="抖音" value="douyin" />
+            <el-option label="小红书" value="xiaohongshu" />
+            <el-option label="视频号" value="shipinhao" />
+            <el-option label="微博" value="weibo" />
+            <el-option label="B站" value="bilibili" />
+            <el-option label="快手" value="kuaishou" />
+            <el-option label="微信" value="wechat" />
+            <el-option label="其他" value="other" />
           </el-select>
         </el-form-item>
         <el-form-item label="账号状态">
@@ -276,7 +279,6 @@
 <script setup>
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useAccountStore } from '../../stores'
-import { useSettingsStore } from '../../stores/settings'
 import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown, Setting } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DynamicFieldManager from '../../components/DynamicFieldManager.vue'
@@ -284,12 +286,6 @@ import DynamicForm from '../../components/DynamicForm.vue'
 
 // 状态管理
 const accountStore = useAccountStore()
-const settingsStore = useSettingsStore()
-
-// 计算属性
-const isDarkTheme = computed(() => {
-  return settingsStore.general.theme === 'dark'
-})
 
 // 响应式数据
 const loading = ref(false)
@@ -1035,264 +1031,6 @@ watch(customFields, () => {
     
     .el-button {
       width: 100%;
-    }
-  }
-}
-
-/* 深色主题样式 */
-.account-page.dark-theme {
-  background-color: #1a1a1a;
-  color: #e0e0e0;
-
-  .title {
-    color: #e0e0e0;
-
-    &::before {
-      background: #409EFF;
-    }
-  }
-
-  .subtitle {
-    color: #e0e0e0;
-
-    &::before {
-      background: #409EFF;
-    }
-  }
-
-  .card {
-    background-color: #242424;
-    border-color: #333;
-    box-shadow: none;
-
-    &:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-  }
-
-  .page-header {
-    background-color: transparent;
-  }
-
-  .search-filter {
-    background-color: #242424;
-  }
-
-  .account-management {
-    background-color: #242424;
-  }
-
-  .header-actions {
-    background-color: transparent;
-  }
-
-  .field-manager-panel {
-    background-color: #242424;
-  }
-
-  .account-list-area {
-    background-color: #242424;
-  }
-
-  .table-actions {
-    background-color: transparent;
-  }
-
-  /* 列展示设置中的div */
-  .el-popover {
-    background-color: #242424;
-    border-color: #333;
-
-    .el-checkbox {
-      color: #e0e0e0;
-
-      .el-checkbox__input.is-checked .el-checkbox__inner {
-        background-color: #409EFF;
-        border-color: #409EFF;
-      }
-
-      .el-checkbox__input.is-checked + .el-checkbox__label {
-        color: #e0e0e0;
-      }
-    }
-  }
-
-  /* 确保所有嵌套的div都有合适的背景色 */
-  div {
-    &:not(.el-table__cell):not(.el-form-item):not(.el-dialog__body):not(.el-dialog__footer):not(.el-collapse-item__content):not(.el-tree-node__content) {
-      background-color: inherit;
-      color: inherit;
-    }
-  }
-
-  .el-input__wrapper {
-    background-color: #2a2a2a;
-    border-color: #333;
-
-    .el-input__inner {
-      color: #e0e0e0;
-    }
-
-    &:hover {
-      border-color: #444;
-    }
-
-    &.is-focus {
-      border-color: #409EFF;
-    }
-  }
-
-  .el-select .el-input__wrapper {
-    background-color: #2a2a2a;
-    border-color: #333;
-
-    .el-input__inner {
-      color: #e0e0e0;
-    }
-
-    &:hover {
-      border-color: #444;
-    }
-
-    &.is-focus {
-      border-color: #409EFF;
-    }
-  }
-
-  .el-select-dropdown {
-    background-color: #242424;
-    border-color: #333;
-
-    .el-select-dropdown__item {
-      color: #e0e0e0;
-
-      &:hover {
-        background-color: #333;
-      }
-
-      &.selected {
-        background-color: #409EFF;
-      }
-    }
-  }
-
-  .el-table {
-    background-color: #242424;
-    color: #e0e0e0;
-    border-color: #333;
-
-    th.el-table__cell {
-      background-color: #1e1e1e;
-      color: #b0b0b0;
-      border-color: #333;
-    }
-
-    .el-table__row {
-      background-color: #242424;
-      color: #e0e0e0;
-      border-color: #333;
-
-      &:hover {
-        background-color: #2c2c2c;
-      }
-
-      &.current-row {
-        background-color: #2a2a2a;
-      }
-    }
-  }
-
-  .el-dialog {
-    background-color: #242424;
-    border-color: #333;
-
-    .el-dialog__title {
-      color: #e0e0e0;
-    }
-
-    .el-dialog__body {
-      color: #e0e0e0;
-    }
-
-    .el-dialog__footer {
-      border-top: 1px solid #333;
-    }
-  }
-
-  .el-form-item__label {
-    color: #b0b0b0;
-  }
-
-  .account-info {
-    background-color: transparent;
-
-    .nickname {
-      color: #e0e0e0;
-    }
-
-    .type-tag {
-      background-color: #2a2a2a;
-      color: #b0b0b0;
-    }
-  }
-
-  .el-button {
-    &:not(.el-button--primary) {
-      background-color: #2a2a2a;
-      border-color: #333;
-      color: #e0e0e0;
-
-      &:hover {
-        background-color: #2c2c2c;
-        border-color: #444;
-      }
-    }
-  }
-
-  .el-collapse {
-    border-color: #333;
-
-    .el-collapse-item {
-      border-color: #333;
-
-      .el-collapse-item__header {
-        background-color: #2a2a2a;
-        color: #e0e0e0;
-        border-color: #333;
-
-        &:hover {
-          background-color: #2c2c2c;
-        }
-
-        &.is-active {
-          background-color: #2c2c2c;
-          border-color: #333;
-        }
-      }
-
-      .el-collapse-item__content {
-        background-color: #242424;
-        border-color: #333;
-      }
-    }
-  }
-
-  .el-tree {
-    background-color: #242424;
-    color: #e0e0e0;
-
-    .el-tree-node {
-      .el-tree-node__content {
-        color: #e0e0e0;
-
-        &:hover {
-          background-color: #2c2c2c;
-        }
-
-        &.is-current {
-          background-color: #2a2a2a;
-        }
-      }
     }
   }
 }

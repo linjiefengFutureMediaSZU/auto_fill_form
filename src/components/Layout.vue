@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container" :class="{ 'dark-theme': isDarkTheme }">
+  <div class="app-container">
     <!-- 侧边导航栏 -->
     <el-aside
       :width="isCollapse ? '64px' : '200px'"
@@ -190,197 +190,129 @@ onUnmounted(() => {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--bg-color);
+  color: var(--text-color-primary);
 
-  &.dark-theme {
-    background-color: #1a1a1a;
-    color: #e0e0e0;
 
-    .sidebar {
-      background-color: #242424;
 
-      .sidebar-header {
-        background-color: #1e1e1e;
-        border-bottom: 1px solid #333;
-      }
-
-      .logo-text {
-        color: #e0e0e0;
-      }
-
-      .sidebar-menu {
-        background-color: #242424;
-      }
-
-      .collapse-btn {
-        background-color: #242424;
-        border-color: #333;
-
-        &:hover {
-          background-color: #2c3e50;
-          border-color: #444;
-        }
-      }
-    }
-
-    .top-bar {
-      background-color: #1e1e1e;
-      border-bottom: 1px solid #333;
-
-      .current-time,
-      .user-info span {
-        color: #e0e0e0;
-      }
-    }
-
-    .content-area {
-      background-color: #1a1a1a;
-      color: #e0e0e0;
-    }
-  }
-}
-
-.sidebar {
-  background-color: #f5f7fa;
-  border-right: 1px solid #e4e7ed;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transition: width 0.3s ease;
-
-  &.collapsed {
-    .logo-text {
-      display: none;
-    }
-  }
-
-  .sidebar-header {
-    height: 60px;
+  .sidebar {
+    background-color: var(--bg-color);
+    border-right: 1px solid var(--border-color);
     display: flex;
-    align-items: center;
-    padding: 0 16px;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e4e7ed;
-
-    .logo {
-      width: 32px;
-      height: 32px;
-      margin-right: 12px;
-    }
-
-    .logo-text {
-      font-size: 16px;
-      font-weight: bold;
-      color: #303133;
-    }
-  }
-
-  .sidebar-menu {
-    flex: 1;
-    border-right: none;
-  }
-
-  .collapse-btn {
-    position: absolute;
-    right: 10px;
-    bottom: 20px;
-    width: 24px;
-    height: 24px;
-    background-color: #f5f7fa;
-    border: 1px solid #e4e7ed;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: none;
-    z-index: 10;
-
-    &:hover {
-      background-color: #f0f9eb;
-      border-color: #c2e7b0;
-    }
-  }
-}
-
-.main-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.top-bar {
-  height: 60px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e4e7ed;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-  .top-bar-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-
-    .current-time {
-      font-size: 14px;
-      color: #606266;
-    }
-  }
-
-  .top-bar-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-
-    .theme-toggle-button {
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-      &:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-      }
-
-      &.dark-theme {
-        background-color: #409EFF;
-        border-color: #409EFF;
-
-        &:hover {
-          background-color: #66B1FF;
-          border-color: #66B1FF;
-        }
-      }
-
-      .el-icon {
-        transition: transform 0.5s ease;
-      }
-
-      &:active .el-icon {
-        transform: rotate(360deg);
-      }
-    }
-
-    .user-info {
+    flex-direction: column;
+    transition: width 0.3s;
+    
+    .sidebar-header {
+      height: 60px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border-color);
+      
+      .logo {
+        width: 32px;
+        height: 32px;
+        margin-right: 8px;
+      }
+      
+      .logo-text {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--primary-color);
+        white-space: nowrap;
+      }
+    }
+    
+    .sidebar-menu {
+      flex: 1;
+      border-right: none;
+      
+      &:not(.el-menu--collapse) {
+        width: 200px;
+      }
+    }
+    
+    .collapse-btn {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-top: 1px solid var(--border-color);
       cursor: pointer;
-
-      span {
-        font-size: 14px;
-        color: #606266;
+      color: var(--text-color-secondary);
+      
+      &:hover {
+        background-color: var(--bg-color-light);
+        color: var(--primary-color);
       }
     }
   }
-}
 
-.content-area {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  background-color: #f5f7fa;
+  .main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--bg-color);
+    
+    .top-bar {
+      height: 60px;
+      background-color: var(--bg-color-white);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      
+      .top-bar-left {
+        display: flex;
+        align-items: center;
+        
+        .current-time {
+          margin-right: 16px;
+          color: var(--text-color-regular);
+          font-size: 14px;
+        }
+      }
+      
+      .top-bar-right {
+        display: flex;
+        align-items: center;
+        
+        .theme-toggle-button {
+          margin-right: 16px;
+          
+          &.dark-theme {
+            background-color: #333;
+            border-color: #444;
+            color: #FFD700;
+            
+            &:hover {
+              background-color: #444;
+            }
+          }
+        }
+        
+        .user-info {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          color: var(--text-color-primary);
+          
+          .el-avatar {
+            margin-right: 8px;
+          }
+        }
+      }
+    }
+    
+    .content-area {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      background-color: var(--bg-color);
+    }
+  }
 }
 </style>

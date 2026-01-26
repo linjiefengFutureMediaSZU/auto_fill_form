@@ -1,5 +1,5 @@
 <template>
-  <div class="login-container" :class="{ 'dark-theme': isDarkTheme }">
+  <div class="login-container">
     <div class="login-card">
       <!-- 登录卡片头部 -->
       <div class="login-header">
@@ -168,16 +168,18 @@ const handleRegister = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f7fa;
+  background-color: var(--bg-color);
+  transition: background-color 0.3s;
 }
 
 .login-card {
   width: 100%;
   max-width: 400px;
-  background-color: #ffffff;
+  background-color: var(--bg-color-white);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--box-shadow);
   padding: 32px;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 .login-header {
@@ -194,15 +196,16 @@ const handleRegister = () => {
   .login-title {
     font-size: 20px;
     font-weight: 600;
-    color: #303133;
+    color: var(--text-color-primary);
     margin-bottom: 4px;
   }
 
   .login-subtitle {
     font-size: 14px;
-    color: #909399;
+    color: var(--text-color-secondary);
   }
 }
+
 
 .login-form {
   margin-bottom: 24px;
@@ -294,94 +297,5 @@ const handleRegister = () => {
   }
 }
 
-/* 深色主题样式 */
-.login-container.dark-theme {
-  background-color: #1a1a1a;
-  color: #e0e0e0;
 
-  // 全局div样式，确保所有嵌套div都继承深色主题样式
-  div {
-    &:not(.el-form-item):not(.el-checkbox__input) {
-      background-color: inherit;
-      color: inherit;
-    }
-  }
-
-  .login-card {
-    background-color: #242424;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-
-  .login-header {
-    .login-title {
-      color: #e0e0e0;
-    }
-    .login-subtitle {
-      color: #b0b0b0;
-    }
-  }
-
-  .login-form {
-    background-color: inherit;
-  }
-
-  .remember-me {
-    .forgot-password {
-      color: #409eff;
-    }
-  }
-
-  .login-footer {
-    .copyright {
-      color: #666;
-    }
-  }
-
-  .el-form {
-    .el-form-item {
-      .el-form-item__label {
-        color: #e0e0e0;
-      }
-    }
-  }
-
-  .el-input {
-    .el-input__wrapper {
-      background-color: #2c2c2c;
-      border-color: #333;
-      box-shadow: none;
-      &:hover {
-        border-color: #409eff;
-      }
-      &.is-focus {
-        border-color: #409eff;
-        box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
-      }
-      .el-input__inner {
-        color: #e0e0e0;
-      }
-    }
-  }
-
-  .el-checkbox {
-    .el-checkbox__label {
-      color: #e0e0e0;
-    }
-    .el-checkbox__input {
-      .el-checkbox__inner {
-        border-color: #409eff;
-        background-color: #2c2c2c;
-        &:hover {
-          border-color: #66b1ff;
-        }
-      }
-      &.is-checked {
-        .el-checkbox__inner {
-          border-color: #409eff;
-          background-color: #409eff;
-        }
-      }
-    }
-  }
-}
 </style>

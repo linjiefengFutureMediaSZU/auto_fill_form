@@ -4,7 +4,28 @@
 </template>
 
 <script setup>
-// 移除Layout的默认导入，让路由配置决定是否使用Layout
+import { onMounted, watch } from 'vue'
+import { useSettingsStore } from './stores'
+
+const settingsStore = useSettingsStore()
+
+const syncTheme = (theme) => {
+  if (theme === 'dark') {
+    document.body.classList.add('dark-theme')
+  } else {
+    document.body.classList.remove('dark-theme')
+  }
+}
+
+// 监听主题变化
+watch(() => settingsStore.general.theme, (newTheme) => {
+  syncTheme(newTheme)
+})
+
+// 初始化主题
+onMounted(() => {
+  syncTheme(settingsStore.general.theme)
+})
 </script>
 
 <style>
