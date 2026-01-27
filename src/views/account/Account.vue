@@ -937,6 +937,99 @@ watch(customFields, () => {
         margin-right: 6px;
       }
     }
+
+    /* 圆形按钮图标居中 */
+    .el-button.is-circle {
+      position: relative;
+      display: block;
+      padding: 0;
+      width: 36px;
+      height: 36px;
+    }
+
+    /* 强制span、i和svg完全居中 */
+    .el-button.is-circle > span {
+      position: absolute !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      width: 20px !important;
+      height: 20px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .el-button.is-circle > span > .el-icon {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .el-button.is-circle > span > .el-icon > svg {
+      display: block !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      width: 16px !important;
+      height: 16px !important;
+    }
+
+
+  }
+}
+
+/* 表格操作列按钮样式 - 与账号管理功能按钮一致 */
+.table-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+
+  .el-button {
+    &.is-circle {
+      position: relative;
+      display: block;
+      padding: 0;
+      width: 36px;
+      height: 36px;
+
+      > span {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 20px !important;
+        height: 20px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        > .el-icon {
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          width: 100% !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+
+          > svg {
+            display: block !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            width: 16px !important;
+            height: 16px !important;
+          }
+        }
+      }
+    }
   }
 }
 
@@ -986,26 +1079,6 @@ watch(customFields, () => {
         border-radius: 4px;
         width: fit-content;
       }
-    }
-
-    /* 操作按钮优化 */
-    .el-button.is-circle {
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      border: none;
-      background: transparent;
-      
-      .el-icon {
-        font-size: 18px;
-      }
-
-      &:hover {
-        background: var(--bg-color-page);
-      }
-
-      &--primary { color: var(--primary-color); }
-      &--danger { color: var(--danger-color); }
     }
   }
 }

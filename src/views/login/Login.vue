@@ -6,6 +6,19 @@
         <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=auto%20fill%20form%20tool%20logo%2C%20simple%20modern%20design%2C%20blue%20color%20scheme&image_size=square_hd" alt="Logo" class="login-logo" />
         <h1 class="login-title">自动填写工具</h1>
         <p class="login-subtitle">多账号表单自动填写解决方案</p>
+        <!-- 主题切换按钮 -->
+        <div class="theme-toggle">
+          <el-button
+            type="info"
+            circle
+            size="small"
+            @click="handleThemeToggle"
+            :title="isDarkTheme ? '切换到浅色主题' : '切换到深色主题'"
+          >
+            <el-icon v-if="isDarkTheme"><Sunny /></el-icon>
+            <el-icon v-else><Moon /></el-icon>
+          </el-button>
+        </div>
       </div>
       
       <!-- 登录表单 -->
@@ -86,7 +99,7 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
-import { User, Lock } from '@element-plus/icons-vue'
+import { User, Lock, Moon, Sunny } from '@element-plus/icons-vue'
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -95,6 +108,14 @@ const settingsStore = useSettingsStore()
 const isDarkTheme = computed(() => {
   return settingsStore.general.theme === 'dark'
 })
+
+// 方法
+/**
+ * 切换主题
+ */
+const handleThemeToggle = () => {
+  settingsStore.toggleTheme()
+}
 
 // 状态管理
 const accountStore = useAccountStore()
@@ -185,6 +206,7 @@ const handleRegister = () => {
 .login-header {
   text-align: center;
   margin-bottom: 32px;
+  position: relative;
 
   .login-logo {
     width: 80px;
@@ -203,6 +225,13 @@ const handleRegister = () => {
   .login-subtitle {
     font-size: 14px;
     color: var(--text-color-secondary);
+    margin-bottom: 16px;
+  }
+
+  .theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
   }
 }
 

@@ -7,6 +7,19 @@
         <h1 class="login-title">自动填写工具</h1>
         <p class="login-subtitle">多账号表单自动填写解决方案</p>
         <h2 class="register-title">用户注册</h2>
+        <!-- 主题切换按钮 -->
+        <div class="theme-toggle">
+          <el-button
+            type="info"
+            circle
+            size="small"
+            @click="handleThemeToggle"
+            :title="isDarkTheme ? '切换到浅色主题' : '切换到深色主题'"
+          >
+            <el-icon v-if="isDarkTheme"><Sunny /></el-icon>
+            <el-icon v-else><Moon /></el-icon>
+          </el-button>
+        </div>
       </div>
       
       <!-- 注册表单 -->
@@ -117,10 +130,23 @@ import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
-import { User, Lock, Message, Phone } from '@element-plus/icons-vue'
+import { User, Lock, Message, Phone, Moon, Sunny } from '@element-plus/icons-vue'
 
 // 状态管理
 const settingsStore = useSettingsStore()
+
+// 计算属性
+const isDarkTheme = computed(() => {
+  return settingsStore.general.theme === 'dark'
+})
+
+// 方法
+/**
+ * 切换主题
+ */
+const handleThemeToggle = () => {
+  settingsStore.toggleTheme()
+}
 
 // 状态管理
 const accountStore = useAccountStore()
@@ -236,6 +262,7 @@ const handleLogin = () => {
 .login-header {
   text-align: center;
   margin-bottom: 32px;
+  position: relative;
 
   .login-logo {
     width: 80px;
@@ -261,6 +288,12 @@ const handleLogin = () => {
     font-size: 18px;
     font-weight: 600;
     color: #303133;
+  }
+
+  .theme-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
   }
 }
 
