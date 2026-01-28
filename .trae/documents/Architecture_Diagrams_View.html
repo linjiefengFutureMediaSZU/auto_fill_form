@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electron Migration Architecture Diagrams</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f6f8;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h1 { text-align: center; color: #2c3e50; }
+        h2 { border-bottom: 2px solid #eaecef; padding-bottom: 10px; margin-top: 0; color: #34495e; }
+        .mermaid { text-align: center; margin: 20px 0; }
+        .desc { color: #666; font-style: italic; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Electron 迁移计划 - 架构视图</h1>
+
+    <div class="container">
+        <h2>1. 系统架构图 (System Architecture)</h2>
+        <p class="desc">展示 Vue 渲染进程、IPC 通信层、主进程 Service 层与基础设施的关系。</p>
+        <pre class="mermaid">
+graph TD
+    User[用户] --> UI[Vue 3 渲染进程]
+    
+    subgraph "Electron Renderer Process"
+        UI --> Components[Vue 组件]
+        Components --> Pinia[Pinia Store]
+        Pinia --> IPC_Client[preload.js (ContextBridge)]
+    end
+    
+    IPC_Client -- "IPC Invoke/Handle (JSON)" --> IPC_Server
+    
+    subgraph "Electron Main Process"
+        IPC_Server[IPC Main Handler]
+        IPC_Server --> Controller[Controller 层]
+        
+        subgraph "Service Layer"
+            Controller --> AccSvc[AccountService]
+            Controller --> FormSvc[FormService]
+            Controller --> AutoSvc[AutoFillService]
+            Controller --> MigSvc[MigrationService]
+        end
+        
+        subgraph "Infrastructure"
+            AccSvc --> DB[(SQLite Database)]
+            FormSvc --> DB
+            AutoSvc --> Playwright[Playwright Engine]
+            MigSvc --> DB
+        end
+    end
+    
+    Playwright -- "控制" --> Browser[Chromium 浏览器实例]
+    Browser -- "填表操作" --> TargetWeb[目标表单网站]
+        </pre>
+    </div>
+
+    <div class="container">
+        <h2>2. 数据库 ER 图 (Entity-Relationship)</h2>
+        <p class="desc">基于 PRD 设计的 8 张核心表及其关联关系。</p>
+        <pre class="mermaid">
+erDiagram
+    USER ||--o{ SYSTEM_SETTING : configures
+    ACCOUNT_GROUP ||--|{ ACCOUNT : contains
+    FORM_FOLDER ||--|{ FORM_TEMPLATE : contains
+    FORM_TEMPLATE ||--|{ FORM_FIELD_MAPPING : defines
+    FORM_TEMPLATE ||--o{ FILL_LOG : generates
+    ACCOUNT ||--o{ FILL_LOG : generates
+    
+    USER {
+        int id PK
+        string username
+        string password_hash
+        string role
+    }
+    
+    ACCOUNT {
+        int id PK
+        int group_id FK
+        string blogger_name
+        string account_type
+        text extra_json "JSON扩展字段"
+        string contact_encrypted
+    }
+    
+    ACCOUNT_GROUP {
+        int id PK
+        string group_name
+    }
+    
+    FORM_TEMPLATE {
+        int id PK
+        int folder_id FK
+        string form_url
+        string form_type
+    }
+    
+    FORM_FOLDER {
+        int id PK
+        string folder_name
+    }
+    
+    FORM_FIELD_MAPPING {
+        int id PK
+        int template_id FK
+        string form_field
+        string account_field
+    }
+    
+    FILL_LOG {
+        int id PK
+        int account_id FK
+        int template_id FK
+        string result
+        datetime fill_time
+    }
+    
+    SYSTEM_SETTING {
+        string key PK
+        string value
+    }
+        </pre>
+    </div>
+
+    <div class="container">
+        <h2>3. 自动填表流程图 (Auto-Fill Flowchart)</h2>
+        <p class="desc">从用户发起请求到完成填写的完整逻辑判断流。</p>
+        <pre class="mermaid">
+flowchart TD
+    Start((开始)) --> UserSelect[用户选择账号 & 表单]
+    UserSelect --> ClickFill[点击“一键填写”]
+    ClickFill --> IPC_Call[IPC调用: autofill:start]
+    
+    IPC_Call --> MainProcess{主进程接收}
+    MainProcess --> FetchData[从DB读取账号 & 规则]
+    
+    FetchData --> LaunchBrowser[Playwright 启动浏览器]
+    LaunchBrowser --> Navigate[跳转至表单 URL]
+    
+    Navigate --> CheckLoaded{页面加载完成?}
+    CheckLoaded -- No --> Retry[重试/超时报错]
+    CheckLoaded -- Yes --> LoopFields[遍历匹配规则]
+    
+    LoopFields --> LocateElem[定位表单元素]
+    LocateElem --> InjectValue[注入账号数据]
+    InjectValue --> NextField{还有字段?}
+    
+    NextField -- Yes --> LoopFields
+    NextField -- No --> Submit[点击提交 (可选)]
+    
+    Submit --> VerifyResult{检测提交结果}
+    VerifyResult --> LogDB[写入 FILL_LOG]
+    LogDB --> IPC_Reply[IPC返回结果]
+    
+    IPC_Reply --> UI_Update[前端更新状态 & 弹窗]
+    UI_Update --> End((结束))
+    
+    Retry --> LogDB
+        </pre>
+    </div>
+
+    <div class="container">
+        <h2>4. 数据流图 (DFD Level 1)</h2>
+        <p class="desc">系统组件间的数据输入输出流向。</p>
+        <pre class="mermaid">
+graph LR
+    User((用户)) -- "1. 输入账号信息" --> UI[前端界面]
+    User -- "2. 提供表单链接" --> UI
+    
+    UI -- "3. 账号数据 (JSON)" --> IPC[IPC 通道]
+    UI -- "4. 填表指令" --> IPC
+    
+    IPC -- "5. 结构化数据" --> Services[业务服务层]
+    
+    Services -- "6. 读写请求" --> DB[(SQLite)]
+    DB -- "7. 返回数据" --> Services
+    
+    Services -- "8. 注入数据" --> Engine[自动化引擎]
+    Engine -- "9. 模拟操作" --> TargetWeb((目标网站))
+    
+    TargetWeb -- "10. 填写结果" --> Engine
+    Engine -- "11. 结果状态" --> Services
+    Services -- "12. 记录日志" --> DB
+        </pre>
+    </div>
+
+    <div class="container">
+        <h2>5. 自动填表时序图 (Sequence Diagram)</h2>
+        <p class="desc">前端与后端各模块交互的详细时序。</p>
+        <pre class="mermaid">
+sequenceDiagram
+    participant User as 用户
+    participant Vue as Vue前端
+    participant IPC as IPC通道
+    participant Main as 主进程(AutoService)
+    participant DB as SQLite
+    participant Browser as Playwright浏览器
+
+    User->>Vue: 点击“开始填写”
+    Vue->>Vue: 锁定界面，显示Loading
+    Vue->>IPC: invoke('autofill:start', { accountIds, formId })
+    
+    IPC->>Main: 转发请求
+    
+    Main->>DB: 查询账号详情(accountIds)
+    DB-->>Main: 返回账号数据
+    Main->>DB: 查询表单规则(formId)
+    DB-->>Main: 返回匹配规则
+    
+    loop 遍历每个账号
+        Main->>Browser: launch() / newContext()
+        Browser-->>Main: 浏览器实例ready
+        
+        Main->>Browser: page.goto(formUrl)
+        Browser-->>Main: 页面加载完毕
+        
+        Main->>Browser: 注入数据 (eval script)
+        Browser-->>Main: 注入完成
+        
+        alt 自动提交开启
+            Main->>Browser: click('#submit')
+            Browser-->>Main: 提交成功信号
+        end
+        
+        Main->>DB: insert(FILL_LOG)
+        Main->>IPC: send('autofill:progress', { percent })
+        IPC-->>Vue: 更新进度条
+    end
+    
+    Main-->>IPC: return { success: true, report }
+    IPC-->>Vue: 返回最终报告
+    Vue->>User: 弹窗展示“填写完成”
+        </pre>
+    </div>
+</body>
+</html>
