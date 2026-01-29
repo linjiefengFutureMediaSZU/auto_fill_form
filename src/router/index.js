@@ -19,6 +19,12 @@ const routes = [
     meta: { title: '注册', requiresAuth: false }
   },
   {
+    path: '/forget-password',
+    name: 'ForgetPassword',
+    component: () => import('../views/login/ForgetPassword.vue'),
+    meta: { title: '忘记密码', requiresAuth: false }
+  },
+  {
     path: '/',
     component: Layout,
     children: [
@@ -82,7 +88,12 @@ router.beforeEach((to, from, next) => {
   
   // 检查是否需要登录
   const requiresAuth = to.meta.requiresAuth !== false
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  
+  // 从 store 中获取登录状态，而不是仅依赖 localStorage
+  // 注意：在路由守卫中访问 store 需要在 app.use(pinia) 之后
+  // 这里我们保持逻辑简单，既然 store 不再持久化 isLoggedIn，
+  // 我们在 App.vue 挂载时会处理初始跳转
+  const isLoggedIn = localStorage.getItem('userInfo') !== null
   
   if (requiresAuth && !isLoggedIn) {
     // 需要登录但未登录，跳转到登录页

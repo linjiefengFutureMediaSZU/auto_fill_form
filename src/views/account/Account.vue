@@ -668,9 +668,9 @@ const saveAccount = async () => {
     }
     
     if (isEditMode.value) {
-      accountStore.updateAccount(accountForm.id, accountForm)
+      await accountStore.updateAccount(accountForm.id, accountForm)
     } else {
-      accountStore.addAccount(accountForm)
+      await accountStore.addAccount(accountForm)
     }
     
     // 恢复原始的报价数组
@@ -689,8 +689,8 @@ const handleDeleteAccount = (id) => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
-    accountStore.deleteAccount(id)
+  }).then(async () => {
+    await accountStore.deleteAccount(id)
     ElMessage.success('账号删除成功')
   }).catch(() => {
     // 取消删除
@@ -708,10 +708,10 @@ const handleBatchDelete = () => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
-    selectedAccountIds.value.forEach(id => {
-      accountStore.deleteAccount(id)
-    })
+  }).then(async () => {
+    for (const id of selectedAccountIds.value) {
+      await accountStore.deleteAccount(id)
+    }
     selectedAccountIds.value = []
     ElMessage.success('账号删除成功')
   }).catch(() => {
@@ -720,13 +720,53 @@ const handleBatchDelete = () => {
 }
 
 // 批量导入
-const handleBatchImport = () => {
-  ElMessage.info('批量导入功能开发中')
+const handleBatchImport = async () => {
+  if (!window.electronAPI) {
+    ElMessage.warning('请在桌面端使用此功能')
+    return
+  }
+  try {
+    const count = await window.electronAPI.excel.importAccounts()
+    if (count !== null) {
+      ElMessage.success(`成功导入 ${count} 个账号`)
+      // 重新加载数据
+      await accountStore.loadInitialData()
+      handleSearch()
+    }
+  } catch (error) {
+    console.error('导入失败:', error)
+    ElMessage.error('导入失败，请检查文件格式')
+  }
 }
 
 // 批量导出
-const handleBatchExport = () => {
-  ElMessage.info('批量导出功能开发中')
+const handleBatchExport = async () => {
+  if (!window.electronAPI) {
+    ElMessage.warning('请在桌面端使用此功能')
+    return
+  }
+  try {
+    // 优先导出选中的账号，如果没有选中则导出所有账号
+    let accountsToExport = []
+    if (selectedAccountIds.value.length > 0) {
+      accountsToExport = accounts.value.filter(a => selectedAccountIds.value.includes(a.id))
+    } else {
+      accountsToExport = accountStore.accounts
+    }
+    
+    if (accountsToExport.length === 0) {
+      ElMessage.warning('暂无账号可导出')
+      return
+    }
+
+    const success = await window.electronAPI.excel.exportAccounts(JSON.parse(JSON.stringify(accountsToExport)))
+    if (success) {
+      ElMessage.success('导出成功')
+    }
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
 }
 
 // 批量修改
@@ -764,9 +804,9 @@ const saveGroup = async () => {
     await groupFormRef.value.validate()
     
     if (isEditGroupMode.value) {
-      accountStore.updateGroup(groupForm.id, groupForm)
+      await accountStore.updateGroup(groupForm.id, groupForm)
     } else {
-      accountStore.addGroup(groupForm)
+      await accountStore.addGroup(groupForm)
     }
     
     groupDialogVisible.value = false
@@ -789,8 +829,8 @@ const handleDeleteGroup = (id) => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
-    accountStore.deleteGroup(id)
+  }).then(async () => {
+    await accountStore.deleteGroup(id)
     ElMessage.success('分组删除成功')
   }).catch(() => {
     // 取消删除
@@ -798,12 +838,7 @@ const handleDeleteGroup = (id) => {
 }
 
 // 生命周期
-onMounted(() => {
-  // 初始化数据
-  if (groups.value.length === 0) {
-    // 默认分组
-    accountStore.addGroup({ group_name: '默认分组', description: '默认账号分组' })
-  }
+onMounted(async () => {
   // 加载字段配置
   loadFieldConfig()
 

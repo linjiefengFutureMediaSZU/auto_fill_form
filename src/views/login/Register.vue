@@ -131,6 +131,7 @@ import { useRouter } from 'vue-router'
 import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
 import { User, Lock, Message, Phone, Moon, Sunny } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -203,33 +204,34 @@ const rules = {
  */
 const handleRegister = async () => {
   // 表单验证
-  if (!registerFormRef.value) return
-  
-  try {
-    await registerFormRef.value.validate()
-    loading.value = true
+    if (!registerFormRef.value) return
     
-    // 模拟注册请求
-    setTimeout(() => {
-      // 注册成功后设置用户信息
-      accountStore.setUserInfo({
+    try {
+      await registerFormRef.value.validate()
+      loading.value = true
+      
+      // 调用真实注册接口
+      const result = await window.electronAPI.auth.register({
         username: registerForm.username,
+        password: registerForm.password,
+        nickname: registerForm.username,
         email: registerForm.email,
-        phone: registerForm.phone,
-        name: registerForm.username
+        phone: registerForm.phone
       })
-      
-      // 保存登录状态
-      accountStore.setLoginStatus(true)
-      
-      // 跳转到首页
-      router.push('/account')
+
+      if (result.success) {
+        ElMessage.success('注册成功，请登录')
+        // 跳转到登录页
+        router.push('/login')
+      } else {
+        ElMessage.error(result.message || '注册失败')
+      }
+    } catch (error) {
+      console.error('注册异常:', error)
+      ElMessage.error('注册过程中发生错误')
+    } finally {
       loading.value = false
-    }, 1000)
-  } catch (error) {
-    console.error('注册验证失败:', error)
-    loading.value = false
-  }
+    }
 }
 
 /**

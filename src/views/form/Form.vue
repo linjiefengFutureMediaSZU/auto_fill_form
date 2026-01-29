@@ -455,6 +455,7 @@ const selectedTemplate = computed(() => {
 
 // 筛选后的账号
 const filteredAccounts = computed(() => {
+  if (!Array.isArray(accounts.value)) return []
   return accounts.value.filter(account => {
     // 分组筛选
     if (selectedGroupId.value && account.group_id !== parseInt(selectedGroupId.value)) {
@@ -481,6 +482,7 @@ const isAllSelected = computed(() => {
 
 // 筛选后的表单模板
 const filteredTemplates = computed(() => {
+  if (!Array.isArray(templates.value)) return []
   return templates.value.filter(template => {
     // 文件夹筛选
     if (selectedFolderId.value && template.folder_id !== parseInt(selectedFolderId.value)) {
@@ -543,9 +545,9 @@ const toggleSelectAll = () => {
 }
 
 // 选择表单模板
-const selectTemplate = (template) => {
+const selectTemplate = async (template) => {
   selectedTemplateId.value = template.id
-  formStore.selectTemplate(template.id)
+  await formStore.selectTemplate(template.id)
 }
 
 // 编辑字段匹配规则
@@ -639,11 +641,85 @@ const startFillProcess = (isBatch) => {
   // 显示进度弹窗
   fillProgressDialogVisible.value = true
   
-  // 模拟填写过程
-  simulateFillProcess(isBatch)
+  // 执行真实的自动化流程
+  realFillProcess(isBatch)
 }
 
-// 模拟填写过程
+// 真实的自动化填写过程
+const realFillProcess = async (isBatch) => {
+  if (!window.electronAPI) {
+    simulateFillProcess(isBatch)
+    return
+  }
+
+  // 监听进度推送
+  window.electronAPI.autofill.onProgress((progress) => {
+    switch (progress.type) {
+      case 'start':
+        fillProgress.currentStatus = `正在准备填写：${progress.accountName}`;
+        fillProgress.logs.push({
+          time: new Date().toLocaleTimeString(),
+          content: `开始处理账号：${progress.accountName}`,
+          status: 'info'
+        });
+        break;
+      case 'log':
+        fillProgress.logs.push({
+          time: new Date().toLocaleTimeString(),
+          content: progress.log,
+          status: 'info'
+        });
+        break;
+      case 'progress':
+        fillProgress.percentage = progress.percentage;
+        fillProgress.successCount = progress.successCount;
+        fillProgress.failCount = progress.failCount;
+        break;
+      case 'error':
+        fillProgress.logs.push({
+          time: new Date().toLocaleTimeString(),
+          content: `错误: ${progress.message}`,
+          status: 'error'
+        });
+        break;
+    }
+  });
+
+  try {
+    const result = await window.electronAPI.autofill.start({
+      accountIds: [...selectedAccountIds.value],
+      templateId: selectedTemplateId.value,
+      settings: {
+        showBrowser: true,
+        submitInterval: fillSettings.submitInterval
+      }
+    });
+
+    fillProgress.isRunning = false;
+    fillProgress.percentage = 100;
+    fillProgress.status = result.failCount === 0 ? 'success' : 'warning';
+    fillProgress.currentStatus = '自动化任务已结束';
+    fillProgress.logs.push({
+      time: new Date().toLocaleTimeString(),
+      content: `任务总结：成功 ${result.successCount} 个，失败 ${result.failCount} 个`,
+      status: 'success'
+    });
+
+  } catch (error) {
+    fillProgress.isRunning = false;
+    fillProgress.status = 'exception';
+    fillProgress.currentStatus = '任务异常终止';
+    fillProgress.logs.push({
+      time: new Date().toLocaleTimeString(),
+      content: `核心引擎错误: ${error.message}`,
+      status: 'error'
+    });
+  } finally {
+    window.electronAPI.autofill.removeProgressListeners();
+  }
+};
+
+// 模拟填写过程 (仅作为降级方案或 Web 预览)
 const simulateFillProcess = (isBatch) => {
   const totalAccounts = selectedAccountIds.value.length
   let currentIndex = 0

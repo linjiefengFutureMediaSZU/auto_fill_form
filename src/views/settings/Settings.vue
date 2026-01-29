@@ -335,9 +335,9 @@ const saveAllSettings = async () => {
     }
     
     // 保存设置
-    settingsStore.updateGeneralSettings(generalSettings)
-    settingsStore.updateLocalDeploymentSettings(localDeploymentSettings)
-    settingsStore.updateFillSettings(fillSettings)
+    await settingsStore.updateGeneralSettings(generalSettings)
+    await settingsStore.updateLocalDeploymentSettings(localDeploymentSettings)
+    await settingsStore.updateFillSettings(fillSettings)
     
     ElMessage.success('设置已保存，部分设置需重启应用生效')
   } catch (error) {

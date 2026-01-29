@@ -21,9 +21,9 @@
             <el-avatar size="large" :src="userAvatar">
               <span v-if="!userAvatar">{{ userInitial }}</span>
             </el-avatar>
-            <el-button type="primary" size="small" @click="handleAvatarUpload">上传头像</el-button>
-            <h3 class="user-name">{{ userInfo.name || userInfo.username }}</h3>
-            <p class="user-role">普通用户</p>
+            <el-button type="primary" size="small" @click="handleAvatarUpload" :loading="avatarLoading">上传头像</el-button>
+            <h3 class="user-name">{{ userInfo.nickname || userInfo.username }}</h3>
+            <p class="user-role">{{ userInfo.role === 'admin' ? '管理员' : '普通用户' }}</p>
           </div>
           <input
             ref="fileInput"
@@ -161,6 +161,7 @@ const securitySettings = ref({
 })
 
 const securityLoading = ref(false)
+const avatarLoading = ref(false)
 const securityFormRef = ref(null)
 const fileInput = ref(null)
 
@@ -168,8 +169,8 @@ const fileInput = ref(null)
 const userInfo = computed(() => accountStore.userInfo)
 
 const userInitial = computed(() => {
-  if (userInfo.value.name) {
-    return userInfo.value.name.charAt(0).toUpperCase()
+  if (userInfo.value.nickname) {
+    return userInfo.value.nickname.charAt(0).toUpperCase()
   } else if (userInfo.value.username) {
     return userInfo.value.username.charAt(0).toUpperCase()
   }
@@ -182,8 +183,9 @@ const userAvatar = computed(() => {
 })
 
 const registrationTime = computed(() => {
-  // 模拟注册时间
-  return '2026-01-26 16:00:00'
+  if (!userInfo.value.created_at) return '-'
+  const date = new Date(userInfo.value.created_at)
+  return date.toLocaleString('zh-CN')
 })
 
 // 安全设置验证规则
@@ -225,7 +227,7 @@ const handleAvatarUpload = () => {
 /**
  * 处理文件选择
  */
-const handleFileChange = (event) => {
+const handleFileChange = async (event) => {
   const file = event.target.files[0]
   if (!file) return
   
@@ -241,18 +243,19 @@ const handleFileChange = (event) => {
     return
   }
   
-  // 读取文件并显示预览
+  avatarLoading.value = true
+  // 读取文件并转换为 base64 发送给 Electron
   const reader = new FileReader()
-  reader.onload = (e) => {
-    const avatarUrl = e.target.result
-    
-    // 更新用户信息中的头像
-    accountStore.setUserInfo({
-      ...userInfo.value,
-      avatar: avatarUrl
-    })
-    
-    ElMessage.success('头像上传成功')
+  reader.onload = async (e) => {
+    try {
+      const base64Data = e.target.result
+      await accountStore.updateAvatar(base64Data)
+      ElMessage.success('头像上传成功')
+    } catch (error) {
+      ElMessage.error('头像上传失败: ' + error.message)
+    } finally {
+      avatarLoading.value = false
+    }
   }
   reader.readAsDataURL(file)
   
@@ -270,34 +273,25 @@ const handleSecuritySave = async () => {
     await securityFormRef.value.validate()
     securityLoading.value = true
     
-    // 模拟保存请求
-    setTimeout(() => {
-      // 保存成功
-      ElMessage({
-        message: '安全设置保存成功',
-        type: 'success'
-      })
-      
-      // 更新用户信息中的邮箱
-      accountStore.setUserInfo({
-        ...userInfo.value,
-        email: securitySettings.value.email
-      })
-      
-      // 重置表单
-      if (securitySettings.value.passwordEnabled) {
-        securitySettings.value = {
-          ...securitySettings.value,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        }
-      }
-      
-      securityLoading.value = false
-    }, 1000)
+    // 调用真实更新接口
+    const updateData = {
+      email: securitySettings.value.email
+    }
+    
+    // 如果启用了密码修改，这里可以扩展逻辑，目前先处理基本资料
+    await accountStore.updateProfile(updateData)
+    
+    ElMessage.success('安全设置保存成功')
+    
+    // 重置密码相关字段
+    securitySettings.value.currentPassword = ''
+    securitySettings.value.newPassword = ''
+    securitySettings.value.confirmPassword = ''
+    
   } catch (error) {
-    console.error('安全设置验证失败:', error)
+    console.error('安全设置保存失败:', error)
+    ElMessage.error(error.message || '保存失败')
+  } finally {
     securityLoading.value = false
   }
 }

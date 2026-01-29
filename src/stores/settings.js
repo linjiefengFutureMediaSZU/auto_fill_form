@@ -6,8 +6,8 @@ export const useSettingsStore = defineStore('settings', {
     // 通用设置
     general: {
       language: 'zh-CN',
-      theme: 'light', // light, dark
-      fontSize: 'medium' // small, medium, large
+      theme: 'light',
+      fontSize: 'medium'
     },
     // 部署设置
     deployment: {
@@ -31,13 +31,13 @@ export const useSettingsStore = defineStore('settings', {
     },
     // 填写设置
     fill: {
-      submitInterval: 2, // 提交间隔（秒）
-      requiredFieldAlert: 'popup' // popup, tooltip
+      submitInterval: 2,
+      requiredFieldAlert: 'popup'
     },
     // 账号安全设置
     security: {
       passwordEnabled: true,
-      password: 'admin123', // 实际项目中应加密存储
+      password: 'admin123',
       email: 'admin@example.com'
     },
     // 版本信息
@@ -45,32 +45,84 @@ export const useSettingsStore = defineStore('settings', {
       current: '1.0.0',
       latest: '1.0.0',
       updateAvailable: false
-    }
+    },
+    loading: false
   }),
   actions: {
+    // 从数据库加载初始数据
+    async loadInitialData() {
+      if (!window.electronAPI) return;
+      this.loading = true;
+      try {
+        const settings = await window.electronAPI.setting.getAll();
+        if (settings.general) this.general = settings.general;
+        if (settings.deployment) this.deployment = settings.deployment;
+        if (settings.fill) this.fill = settings.fill;
+        if (settings.security) this.security = settings.security;
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
     // 更新通用设置
-    updateGeneralSettings(settings) {
-      this.general = { ...this.general, ...settings }
+    async updateGeneralSettings(settings) {
+      if (!window.electronAPI) return;
+      try {
+        const newSettings = { ...this.general, ...settings };
+        await window.electronAPI.setting.set('general', newSettings);
+        this.general = newSettings;
+      } catch (error) {
+        console.error('Failed to update general settings:', error);
+        throw error;
+      }
     },
+
     // 更新本地部署设置
-    updateLocalDeploymentSettings(settings) {
-      this.deployment.local = { ...this.deployment.local, ...settings }
+    async updateLocalDeploymentSettings(settings) {
+      if (!window.electronAPI) return;
+      try {
+        const newSettings = { ...this.deployment.local, ...settings };
+        const fullDeployment = { ...this.deployment, local: newSettings };
+        await window.electronAPI.setting.set('deployment', fullDeployment);
+        this.deployment.local = newSettings;
+      } catch (error) {
+        console.error('Failed to update local deployment settings:', error);
+        throw error;
+      }
     },
-    // 更新线上部署设置
-    updateOnlineDeploymentSettings(settings) {
-      this.deployment.online = { ...this.deployment.online, ...settings }
-    },
+
     // 更新填写设置
-    updateFillSettings(settings) {
-      this.fill = { ...this.fill, ...settings }
+    async updateFillSettings(settings) {
+      if (!window.electronAPI) return;
+      try {
+        const newSettings = { ...this.fill, ...settings };
+        await window.electronAPI.setting.set('fill', newSettings);
+        this.fill = newSettings;
+      } catch (error) {
+        console.error('Failed to update fill settings:', error);
+        throw error;
+      }
     },
+
     // 更新安全设置
-    updateSecuritySettings(settings) {
-      this.security = { ...this.security, ...settings }
+    async updateSecuritySettings(settings) {
+      if (!window.electronAPI) return;
+      try {
+        const newSettings = { ...this.security, ...settings };
+        await window.electronAPI.setting.set('security', newSettings);
+        this.security = newSettings;
+      } catch (error) {
+        console.error('Failed to update security settings:', error);
+        throw error;
+      }
     },
+
     // 切换主题
-    toggleTheme() {
-      this.general.theme = this.general.theme === 'light' ? 'dark' : 'light'
+    async toggleTheme() {
+      const newTheme = this.general.theme === 'light' ? 'dark' : 'light';
+      await this.updateGeneralSettings({ theme: newTheme });
     }
   }
 })

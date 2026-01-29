@@ -58,7 +58,7 @@
           <el-checkbox v-model="loginForm.remember">
             记住我
           </el-checkbox>
-          <el-link type="primary" class="forgot-password">忘记密码？</el-link>
+          <el-link type="primary" class="forgot-password" @click="router.push('/forget-password')">忘记密码？</el-link>
         </el-form-item>
         
         <el-form-item>
@@ -100,6 +100,7 @@ import { useRouter } from 'vue-router'
 import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
 import { User, Lock, Moon, Sunny } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -147,31 +148,40 @@ const rules = {
  */
 const handleLogin = async () => {
   // 表单验证
-  if (!loginFormRef.value) return
-  
-  try {
-    await loginFormRef.value.validate()
-    loading.value = true
+    if (!loginFormRef.value) return
     
-    // 模拟登录请求
-    setTimeout(() => {
-      // 登录成功后设置用户信息
-      accountStore.setUserInfo({
-        username: loginForm.username,
-        name: '管理员'
+    try {
+      await loginFormRef.value.validate()
+      loading.value = true
+      
+      // 调用真实登录接口
+      const result = await window.electronAPI.auth.login({
+        account: loginForm.username, // 这里的 username 字段实际作为 account (用户名或手机号)
+        password: loginForm.password
       })
-      
-      // 保存登录状态
-      accountStore.setLoginStatus(true)
-      
-      // 跳转到首页
-      router.push('/account')
+
+      if (result.success) {
+        // 登录成功后设置用户信息
+        accountStore.setUserInfo({
+          username: result.user.username,
+          name: result.user.nickname || result.user.username
+        })
+        
+        // 保存登录状态
+        accountStore.setLoginStatus(true)
+        
+        ElMessage.success('登录成功')
+        // 跳转到首页
+        router.push('/account')
+      } else {
+        ElMessage.error(result.message || '登录失败')
+      }
+    } catch (error) {
+      console.error('登录异常:', error)
+      ElMessage.error('登录过程中发生错误')
+    } finally {
       loading.value = false
-    }, 1000)
-  } catch (error) {
-    console.error('登录验证失败:', error)
-    loading.value = false
-  }
+    }
 }
 
 /**

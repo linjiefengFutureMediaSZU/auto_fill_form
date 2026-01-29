@@ -3,102 +3,104 @@ import { defineStore } from 'pinia'
 // 数据管理store
 export const useDataStore = defineStore('data', {
   state: () => ({
-    // 备份列表
-    backups: [
-      {
-        id: 1,
-        backup_time: '2026-01-22 00:00:00',
-        backup_path: 'D:/backup/backup_20260122_000000.json',
-        backup_size: '1.2 MB',
-        account_count: 2,
-        template_count: 2,
-        log_count: 10
-      },
-      {
-        id: 2,
-        backup_time: '2026-01-21 00:00:00',
-        backup_path: 'D:/backup/backup_20260121_000000.json',
-        backup_size: '1.1 MB',
-        account_count: 2,
-        template_count: 1,
-        log_count: 8
-      }
-    ],
-    // 填写日志
-    logs: [
-      {
-        id: 1,
-        account_id: 1,
-        template_id: 1,
-        fill_time: '2026-01-22 10:00:00',
-        fill_result: '成功',
-        fail_reason: null,
-        submit_count: 1
-      },
-      {
-        id: 2,
-        account_id: 2,
-        template_id: 1,
-        fill_time: '2026-01-22 10:01:00',
-        fill_result: '成功',
-        fail_reason: null,
-        submit_count: 1
-      },
-      {
-        id: 3,
-        account_id: 1,
-        template_id: 2,
-        fill_time: '2026-01-22 09:00:00',
-        fill_result: '失败',
-        fail_reason: '网络异常',
-        submit_count: 1
-      }
-    ],
-    // 定时备份设置
+    backups: [],
+    logs: [],
     backupSettings: {
       enabled: true,
       time: '00:00',
-      frequency: 'daily', // daily, weekly, monthly
+      frequency: 'daily',
       path: 'D:/backup/'
-    }
+    },
+    loading: false
   }),
   getters: {
-    // 获取成功的日志
     successLogs: (state) => {
       return state.logs.filter(log => log.fill_result === '成功')
     },
-    // 获取失败的日志
     failedLogs: (state) => {
       return state.logs.filter(log => log.fill_result === '失败')
     }
   },
   actions: {
-    // 添加备份记录
-    addBackup(backup) {
-      const newId = Math.max(...this.backups.map(b => b.id), 0) + 1
-      this.backups.push({ id: newId, ...backup })
+    // 从数据库加载初始数据
+    async loadInitialData() {
+      if (!window.electronAPI) return;
+      this.loading = true;
+      try {
+        const [backups, logs, settings] = await Promise.all([
+          window.electronAPI.backup.getAll(),
+          window.electronAPI.log.getAll(100),
+          window.electronAPI.setting.get('backupSettings')
+        ]);
+        this.backups = backups || [];
+        this.logs = logs || [];
+        if (settings) {
+          this.backupSettings = settings;
+        }
+      } catch (error) {
+        console.error('Failed to load data/logs:', error);
+      } finally {
+        this.loading = false;
+      }
     },
-    // 删除备份
-    deleteBackup(id) {
-      this.backups = this.backups.filter(b => b.id !== id)
+
+    // 备份操作
+    async addBackup(backup) {
+      if (!window.electronAPI) return;
+      try {
+        const newId = await window.electronAPI.backup.add(backup);
+        this.backups.push({ id: newId, ...backup });
+      } catch (error) {
+        console.error('Failed to add backup:', error);
+        throw error;
+      }
     },
-    // 添加填写日志
-    addLog(log) {
-      const newId = Math.max(...this.logs.map(l => l.id), 0) + 1
-      this.logs.unshift({ id: newId, ...log })
+    async deleteBackup(id) {
+      if (!window.electronAPI) return;
+      try {
+        await window.electronAPI.backup.delete(id);
+        this.backups = this.backups.filter(b => b.id !== id);
+      } catch (error) {
+        console.error('Failed to delete backup:', error);
+        throw error;
+      }
     },
-    // 清理过期日志
-    cleanExpiredLogs(days) {
-      const cutoffDate = new Date()
-      cutoffDate.setDate(cutoffDate.getDate() - days)
-      this.logs = this.logs.filter(log => {
-        const logDate = new Date(log.fill_time)
-        return logDate >= cutoffDate
-      })
+
+    // 日志操作
+    async addLog(log) {
+      if (!window.electronAPI) return;
+      try {
+        const newId = await window.electronAPI.log.add(log);
+        this.logs.unshift({ id: newId, ...log });
+      } catch (error) {
+        console.error('Failed to add log:', error);
+        throw error;
+      }
     },
-    // 更新备份设置
-    updateBackupSettings(settings) {
-      this.backupSettings = { ...this.backupSettings, ...settings }
+    async cleanExpiredLogs(days) {
+      if (!window.electronAPI) return;
+      try {
+        await window.electronAPI.log.clean(days);
+        // 本地也同步清理
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        this.logs = this.logs.filter(log => new Date(log.fill_time) >= cutoffDate);
+      } catch (error) {
+        console.error('Failed to clean logs:', error);
+        throw error;
+      }
+    },
+
+    // 备份设置
+    async updateBackupSettings(settings) {
+      if (!window.electronAPI) return;
+      try {
+        await window.electronAPI.setting.set('backupSettings', settings);
+        this.backupSettings = { ...this.backupSettings, ...settings };
+      } catch (error) {
+        console.error('Failed to update backup settings:', error);
+        throw error;
+      }
     }
   }
 })
