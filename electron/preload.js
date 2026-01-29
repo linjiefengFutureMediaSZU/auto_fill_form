@@ -75,6 +75,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateProfile: (userId, data) => ipcRenderer.invoke('auth:updateProfile', userId, data),
     saveAvatar: (userId, base64Data) => ipcRenderer.invoke('auth:saveAvatar', userId, base64Data),
     verifyReset: (username, phone) => ipcRenderer.invoke('auth:verifyReset', username, phone),
+    changePassword: (userId, oldPassword, newPassword) => ipcRenderer.invoke('auth:changePassword', userId, oldPassword, newPassword),
     resetPassword: (userId, newPassword) => ipcRenderer.invoke('auth:resetPassword', userId, newPassword),
   },
   excel: {

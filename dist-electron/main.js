@@ -764,15 +764,37 @@ const UserService = {
    * 用户登录 (支持用户名或手机号)
    */
   async login(account, password) {
-    const hashedPassword = this.hashPassword(password);
     const users = await queryAll(
-      "SELECT id, username, email, phone, avatar, nickname, role, created_at FROM users WHERE (username = ? OR phone = ?) AND password = ?",
-      [account, account, hashedPassword]
+      "SELECT id, username, email, phone, avatar, nickname, role, created_at, password FROM users WHERE username = ? OR phone = ?",
+      [account, account]
     );
-    if (users.length > 0) {
-      return { success: true, user: users[0] };
-    } else {
-      return { success: false, message: "账号或密码错误" };
+    if (users.length === 0) {
+      return { success: false, message: "账号不存在" };
+    }
+    const user = users[0];
+    const hashedPassword = this.hashPassword(password);
+    if (user.password !== hashedPassword) {
+      return { success: false, message: "密码错误" };
+    }
+    delete user.password;
+    return { success: true, user };
+  },
+  /**
+   * 修改密码
+   */
+  async changePassword(userId, oldPassword, newPassword) {
+    const users = await queryAll("SELECT password FROM users WHERE id = ?", [userId]);
+    if (users.length === 0) return { success: false, message: "用户不存在" };
+    const hashedOldPassword = this.hashPassword(oldPassword);
+    if (users[0].password !== hashedOldPassword) {
+      return { success: false, message: "当前密码错误" };
+    }
+    const hashedNewPassword = this.hashPassword(newPassword);
+    try {
+      await queryRun("UPDATE users SET password = ? WHERE id = ?", [hashedNewPassword, userId]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: "修改密码失败: " + error.message };
     }
   },
   /**
@@ -805,9 +827,28 @@ const UserService = {
    * 更新用户资料
    */
   async updateProfile(userId, data) {
-    const { nickname, email, phone, avatar } = data;
+    const { username, nickname, email, phone, avatar } = data;
     const fields = [];
     const params = [];
+    if (username !== void 0) {
+      const existingUser = await queryAll("SELECT id FROM users WHERE username = ? AND id != ?", [username, userId]);
+      if (existingUser.length > 0) {
+        return { success: false, message: "用户名已存在" };
+      }
+      fields.push("username = ?");
+      params.push(username);
+    }
+    if (phone !== void 0 && phone !== "") {
+      const existingPhone = await queryAll("SELECT id FROM users WHERE phone = ? AND id != ?", [phone, userId]);
+      if (existingPhone.length > 0) {
+        return { success: false, message: "手机号已被注册" };
+      }
+      fields.push("phone = ?");
+      params.push(phone);
+    } else if (phone === "") {
+      fields.push("phone = ?");
+      params.push(null);
+    }
     if (nickname !== void 0) {
       fields.push("nickname = ?");
       params.push(nickname);
@@ -815,10 +856,6 @@ const UserService = {
     if (email !== void 0) {
       fields.push("email = ?");
       params.push(email);
-    }
-    if (phone !== void 0) {
-      fields.push("phone = ?");
-      params.push(phone);
     }
     if (avatar !== void 0) {
       fields.push("avatar = ?");
@@ -859,6 +896,35 @@ const UserService = {
     } catch (error) {
       console.error("Failed to save avatar:", error);
       return { success: false, message: error.message };
+    }
+  },
+  /**
+   * 验证用户是否可以重置密码 (通过用户名和手机号)
+   */
+  async verifyUserForReset(username, phone) {
+    const users = await queryAll(
+      "SELECT id, phone FROM users WHERE username = ?",
+      [username]
+    );
+    if (users.length === 0) {
+      return { success: false, message: "用户不存在" };
+    }
+    const user = users[0];
+    if (user.phone !== phone) {
+      return { success: false, message: "手机号不匹配" };
+    }
+    return { success: true, userId: user.id };
+  },
+  /**
+   * 重置密码
+   */
+  async resetPassword(userId, newPassword) {
+    const hashedPassword = this.hashPassword(newPassword);
+    try {
+      await queryRun("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, userId]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: "重置密码失败: " + error.message };
     }
   },
   /**
@@ -981,4 +1047,13 @@ electron.ipcMain.handle("auth:updateProfile", async (event, userId, data) => {
 });
 electron.ipcMain.handle("auth:saveAvatar", async (event, userId, base64Data) => {
   return await UserService.saveAvatar(userId, base64Data);
+});
+electron.ipcMain.handle("auth:verifyReset", async (event, username, phone) => {
+  return await UserService.verifyUserForReset(username, phone);
+});
+electron.ipcMain.handle("auth:changePassword", async (event, userId, oldPassword, newPassword) => {
+  return await UserService.changePassword(userId, oldPassword, newPassword);
+});
+electron.ipcMain.handle("auth:resetPassword", async (event, userId, newPassword) => {
+  return await UserService.resetPassword(userId, newPassword);
 });

@@ -187,7 +187,14 @@ export const useAccountStore = defineStore('account', {
 
     // 更新用户头像
     async updateAvatar(base64Data) {
-      if (!window.electronAPI || !this.userInfo.id) return;
+      if (!this.userInfo.id) return;
+      
+      if (!window.electronAPI) {
+         // Fallback for browser preview
+         this.setUserInfo({ avatar: base64Data });
+         return true;
+      }
+
       try {
         const result = await window.electronAPI.auth.saveAvatar(this.userInfo.id, base64Data);
         if (result.success) {

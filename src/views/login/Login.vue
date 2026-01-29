@@ -100,7 +100,7 @@ import { useRouter } from 'vue-router'
 import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
 import { User, Lock, Moon, Sunny } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -147,6 +147,12 @@ const rules = {
  * 处理登录逻辑
  */
 const handleLogin = async () => {
+  // 非空校验提示
+  if (!loginForm.username || !loginForm.password) {
+    ElMessage.warning('请输入账号和密码')
+    return
+  }
+
   // 表单验证
     if (!loginFormRef.value) return
     
@@ -163,7 +169,7 @@ const handleLogin = async () => {
       if (result.success) {
         // 登录成功后设置用户信息
         accountStore.setUserInfo({
-          username: result.user.username,
+          ...result.user, // 确保包含 email, phone, created_at 等所有字段
           name: result.user.nickname || result.user.username
         })
         
@@ -174,10 +180,16 @@ const handleLogin = async () => {
         // 跳转到首页
         router.push('/account')
       } else {
-        ElMessage.error(result.message || '登录失败')
+        // 使用弹窗提示错误（账号不存在或密码错误）
+        ElMessageBox.alert(result.message || '登录失败', '登录错误', {
+          confirmButtonText: '确定',
+          type: 'error'
+        })
       }
     } catch (error) {
       console.error('登录异常:', error)
+      // 如果是表单校验失败，不需要弹窗，Element Plus 会有红字提示
+      if (error && error.username) return 
       ElMessage.error('登录过程中发生错误')
     } finally {
       loading.value = false
