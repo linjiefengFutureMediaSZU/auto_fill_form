@@ -17,46 +17,16 @@ export const UserService = {
    * 用户登录 (支持用户名或手机号)
    */
   async login(account, password) {
-    // 先查询用户是否存在
+    const hashedPassword = this.hashPassword(password);
     const users = await queryAll(
-      'SELECT id, username, email, phone, avatar, nickname, role, created_at, password FROM users WHERE username = ? OR phone = ?', 
-      [account, account]
+      'SELECT id, username, email, phone, avatar, nickname, role, created_at FROM users WHERE (username = ? OR phone = ?) AND password = ?', 
+      [account, account, hashedPassword]
     );
     
-    if (users.length === 0) {
-      return { success: false, message: '账号不存在' };
-    }
-
-    const user = users[0];
-    const hashedPassword = this.hashPassword(password);
-    
-    if (user.password !== hashedPassword) {
-      return { success: false, message: '密码错误' };
-    }
-
-    // 登录成功，移除密码字段后返回用户信息
-    delete user.password;
-    return { success: true, user: user };
-  },
-
-  /**
-   * 修改密码
-   */
-  async changePassword(userId, oldPassword, newPassword) {
-    const users = await queryAll('SELECT password FROM users WHERE id = ?', [userId]);
-    if (users.length === 0) return { success: false, message: '用户不存在' };
-    
-    const hashedOldPassword = this.hashPassword(oldPassword);
-    if (users[0].password !== hashedOldPassword) {
-      return { success: false, message: '当前密码错误' };
-    }
-    
-    const hashedNewPassword = this.hashPassword(newPassword);
-    try {
-      await queryRun('UPDATE users SET password = ? WHERE id = ?', [hashedNewPassword, userId]);
-      return { success: true };
-    } catch (error) {
-      return { success: false, message: '修改密码失败: ' + error.message };
+    if (users.length > 0) {
+      return { success: true, user: users[0] };
+    } else {
+      return { success: false, message: '账号或密码错误' };
     }
   },
 
@@ -94,36 +64,13 @@ export const UserService = {
    * 更新用户资料
    */
   async updateProfile(userId, data) {
-    const { username, nickname, email, phone, avatar } = data;
+    const { nickname, email, phone, avatar } = data;
     const fields = [];
     const params = [];
 
-    // 如果更新用户名，需要检查唯一性
-    if (username !== undefined) {
-      const existingUser = await queryAll('SELECT id FROM users WHERE username = ? AND id != ?', [username, userId]);
-      if (existingUser.length > 0) {
-        return { success: false, message: '用户名已存在' };
-      }
-      fields.push('username = ?');
-      params.push(username);
-    }
-    
-    // 如果更新手机号，需要检查唯一性
-    if (phone !== undefined && phone !== '') {
-      const existingPhone = await queryAll('SELECT id FROM users WHERE phone = ? AND id != ?', [phone, userId]);
-      if (existingPhone.length > 0) {
-        return { success: false, message: '手机号已被注册' };
-      }
-      fields.push('phone = ?');
-      params.push(phone);
-    } else if (phone === '') {
-       // 允许清空手机号
-       fields.push('phone = ?');
-       params.push(null);
-    }
-
     if (nickname !== undefined) { fields.push('nickname = ?'); params.push(nickname); }
     if (email !== undefined) { fields.push('email = ?'); params.push(email); }
+    if (phone !== undefined) { fields.push('phone = ?'); params.push(phone); }
     if (avatar !== undefined) { fields.push('avatar = ?'); params.push(avatar); }
 
     if (fields.length === 0) return { success: true };

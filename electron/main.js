@@ -160,10 +160,6 @@ ipcMain.handle('auth:verifyReset', async (event, username, phone) => {
   return await UserService.verifyUserForReset(username, phone);
 });
 
-ipcMain.handle('auth:changePassword', async (event, userId, oldPassword, newPassword) => {
-  return await UserService.changePassword(userId, oldPassword, newPassword);
-});
-
 ipcMain.handle('auth:resetPassword', async (event, userId, newPassword) => {
   return await UserService.resetPassword(userId, newPassword);
 });

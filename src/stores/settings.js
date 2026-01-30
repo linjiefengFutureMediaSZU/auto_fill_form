@@ -68,12 +68,11 @@ export const useSettingsStore = defineStore('settings', {
 
     // 更新通用设置
     async updateGeneralSettings(settings) {
-      const newSettings = { ...this.general, ...settings };
-      this.general = newSettings;
-      
       if (!window.electronAPI) return;
       try {
+        const newSettings = { ...this.general, ...settings };
         await window.electronAPI.setting.set('general', newSettings);
+        this.general = newSettings;
       } catch (error) {
         console.error('Failed to update general settings:', error);
         throw error;
@@ -82,13 +81,12 @@ export const useSettingsStore = defineStore('settings', {
 
     // 更新本地部署设置
     async updateLocalDeploymentSettings(settings) {
-      const newSettings = { ...this.deployment.local, ...settings };
-      this.deployment.local = newSettings;
-      
       if (!window.electronAPI) return;
       try {
+        const newSettings = { ...this.deployment.local, ...settings };
         const fullDeployment = { ...this.deployment, local: newSettings };
         await window.electronAPI.setting.set('deployment', fullDeployment);
+        this.deployment.local = newSettings;
       } catch (error) {
         console.error('Failed to update local deployment settings:', error);
         throw error;
@@ -97,12 +95,11 @@ export const useSettingsStore = defineStore('settings', {
 
     // 更新填写设置
     async updateFillSettings(settings) {
-      const newSettings = { ...this.fill, ...settings };
-      this.fill = newSettings;
-      
       if (!window.electronAPI) return;
       try {
+        const newSettings = { ...this.fill, ...settings };
         await window.electronAPI.setting.set('fill', newSettings);
+        this.fill = newSettings;
       } catch (error) {
         console.error('Failed to update fill settings:', error);
         throw error;
@@ -111,12 +108,11 @@ export const useSettingsStore = defineStore('settings', {
 
     // 更新安全设置
     async updateSecuritySettings(settings) {
-      const newSettings = { ...this.security, ...settings };
-      this.security = newSettings;
-      
       if (!window.electronAPI) return;
       try {
+        const newSettings = { ...this.security, ...settings };
         await window.electronAPI.setting.set('security', newSettings);
+        this.security = newSettings;
       } catch (error) {
         console.error('Failed to update security settings:', error);
         throw error;
