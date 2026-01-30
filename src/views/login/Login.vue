@@ -1,6 +1,14 @@
 <template>
-  <div class="login-container">
+  <div class="login-container" :class="{ 'is-dark': isDarkTheme }">
+    <!-- Liquid Background Orbs -->
+    <div class="liquid-bg">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
     <div class="login-card">
+      <div class="card-glow"></div>
       <!-- 登录卡片头部 -->
       <div class="login-header">
         <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=auto%20fill%20form%20tool%20logo%2C%20simple%20modern%20design%2C%20blue%20color%20scheme&image_size=square_hd" alt="Logo" class="login-logo" />
@@ -88,7 +96,7 @@
       
       <!-- 登录卡片底部 -->
       <div class="login-footer">
-        <p class="copyright">© 2026 自动填写工具. 保留所有权利.</p>
+        <p class="copyright">© 2026 Qilin Culture Media Co., Ltd. All rights reserved.</p>
       </div>
     </div>
   </div>
@@ -100,7 +108,7 @@ import { useRouter } from 'vue-router'
 import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
 import { User, Lock, Moon, Sunny } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -147,6 +155,12 @@ const rules = {
  * 处理登录逻辑
  */
 const handleLogin = async () => {
+  // 非空校验提示
+  if (!loginForm.username || !loginForm.password) {
+    ElMessage.warning('请输入账号和密码')
+    return
+  }
+
   // 表单验证
     if (!loginFormRef.value) return
     
@@ -163,7 +177,7 @@ const handleLogin = async () => {
       if (result.success) {
         // 登录成功后设置用户信息
         accountStore.setUserInfo({
-          username: result.user.username,
+          ...result.user, // 确保包含 email, phone, created_at 等所有字段
           name: result.user.nickname || result.user.username
         })
         
@@ -174,10 +188,16 @@ const handleLogin = async () => {
         // 跳转到首页
         router.push('/account')
       } else {
-        ElMessage.error(result.message || '登录失败')
+        // 使用弹窗提示错误（账号不存在或密码错误）
+        ElMessageBox.alert(result.message || '登录失败', '登录错误', {
+          confirmButtonText: '确定',
+          type: 'error'
+        })
       }
     } catch (error) {
       console.error('登录异常:', error)
+      // 如果是表单校验失败，不需要弹窗，Element Plus 会有红字提示
+      if (error && error.username) return 
       ElMessage.error('登录过程中发生错误')
     } finally {
       loading.value = false
@@ -193,148 +213,261 @@ const handleRegister = () => {
 </script>
 
 <style scoped lang="scss">
+/* Apple Style Liquid Design System */
 .login-container {
+  /* Light Mode Variables */
+  --bg-base: #f5f5f7;
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --accent-color: #007aff;
+  
+  --orb-1: #a1c4fd; /* Pastel Blue */
+  --orb-2: #c2e9fb; /* Light Cyan */
+  --orb-3: #ffecd2; /* Light Peach */
+  
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  
+  --input-bg: rgba(255, 255, 255, 0.5);
+  --input-border: transparent;
+  --input-text: #1d1d1f;
+  --input-placeholder: #86868b;
+  --input-focus-border: #007aff;
+  --input-focus-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+
+  position: relative;
   width: 100vw;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-color);
-  transition: background-color 0.3s;
+  overflow: hidden;
+  transition: all 0.5s ease;
+}
+
+/* Dark Mode Overrides */
+.login-container.is-dark {
+  --bg-base: #000000;
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --accent-color: #0a84ff;
+  
+  /* Deep, vibrant liquid colors for dark mode */
+  --orb-1: #2b5876; /* Deep Navy */
+  --orb-2: #4e4376; /* Deep Purple */
+  --orb-3: #141e30; /* Dark Blue */
+  
+  --glass-bg: rgba(28, 28, 30, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  
+  --input-bg: rgba(255, 255, 255, 0.1);
+  --input-border: rgba(255, 255, 255, 0.05);
+  --input-text: #ffffff;
+  --input-placeholder: #86868b;
+  --input-focus-border: #0a84ff;
+  --input-focus-shadow: 0 0 0 4px rgba(10, 132, 255, 0.25);
+}
+
+/* Liquid Background Animation */
+.liquid-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background-color: var(--bg-base);
+  transition: background-color 0.5s ease;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.8;
+  animation: float 10s infinite ease-in-out alternate;
+  will-change: transform;
+}
+
+.orb-1 {
+  background: var(--orb-1);
+  width: 60vw;
+  height: 60vw;
+  top: -10%;
+  left: -10%;
+}
+
+.orb-2 {
+  background: var(--orb-2);
+  width: 50vw;
+  height: 50vw;
+  bottom: -10%;
+  right: -10%;
+  animation-delay: -5s;
+}
+
+.orb-3 {
+  background: var(--orb-3);
+  width: 40vw;
+  height: 40vw;
+  top: 30%;
+  left: 30%;
+  animation-delay: -2s;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(30px, 50px) rotate(10deg); }
 }
 
 .login-card {
-  width: 100%;
-  max-width: 400px;
-  background-color: var(--bg-color-white);
-  border-radius: 12px;
-  box-shadow: var(--box-shadow);
-  padding: 32px;
-  transition: background-color 0.3s, box-shadow 0.3s;
+  position: relative;
+  z-index: 1;
+  width: 420px;
+  padding: 48px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--glass-shadow);
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
 .login-header {
-  text-align: center;
   margin-bottom: 32px;
   position: relative;
+}
 
-  .login-logo {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 16px;
-    border-radius: 8px;
+.login-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.login-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 400;
+}
+
+.theme-toggle {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+}
+
+/* Input Styles Overrides */
+:deep(.el-input__wrapper) {
+  background-color: var(--input-bg) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+  
+  &.is-focus {
+    background-color: var(--glass-bg) !important;
+    border-color: var(--input-focus-border) !important;
+    box-shadow: var(--input-focus-shadow) !important;
   }
-
-  .login-title {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text-color-primary);
-    margin-bottom: 4px;
-  }
-
-  .login-subtitle {
-    font-size: 14px;
-    color: var(--text-color-secondary);
-    margin-bottom: 16px;
-  }
-
-  .theme-toggle {
-    position: absolute;
-    top: 16px;
-    right: 16px;
+  
+  &:hover:not(.is-focus) {
+    background-color: rgba(255, 255, 255, 0.2) !important;
   }
 }
 
-
-.login-form {
-  margin-bottom: 24px;
-
-  .el-form-item {
-    margin-bottom: 16px;
+:deep(.el-input__inner) {
+  color: var(--input-text) !important;
+  height: 44px;
+  font-size: 16px;
+  
+  &::placeholder {
+    color: var(--input-placeholder);
   }
 }
 
 .remember-me {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin-bottom: 24px;
+  
+  :deep(.el-form-item__content) {
+    justify-content: space-between;
+  }
+  
+  :deep(.el-checkbox__label) {
+    color: var(--text-secondary);
+  }
+}
 
-  .forgot-password {
-    font-size: 14px;
+.forgot-password {
+  font-size: 14px;
+  color: var(--accent-color);
+  
+  &:hover {
+    opacity: 0.8;
   }
 }
 
 .login-button {
   width: 100%;
-  height: 44px;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-
+  height: 50px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  background-color: var(--accent-color);
+  border: none;
+  transition: all 0.2s ease;
+  
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  }
+  
+  &:active {
+    transform: scale(0.98);
   }
 }
 
 .register-button {
   width: 100%;
-  height: 44px;
-  font-size: 16px;
-  font-weight: 500;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-
+  height: 50px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  background-color: transparent;
+  border: 1px solid var(--text-secondary);
+  color: var(--text-secondary);
+  margin-top: -10px;
+  
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(144, 147, 153, 0.3);
+    background-color: rgba(0, 0, 0, 0.05);
+    border-color: var(--text-primary);
+    color: var(--text-primary);
   }
 }
 
 .login-footer {
-  text-align: center;
-
+  margin-top: 32px;
+  
   .copyright {
     font-size: 12px;
-    color: #C0C4CC;
+    color: var(--text-secondary);
+    opacity: 0.8;
   }
 }
-
-/* 响应式布局 */
-@media (max-width: 768px) {
-  .login-card {
-    margin: 0 16px;
-    padding: 24px;
-  }
-
-  .login-header {
-    .login-logo {
-      width: 60px;
-      height: 60px;
-    }
-
-    .login-title {
-      font-size: 18px;
-    }
-  }
-}
-
-/* 动画效果 */
-.login-card {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-
 </style>

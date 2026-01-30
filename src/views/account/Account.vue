@@ -58,7 +58,7 @@
     </div>
 
     <!-- 账号管理功能 -->
-    <div class="account-management card" style="margin-bottom: 20px;">
+    <div class="account-management glass-card" style="margin-bottom: 20px;">
       <h3 class="subtitle">账号管理功能</h3>
       <div class="header-actions" style="margin-top: 10px; display: flex; gap: 16px; align-items: center;">
         <el-tooltip content="新增账号" placement="top">

@@ -55,7 +55,8 @@
 }
 
 /* 暂时使用@import规则，因为dark-theme.scss包含直接的CSS规则 */
-@import './dark-theme.scss';
+/* @import './dark-theme.scss'; */
+@import './apple-theme.scss';
 
 /* 全局样式重置 */
 * {

@@ -365,12 +365,12 @@ onMounted(() => {
     .user-name {
       font-size: 18px;
       font-weight: 600;
-      color: #303133;
+      color: var(--text-primary);
     }
 
     .user-role {
       font-size: 14px;
-      color: #909399;
+      color: var(--text-secondary);
     }
   }
 
@@ -383,12 +383,12 @@ onMounted(() => {
       align-items: center;
       margin-bottom: 16px;
       padding: 12px;
-      background-color: #f9f9f9;
+      background-color: var(--input-bg);
       border-radius: 8px;
       transition: all 0.3s ease;
 
       &:hover {
-        background-color: #f0f9eb;
+        background-color: color-mix(in srgb, var(--accent-color), transparent 90%);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       }
 
@@ -396,18 +396,18 @@ onMounted(() => {
         width: 100px;
         font-size: 14px;
         font-weight: 500;
-        color: #606266;
+        color: var(--text-secondary);
       }
 
       .info-value {
         flex: 1;
         font-size: 14px;
-        color: #303133;
+        color: var(--text-primary);
         word-break: break-all;
         font-weight: 500;
 
         &.unset {
-          color: #909399;
+          color: var(--text-secondary);
           font-style: italic;
           font-weight: normal;
         }

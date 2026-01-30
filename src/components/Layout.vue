@@ -1,9 +1,16 @@
 <template>
   <div class="app-container">
+    <!-- Global Liquid Background -->
+    <div class="liquid-bg-container">
+      <div class="liquid-bg-orb orb-1"></div>
+      <div class="liquid-bg-orb orb-2"></div>
+      <div class="liquid-bg-orb orb-3"></div>
+    </div>
+
     <!-- 侧边导航栏 -->
     <el-aside
       :width="isCollapse ? '64px' : '200px'"
-      class="sidebar"
+      class="sidebar glass-card"
       :class="{ 'collapsed': isCollapse }"
     >
       <div class="sidebar-header">
@@ -13,9 +20,9 @@
       <el-menu
         :default-active="activeMenu"
         class="sidebar-menu"
-        :background-color="isDarkTheme ? '#242424' : '#f5f7fa'"
+        :background-color="'transparent'"
         :text-color="isDarkTheme ? '#e0e0e0' : '#303133'"
-        :active-text-color="'#409EFF'"
+        :active-text-color="isDarkTheme ? '#0a84ff' : '#007aff'"
         :collapse="isCollapse"
         router
       >
@@ -57,16 +64,15 @@
     <!-- 主内容区 -->
     <el-container class="main-container">
       <!-- 顶部状态栏 -->
-      <el-header class="top-bar">
+      <el-header class="top-bar glass-card">
         <div class="top-bar-left">
           <span class="current-time">{{ currentTime }}</span>
           <span class="deployment-status">
-            <el-tag size="small" type="success">本地部署已启动</el-tag>
+            <el-tag size="small" type="success" effect="dark" round>本地部署已启动</el-tag>
           </span>
         </div>
         <div class="top-bar-right">
           <el-button 
-            type="primary" 
             circle 
             @click="toggleTheme"
             class="theme-toggle-button"
@@ -166,6 +172,9 @@ const updateCurrentTime = () => {
 
 // 生命周期
 onMounted(() => {
+  // 初始化主题
+  settingsStore.initTheme()
+  
   // 初始化登录状态
   accountStore.initLoginStatus()
   
@@ -190,36 +199,51 @@ onUnmounted(() => {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background-color: var(--bg-color);
-  color: var(--text-color-primary);
-
-
+  background-color: transparent; /* Use transparent to show liquid background */
+  color: var(--text-primary);
 
   .sidebar {
-    background-color: var(--bg-color);
-    border-right: 1px solid var(--border-color);
+    background-color: var(--glass-bg); /* Glass effect */
+    border-right: 1px solid var(--glass-border);
+    transition: width 0.3s ease, background-color 0.3s ease;
     display: flex;
     flex-direction: column;
-    transition: width 0.3s;
+    overflow: hidden;
+    z-index: 10;
+    margin: 16px 0 16px 16px;
+    height: calc(100vh - 32px);
+    
+    &.collapsed {
+      width: 64px;
+      
+      .logo-text {
+        display: none;
+      }
+      
+      .sidebar-header {
+        padding: 0;
+        justify-content: center;
+      }
+    }
     
     .sidebar-header {
       height: 60px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 0 16px;
-      border-bottom: 1px solid var(--border-color);
+      padding: 0 20px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
       
       .logo {
         width: 32px;
         height: 32px;
-        margin-right: 8px;
+        border-radius: 8px;
       }
       
       .logo-text {
-        font-size: 18px;
+        margin-left: 10px;
+        font-size: 16px;
         font-weight: 600;
-        color: var(--primary-color);
+        color: var(--text-primary);
         white-space: nowrap;
       }
     }
@@ -227,9 +251,34 @@ onUnmounted(() => {
     .sidebar-menu {
       flex: 1;
       border-right: none;
+      background-color: transparent !important;
       
-      &:not(.el-menu--collapse) {
-        width: 200px;
+      :deep(.el-menu-item) {
+        margin: 4px 8px;
+        border-radius: 8px;
+        height: 44px;
+        line-height: 44px;
+        color: var(--text-secondary);
+        
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.05);
+          color: var(--text-primary);
+        }
+        
+        &.is-active {
+          background-color: var(--accent-color);
+          color: #ffffff;
+          box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+          
+          .el-icon {
+            color: #ffffff;
+          }
+        }
+        
+        .el-icon {
+          margin-right: 8px;
+          color: var(--text-secondary);
+        }
       }
     }
     
@@ -238,13 +287,13 @@ onUnmounted(() => {
       display: flex;
       align-items: center;
       justify-content: center;
-      border-top: 1px solid var(--border-color);
       cursor: pointer;
-      color: var(--text-color-secondary);
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      color: var(--text-secondary);
       
       &:hover {
-        background-color: var(--bg-color-light);
-        color: var(--primary-color);
+        background-color: rgba(0, 0, 0, 0.05);
+        color: var(--text-primary);
       }
     }
   }
@@ -254,54 +303,53 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background-color: var(--bg-color);
+    padding: 16px;
     
     .top-bar {
       height: 60px;
-      background-color: var(--bg-color-white);
-      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
+      padding: 0 20px;
+      z-index: 10;
       
       .top-bar-left {
         display: flex;
         align-items: center;
+        gap: 16px;
         
         .current-time {
-          margin-right: 16px;
-          color: var(--text-color-regular);
           font-size: 14px;
+          color: var(--text-secondary);
         }
       }
       
       .top-bar-right {
         display: flex;
         align-items: center;
+        gap: 16px;
         
         .theme-toggle-button {
-          margin-right: 16px;
+          background: transparent;
+          border: 1px solid var(--border-color);
+          color: var(--text-primary);
           
-          &.dark-theme {
-            background-color: #333;
-            border-color: #444;
-            color: #FFD700;
-            
-            &:hover {
-              background-color: #444;
-            }
+          &:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
           }
         }
         
         .user-info {
           display: flex;
           align-items: center;
+          gap: 8px;
           cursor: pointer;
-          color: var(--text-color-primary);
+          color: var(--text-primary);
           
-          .el-avatar {
-            margin-right: 8px;
+          &:hover {
+            color: var(--accent-color);
           }
         }
       }
@@ -309,9 +357,18 @@ onUnmounted(() => {
     
     .content-area {
       flex: 1;
-      padding: 24px;
+      padding: 0;
       overflow-y: auto;
-      background-color: var(--bg-color);
+      border-radius: var(--border-radius-lg);
+      
+      /* Hide scrollbar for cleaner look */
+      &::-webkit-scrollbar {
+        width: 6px;
+      }
+      &::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+      }
     }
   }
 }

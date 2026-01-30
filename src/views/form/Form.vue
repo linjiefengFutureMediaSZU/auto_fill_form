@@ -133,7 +133,7 @@
 
       <!-- 右列：表单预览&填写区 -->
       <div class="form-preview-fill">
-        <div class="card">
+        <div class="glass-card">
           <div class="section-header">
             <h3 class="subtitle">
               {{ selectedTemplate ? selectedTemplate.template_name : '表单预览' }}

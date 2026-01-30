@@ -1,5 +1,12 @@
 <template>
-  <div class="forget-container">
+  <div class="forget-container" :class="{ 'is-dark': isDarkTheme }">
+    <!-- Liquid Background Orbs -->
+    <div class="liquid-bg">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
     <div class="forget-card">
       <!-- 卡片头部 -->
       <div class="forget-header">

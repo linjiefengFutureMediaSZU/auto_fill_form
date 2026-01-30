@@ -864,10 +864,8 @@ onUnmounted(() => {
     margin-bottom: var(--spacing-lg);
 
     .stat-card {
-      background-color: var(--bg-color-white);
-      border-radius: var(--border-radius-md);
+      @include glass-card;
       padding: var(--spacing-lg);
-      box-shadow: var(--box-shadow-light);
       text-align: center;
 
       .stat-value {

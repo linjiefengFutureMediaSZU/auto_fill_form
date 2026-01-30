@@ -121,8 +121,24 @@ export const useSettingsStore = defineStore('settings', {
 
     // 切换主题
     async toggleTheme() {
-      const newTheme = this.general.theme === 'light' ? 'dark' : 'light';
-      await this.updateGeneralSettings({ theme: newTheme });
+      const newTheme = this.general.theme === 'light' ? 'dark' : 'light'
+      await this.updateGeneralSettings({ theme: newTheme })
+      
+      // 更新全局类名
+      if (newTheme === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    },
+    
+    // 初始化主题
+    initTheme() {
+      if (this.general.theme === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
     }
   }
 })

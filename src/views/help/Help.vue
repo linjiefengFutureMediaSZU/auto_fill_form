@@ -10,7 +10,7 @@
       <!-- 使用手册标签页 -->
       <el-tab-pane label="使用手册" name="manual">
         <div class="manual-content">
-          <div class="card">
+          <div class="glass-card">
             <div class="section-header">
               <h3 class="subtitle">使用指南</h3>
               <el-input

@@ -40,7 +40,7 @@
       </div>
 
       <!-- 部署设置 -->
-      <div class="card">
+      <div class="glass-card">
         <h3 class="subtitle">部署设置</h3>
         
         <!-- 本地部署设置 -->

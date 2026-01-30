@@ -243,22 +243,130 @@ const handleLogin = () => {
 </script>
 
 <style scoped lang="scss">
+/* Apple Style Liquid Design System */
 .login-container {
+  /* Light Mode Variables */
+  --bg-base: #f5f5f7;
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --accent-color: #007aff;
+  
+  --orb-1: #a1c4fd; /* Pastel Blue */
+  --orb-2: #c2e9fb; /* Light Cyan */
+  --orb-3: #ffecd2; /* Light Peach */
+  
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  
+  --input-bg: rgba(255, 255, 255, 0.5);
+  --input-border: transparent;
+  --input-text: #1d1d1f;
+  --input-placeholder: #86868b;
+  --input-focus-border: #007aff;
+  --input-focus-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+
+  position: relative;
   width: 100vw;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f7fa;
+  overflow: hidden;
+  transition: all 0.5s ease;
+}
+
+/* Dark Mode Overrides */
+.login-container.is-dark {
+  --bg-base: #000000;
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --accent-color: #0a84ff;
+  
+  /* Deep, vibrant liquid colors for dark mode */
+  --orb-1: #2b5876; /* Deep Navy */
+  --orb-2: #4e4376; /* Deep Purple */
+  --orb-3: #141e30; /* Dark Blue */
+  
+  --glass-bg: rgba(28, 28, 30, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  
+  --input-bg: rgba(255, 255, 255, 0.1);
+  --input-border: rgba(255, 255, 255, 0.05);
+  --input-text: #ffffff;
+  --input-placeholder: #86868b;
+  --input-focus-border: #0a84ff;
+  --input-focus-shadow: 0 0 0 4px rgba(10, 132, 255, 0.25);
+}
+
+/* Liquid Background Animation */
+.liquid-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background-color: var(--bg-base);
+  transition: background-color 0.5s ease;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.8;
+  animation: float 10s infinite ease-in-out alternate;
+  will-change: transform;
+}
+
+.orb-1 {
+  background: var(--orb-1);
+  width: 60vw;
+  height: 60vw;
+  top: -10%;
+  left: -10%;
+}
+
+.orb-2 {
+  background: var(--orb-2);
+  width: 50vw;
+  height: 50vw;
+  bottom: -10%;
+  right: -10%;
+  animation-delay: -5s;
+}
+
+.orb-3 {
+  background: var(--orb-3);
+  width: 40vw;
+  height: 40vw;
+  top: 30%;
+  left: 30%;
+  animation-delay: -2s;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(30px, 50px) rotate(10deg); }
 }
 
 .login-card {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 400px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 32px;
+  max-width: 420px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  box-shadow: var(--glass-shadow);
+  padding: 40px;
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
 .login-header {
@@ -270,87 +378,119 @@ const handleLogin = () => {
     width: 80px;
     height: 80px;
     margin-bottom: 16px;
-    border-radius: 8px;
+    border-radius: 18px; /* Slightly more rounded */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   .login-title {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 600;
-    color: #303133;
+    color: var(--text-primary);
     margin-bottom: 4px;
+    letter-spacing: -0.5px;
   }
 
   .login-subtitle {
-    font-size: 14px;
-    color: #909399;
+    font-size: 15px;
+    color: var(--text-secondary);
     margin-bottom: 16px;
   }
   
   .register-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 600;
-    color: #303133;
+    color: var(--text-primary);
+    margin-top: 10px;
   }
 
   .theme-toggle {
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: 0;
+    right: 0;
   }
+}
+
+/* Element Plus Overrides for Glassmorphism */
+:deep(.el-input__wrapper) {
+  background-color: var(--input-bg) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--input-border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-focus-border);
+  box-shadow: var(--input-focus-shadow) !important;
+}
+
+:deep(.el-input__inner) {
+  color: var(--input-text) !important;
+  font-size: 15px;
+  height: 24px;
+}
+
+:deep(.el-input__prefix) {
+  color: var(--text-secondary);
 }
 
 .login-form {
   margin-bottom: 24px;
 
   .el-form-item {
-    margin-bottom: 16px;
-  }
-}
-
-.remember-me {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  .forgot-password {
-    font-size: 14px;
+    margin-bottom: 20px;
   }
 }
 
 .login-button {
   width: 100%;
-  height: 44px;
+  height: 48px;
   font-size: 16px;
-  font-weight: 500;
-  border-radius: 4px;
+  font-weight: 600;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid rgba(134, 134, 139, 0.3);
   transition: all 0.3s ease;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+    background: rgba(134, 134, 139, 0.1);
+    color: var(--text-primary);
+    transform: translateY(-1px);
   }
 }
 
 .register-button {
   width: 100%;
-  height: 44px;
+  height: 48px;
   font-size: 16px;
-  font-weight: 500;
-  border-radius: 4px;
+  font-weight: 600;
+  border-radius: 14px;
+  background: var(--accent-color);
+  border: none;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(144, 147, 153, 0.3);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
 }
 
 .login-footer {
   text-align: center;
+  margin-top: 24px;
 
   .copyright {
-    font-size: 12px;
-    color: var(--text-color-secondary);
+    font-size: 13px;
+    color: var(--text-secondary);
   }
 }
 
@@ -358,7 +498,7 @@ const handleLogin = () => {
 @media (max-width: 768px) {
   .login-card {
     margin: 0 16px;
-    padding: 24px;
+    padding: 32px 24px;
   }
 
   .login-header {
@@ -368,28 +508,28 @@ const handleLogin = () => {
     }
 
     .login-title {
-      font-size: 18px;
+      font-size: 20px;
     }
     
     .register-title {
-      font-size: 16px;
+      font-size: 18px;
     }
   }
 }
 
 /* 动画效果 */
 .login-card {
-  animation: fadeInUp 0.5s ease-out;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(40px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
