@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "electron:rebuild": "electron-rebuild -f -w better-sqlite3",
-    "package": "npm run build && electron-builder"
+    "package": "npm run build && electron-builder",
+    "gen:poster": "node scripts/generate_poster.js"
   },
   "build": {
     "appId": "com.autofill.app",

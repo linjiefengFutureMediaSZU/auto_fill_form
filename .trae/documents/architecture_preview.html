@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>项目架构设计海报 (Project Architecture Poster)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                darkMode: true,
+                background: '#0d1117',
+                primaryColor: '#1f6feb',
+                primaryTextColor: '#c9d1d9',
+                primaryBorderColor: '#30363d',
+                lineColor: '#8b949e',
+                secondaryColor: '#161b22',
+                tertiaryColor: '#161b22',
+                fontFamily: '"JetBrains Mono", "PingFang SC", sans-serif'
+            },
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117; /* GitHub Dark Dimmed */
+            --card-bg: rgba(22, 27, 34, 0.8);
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent-color: #58a6ff;
+            --border-color: #30363d;
+            --success-color: #238636;
+            --border-radius: 16px;
+            --glass-border: 1px solid rgba(240, 246, 252, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: "JetBrains Mono", "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(88, 166, 255, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(188, 140, 255, 0.1) 0%, transparent 20%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            /* Poster sizing if printed, but for web we just maximize width */
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 40px;
+            background: linear-gradient(180deg, rgba(22,27,34,0) 0%, rgba(22,27,34,0.5) 100%);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(90deg, #58a6ff, #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        .poster-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .diagram-section {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            border: var(--glass-border);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .diagram-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            border-color: var(--accent-color);
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        h2 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0;
+            margin-bottom: 25px;
+            color: var(--text-primary);
+            font-size: 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+        
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 24px;
+            background: var(--accent-color);
+            margin-right: 15px;
+            border-radius: 4px;
+        }
+
+        .english-note {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-family: "JetBrains Mono", monospace;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            /* background-color: rgba(0,0,0,0.2); */
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .er-diagram .mermaid {
+            overflow-x: auto;
+            justify-content: center; 
+        }
+
+        /* Footer for the poster */
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .poster-grid {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>PROJECT ARCHITECTURE</h1>
+        <p class="subtitle">Auto Fill Forms V3.0 | Technical Design Overview</p>
+    </header>
+
+    <div class="poster-grid">
+        <!-- 1. System Architecture (Full Width) -->
+        <div class="diagram-section full-width">
+            <h2>
+                系统整体架构
+                <span class="english-note">System Architecture</span>
+            </h2>
+            <div class="mermaid">
+flowchart TB
+    subgraph ClientLayer ["🖥️ 客户端层 (Renderer Process)"]
+        Vue["Vue 3 前端应用"]
+        Store["Pinia 状态管理"]
+        Router["Vue Router 路由"]
+        Preload["Preload 预加载脚本<br/>(ContextBridge 安全桥接)"]
+    end
+
+    subgraph ApplicationLayer ["⚙️ 应用层 (Main Process)"]
+        IPC["IPC 主进程处理器"]
+        
+        subgraph ServiceModule ["核心服务模块 (Services)"]
+            AccService["Account 账号服务"]
+            FormService["Form 表单/模板服务"]
+            AutoService["AutoFill 自动化服务"]
+            DataService["Data 数据/日志服务"]
+        end
+        
+        Playwright["🎭 Playwright 自动化引擎"]
+    end
+
+    subgraph InfrastructureLayer ["💾 基础设施层 (Infrastructure)"]
+        SQLite[("SQLite 本地数据库")]
+        FileSystem["文件系统 (fs)"]
+        Browser["Chromium 浏览器实例"]
+        TargetWeb["🌐 目标表单网站"]
+    end
+
+    %% 通信流
+    Vue --> Store
+    Store --> Preload
+    Preload -- "IPC Invoke" --> IPC
+    IPC --> AccService
+    IPC --> FormService
+    IPC --> AutoService
+    IPC --> DataService
+
+    %% 数据访问
+    AccService --> SQLite
+    FormService --> SQLite
+    DataService --> SQLite
+    DataService --> FileSystem
+
+    %% 自动化流程
+    AutoService --> Playwright
+    Playwright --> Browser
+    Browser -- "Actions" --> TargetWeb
+
+    classDef container fill:#161b22,stroke:#30363d,stroke-width:2px,color:#c9d1d9;
+    classDef component fill:#0d1117,stroke:#58a6ff,stroke-width:1px,color:#c9d1d9;
+    classDef database fill:#0d1117,stroke:#e3b341,stroke-width:1px,color:#c9d1d9;
+    
+    class ClientLayer,ApplicationLayer,InfrastructureLayer,ServiceModule container;
+    class Vue,Store,Router,Preload,IPC,AccService,FormService,AutoService,DataService,Playwright,FileSystem,Browser,TargetWeb component;
+    class SQLite database;
+            </div>
+        </div>
+
+        <!-- 2. Database Design (Full Width) -->
+        <div class="diagram-section full-width er-diagram">
+            <h2>
+                数据库设计
+                <span class="english-note">Database Schema</span>
+            </h2>
+            <div class="mermaid">
+erDiagram
+    ACCOUNT_GROUPS ||--o{ ACCOUNTS : "包含"
+    FORM_FOLDERS ||--o{ FORM_TEMPLATES : "包含"
+    FORM_TEMPLATES ||--o{ FORM_FIELD_MAPPINGS : "拥有"
+    ACCOUNTS ||--o{ FILL_LOGS : "生成"
+    FORM_TEMPLATES ||--o{ FILL_LOGS : "生成"
+
+    ACCOUNT_GROUPS {
+        int id PK
+        string group_name "分组名称"
+    }
+
+    ACCOUNTS {
+        int id PK
+        int group_id FK
+        string blogger_name "博主名称"
+        string extra_json "JSON扩展"
+        int status "状态"
+    }
+
+    FORM_TEMPLATES {
+        int id PK
+        string template_name "模板名称"
+        string form_url "URL"
+    }
+
+    FORM_FIELD_MAPPINGS {
+        int id PK
+        string form_field_name "表单字段"
+        string account_field_name "账号字段"
+        bool is_auto_mapping "自动映射"
+    }
+
+    FILL_LOGS {
+        int id PK
+        string fill_result "结果"
+        string fail_reason "原因"
+    }
+            </div>
+        </div>
+
+        <!-- 3.1 Auto-Fill Flow -->
+        <div class="diagram-section">
+            <h2>
+                自动填表流程
+                <span class="english-note">Auto-Fill Process</span>
+            </h2>
+            <div class="mermaid">
+flowchart TD
+    Start([🚀 开始]) --> Init[初始化]
+    Init --> Filter[筛选账号]
+    Filter --> Loop{未执行?}
+    
+    Loop -- Yes --> Select[选账号]
+    Loop -- No --> End([🏁 结束])
+
+    Select --> Launch[启动浏览器]
+    Launch --> Navigate[跳转URL]
+    Navigate --> Check{加载成功?}
+    
+    Check -- No --> LogErr[记录错误]
+    LogErr --> Close[关闭]
+    Close --> Loop
+
+    Check -- Yes --> MapLoop{遍历字段}
+    
+    MapLoop --> Locate[🔍 定位]
+    Locate --> Found{存在?}
+    
+    Found -- Yes --> Fill[✍️ 填充]
+    Fill --> MapLoop
+    
+    Found -- No --> Skip[跳过/报错]
+    Skip --> MapLoop
+
+    MapLoop -- Done --> Verify[✅ 验证]
+    Verify --> Submit{自动提交?}
+    
+    Submit -- Yes --> DoSubmit[提交]
+    DoSubmit --> LogOk[记录成功]
+    LogOk --> Close
+            </div>
+        </div>
+
+        <!-- 3.2 Smart Location -->
+        <div class="diagram-section">
+            <h2>
+                智能定位策略
+                <span class="english-note">Smart Location</span>
+            </h2>
+            <div class="mermaid">
+flowchart TD
+    Input[输入字段名] --> S1{策略1: 文本匹配}
+    S1 -- OK --> Found([✅ 成功])
+    S1 -- Fail --> S2{策略2: Label关联}
+    
+    S2 -- OK --> Found
+    S2 -- Fail --> S3{策略3: Placeholder}
+    
+    S3 -- OK --> Found
+    S3 -- Fail --> S4{策略4: 属性匹配}
+    
+    S4 -- OK --> Found
+    S4 -- Fail --> Err([❌ 失败])
+            </div>
+        </div>
+
+        <!-- 3.3 IPC Sequence (Full Width) -->
+        <div class="diagram-section full-width">
+            <h2>
+                数据流与 IPC 通信
+                <span class="english-note">Data Flow Sequence</span>
+            </h2>
+            <div class="mermaid">
+sequenceDiagram
+    participant UI as Vue UI
+    participant Store as Pinia
+    participant Bridge as Preload
+    participant Main as Main Process
+    participant DB as SQLite
+
+    UI->>Store: fetchAccounts()
+    Store->>Bridge: window.electronAPI.getAll()
+    Bridge->>Main: ipc.invoke('account:getAll')
+    
+    activate Main
+    Main->>DB: SELECT * FROM accounts
+    DB-->>Main: Rows
+    
+    Main-->>Bridge: JSON Data
+    deactivate Main
+    
+    Bridge-->>Store: Promise Resolve
+    Store-->>UI: Update State
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Generated by Auto Fill Forms V3.0 Architecture Team</p>
+    </footer>
+
+</body>
+</html>
