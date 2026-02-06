@@ -43,7 +43,7 @@
 }
 
 /* Dark Mode Variables */
-html.dark {
+body.dark-theme {
   --bg-base: #000000;
   --text-primary: #f5f5f7;
   --text-secondary: #a1a1a6;
@@ -135,4 +135,37 @@ html.dark {
 @keyframes global-float {
   0% { transform: translate(0, 0) rotate(0deg); }
   100% { transform: translate(40px, 60px) rotate(15deg); }
+}
+
+/* Dialog - Glass Style */
+.el-dialog {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--glass-shadow);
+  
+  .el-dialog__header .el-dialog__title {
+    color: var(--text-primary);
+  }
+  .el-dialog__body {
+    color: var(--text-primary);
+  }
+  .el-dialog__footer {
+    border-top: 1px solid var(--glass-border);
+  }
+}
+
+/* Tooltip Styles - Light Mode (Global Default) */
+/* 用户要求：浅色模式下，悬停出现的框（Tooltip）背景应该是白色，字体是黑色 */
+.el-popper.is-dark {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #1d1d1f !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  
+  .el-popper__arrow::before {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
 }

@@ -67,7 +67,9 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
     login: (credentials) => electron.ipcRenderer.invoke("auth:login", credentials),
     register: (userData) => electron.ipcRenderer.invoke("auth:register", userData),
     updateProfile: (userId, data) => electron.ipcRenderer.invoke("auth:updateProfile", userId, data),
-    saveAvatar: (userId, base64Data) => electron.ipcRenderer.invoke("auth:saveAvatar", userId, base64Data)
+    saveAvatar: (userId, base64Data) => electron.ipcRenderer.invoke("auth:saveAvatar", userId, base64Data),
+    verifyReset: (username, phone) => electron.ipcRenderer.invoke("auth:verifyReset", username, phone),
+    resetPassword: (userId, newPassword) => electron.ipcRenderer.invoke("auth:resetPassword", userId, newPassword)
   },
   excel: {
     importAccounts: () => electron.ipcRenderer.invoke("excel:importAccounts"),

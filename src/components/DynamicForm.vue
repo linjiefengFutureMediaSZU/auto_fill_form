@@ -1,6 +1,6 @@
 <template>
   <div class="dynamic-form">
-    <!-- 基础信息 -->
+    <el-collapse v-model="activeNames">
     <el-collapse-item title="基础信息" name="basic">
       <!-- 固定字段 -->
       <el-form-item label="博主姓名" prop="blogger_name">
@@ -29,35 +29,38 @@
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('basic')" :key="field.id">
         <el-form-item :label="field.label" :prop="field.name">
-          <component :is="getFieldComponent(field.type)" v-bind="getFieldProps(field)" />
+          <component :is="getFieldComponent(field.type)" v-bind="getFieldProps(field)">
+            <template v-if="field.type === 'select' || field.type === 'multiple_select'">
+              <el-option
+                v-for="opt in getFieldOptions(field)"
+                :key="opt"
+                :label="opt"
+                :value="opt"
+              />
+            </template>
+          </component>
         </el-form-item>
       </template>
     </el-collapse-item>
 
-    <!-- 运营数据 -->
     <el-collapse-item title="运营数据" name="data">
-      <!-- 固定字段 -->
-      <el-form-item label="粉丝量" prop="fans_count">
-        <el-input-number v-model="formData.fans_count" :min="0" placeholder="请输入粉丝量" />
-      </el-form-item>
-      <el-form-item label="平均阅读量">
-        <el-input-number v-model="formData.avg_read_count" :min="0" placeholder="请输入平均阅读量" />
-      </el-form-item>
-      <el-form-item label="平均点赞量">
-        <el-input-number v-model="formData.like_count" :min="0" placeholder="请输入平均点赞量" />
-      </el-form-item>
-      <el-form-item label="平均评论量">
-        <el-input-number v-model="formData.comment_count" :min="0" placeholder="请输入平均评论量" />
-      </el-form-item>
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('data')" :key="field.id">
         <el-form-item :label="field.label" :prop="field.name">
-          <component :is="getFieldComponent(field.type)" v-bind="getFieldProps(field)" />
+          <component :is="getFieldComponent(field.type)" v-bind="getFieldProps(field)">
+            <template v-if="field.type === 'select' || field.type === 'multiple_select'">
+              <el-option
+                v-for="opt in getFieldOptions(field)"
+                :key="opt"
+                :label="opt"
+                :value="opt"
+              />
+            </template>
+          </component>
         </el-form-item>
       </template>
     </el-collapse-item>
 
-    <!-- 合作信息 -->
     <el-collapse-item title="合作信息" name="cooperation">
       <!-- 固定字段 -->
       <el-form-item label="单条报价">
@@ -67,43 +70,41 @@
         </div>
         <el-button type="primary" size="small" @click="addQuoteItem" style="margin-top: 10px;">添加</el-button>
       </el-form-item>
-      <el-form-item label="套餐报价">
-        <el-input-number v-model="formData.quote_package" :min="0" :step="0.01" placeholder="请输入套餐报价" />
-      </el-form-item>
-      <el-form-item label="合作形式">
-        <el-select v-model="formData.cooperation_type" multiple placeholder="请选择合作形式">
-          <el-option label="图文" value="图文" />
-          <el-option label="视频" value="视频" />
-          <el-option label="直播" value="直播" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="是否接受置换">
-        <el-switch v-model="formData.is_swap" />
-      </el-form-item>
-      <el-form-item label="联系方式">
-        <el-input v-model="formData.contact" placeholder="请输入联系方式" />
-      </el-form-item>
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('cooperation')" :key="field.id">
         <el-form-item :label="field.label" :prop="field.name">
-          <component :is="getFieldComponent(field.type)" v-bind="getFieldProps(field)" />
+          <component :is="getFieldComponent(field.type)" v-bind="getFieldProps(field)">
+            <template v-if="field.type === 'select' || field.type === 'multiple_select'">
+              <el-option
+                v-for="opt in getFieldOptions(field)"
+                :key="opt"
+                :label="opt"
+                :value="opt"
+              />
+            </template>
+          </component>
         </el-form-item>
       </template>
     </el-collapse-item>
 
-    <!-- 备注信息 -->
     <el-collapse-item title="备注信息" name="remark">
-      <!-- 固定字段 -->
-      <el-form-item label="备注">
-        <el-input type="textarea" v-model="formData.remark" placeholder="请输入备注信息" />
-      </el-form-item>
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('remark')" :key="field.id">
         <el-form-item :label="field.label" :prop="field.name">
-          <component :is="getFieldComponent(field.type)" v-bind="getFieldProps(field)" />
+          <component :is="getFieldComponent(field.type)" v-bind="getFieldProps(field)">
+            <template v-if="field.type === 'select' || field.type === 'multiple_select'">
+              <el-option
+                v-for="opt in getFieldOptions(field)"
+                :key="opt"
+                :label="opt"
+                :value="opt"
+              />
+            </template>
+          </component>
         </el-form-item>
       </template>
     </el-collapse-item>
+    </el-collapse>
   </div>
 </template>
 
@@ -127,6 +128,7 @@ const emit = defineEmits(['update:modelValue'])
 
 // 响应式数据
 const formData = ref({ ...props.modelValue })
+const activeNames = ref(['basic', 'data', 'cooperation', 'remark'])
 
 // 计算属性
 const getFieldsByGroup = (group) => {
@@ -139,6 +141,7 @@ const getFieldComponent = (type) => {
     text: 'el-input',
     number: 'el-input-number',
     select: 'el-select',
+    multiple_select: 'el-select',
     switch: 'el-switch'
   }
   return componentMap[type] || 'el-input'
@@ -150,41 +153,52 @@ const getFieldProps = (field) => {
     formData.value[field.name] = field.defaultValue || ''
   }
 
+  const baseProps = {
+    modelValue: formData.value[field.name],
+    placeholder: field.placeholder || `请输入${field.label}`,
+    'onUpdate:modelValue': (value) => {
+      formData.value[field.name] = value
+      emit('update:modelValue', { ...formData.value })
+    }
+  }
+
   const propsMap = {
     text: {
-      modelValue: formData.value[field.name],
-      placeholder: field.placeholder || `请输入${field.label}`,
-      onChange: (value) => {
-        formData.value[field.name] = value
-        emit('update:modelValue', { ...formData.value })
-      }
+      ...baseProps
     },
     number: {
+      ...baseProps,
       modelValue: formData.value[field.name] || 0,
-      placeholder: field.placeholder || `请输入${field.label}`,
-      min: 0,
-      onChange: (value) => {
-        formData.value[field.name] = value
-        emit('update:modelValue', { ...formData.value })
-      }
+      min: 0
     },
     select: {
-      modelValue: formData.value[field.name] || '',
+      ...baseProps,
+      placeholder: field.placeholder || `请选择${field.label}`
+    },
+    multiple_select: {
+      ...baseProps,
       placeholder: field.placeholder || `请选择${field.label}`,
-      onChange: (value) => {
-        formData.value[field.name] = value
-        emit('update:modelValue', { ...formData.value })
-      }
+      multiple: true,
+      'collapse-tags': true
     },
     switch: {
       modelValue: formData.value[field.name] || false,
-      onChange: (value) => {
+      'onUpdate:modelValue': (value) => {
         formData.value[field.name] = value
         emit('update:modelValue', { ...formData.value })
       }
     }
   }
   return propsMap[field.type] || propsMap.text
+}
+
+const getFieldOptions = (field) => {
+  if (!field.options) return []
+  if (Array.isArray(field.options)) return field.options
+  if (typeof field.options === 'string') {
+    return field.options.split(',').map(opt => opt.trim()).filter(opt => opt)
+  }
+  return []
 }
 
 // 单条报价相关方法

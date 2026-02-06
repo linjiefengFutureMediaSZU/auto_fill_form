@@ -10,6 +10,7 @@ import { MigrationService } from './services/MigrationService.js';
 import { AutoFillService } from './services/AutoFillService.js';
 import { ExcelService } from './services/ExcelService.js';
 import { UserService } from './services/UserService.js';
+import { seedData } from './seed.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,7 +18,13 @@ const __dirname = path.dirname(__filename);
 // 初始化数据库
 initDatabase()
   .then(() => UserService.initAdmin())
+  .then(() => seedData())
   .catch(console.error);
+
+// 屏蔽安全警告（仅在开发环境，因为 Vite 需要 unsafe-eval）
+if (process.env.VITE_DEV_SERVER_URL) {
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+}
 
 function createWindow() {
   const win = new BrowserWindow({

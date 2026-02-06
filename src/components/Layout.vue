@@ -213,16 +213,31 @@ onUnmounted(() => {
     margin: 16px 0 16px 16px;
     height: calc(100vh - 32px);
     
+    /* 折叠状态下的 Logo 样式修正 */
     &.collapsed {
       width: 64px;
+      align-items: center; /* 确保所有直接子元素水平居中 */
       
       .logo-text {
-        display: none;
+        display: none !important;
       }
       
       .sidebar-header {
-        padding: 0;
+        padding: 0 !important;
+        margin: 0 !important; /* 去除 margin，完全依赖 Flex 居中 */
         justify-content: center;
+        width: 44px !important;
+        border-bottom: none !important; /* 折叠时去掉分割线，更干净 */
+        
+        /* 确保 Logo 图片本身也居中 */
+        .logo {
+          margin: 0 !important;
+        }
+      }
+      
+      /* 确保 collapse-btn 在折叠状态下也能正确定位 */
+      .collapse-btn {
+        margin: 16px 0 !important; /* 去除 auto margin，完全依赖 Flex 居中 */
       }
     }
     
@@ -230,13 +245,15 @@ onUnmounted(() => {
       height: 60px;
       display: flex;
       align-items: center;
-      padding: 0 20px;
+      justify-content: center;
+      margin: 0 10px;
+      padding: 0;
       border-bottom: 1px solid rgba(0, 0, 0, 0.05);
       
       .logo {
         width: 32px;
         height: 32px;
-        border-radius: 8px;
+        border-radius: var(--border-radius-lg);
       }
       
       .logo-text {
@@ -252,23 +269,30 @@ onUnmounted(() => {
       flex: 1;
       border-right: none;
       background-color: transparent !important;
+      width: 100%;
+      padding: 0 !important; /* 移除任何默认内边距 */
+      margin: 0 !important;
       
       :deep(.el-menu-item) {
-        margin: 4px 8px;
-        border-radius: 8px;
+        margin: 4px 10px;
+        border-radius: var(--border-radius-lg);
         height: 44px;
         line-height: 44px;
         color: var(--text-secondary);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         
         &:hover {
           background-color: rgba(0, 0, 0, 0.05);
           color: var(--text-primary);
+          transform: translateX(2px);
         }
         
         &.is-active {
           background-color: var(--accent-color);
           color: #ffffff;
           box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+          font-weight: 500;
+          transform: translateX(2px);
           
           .el-icon {
             color: #ffffff;
@@ -276,24 +300,89 @@ onUnmounted(() => {
         }
         
         .el-icon {
-          margin-right: 8px;
+          margin-right: 10px;
           color: var(--text-secondary);
+          font-size: 18px;
+          transition: margin 0.3s;
+        }
+      }
+      
+      /* 折叠状态下的菜单样式 */
+      &.el-menu--collapse {
+        width: 100%;
+        padding: 0 !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* 暴力居中所有子元素 */
+        
+        :deep(.el-menu-item) {
+          margin: 4px 0 !important; /* 不再依赖 auto，由父级控制 */
+          padding: 0 !important;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 44px; /* 固定宽度，变成正方形 */
+          height: 44px; /* 固定高度，变成正方形 */
+          border-radius: var(--border-radius-lg); /* 保持圆角 */
+          
+          /* 移除可能导致偏移的 transform */
+          transform: none !important;
+          
+          .el-icon {
+            margin-right: 0;
+            margin-left: 0; /* 确保无左右边距 */
+            font-size: 20px;
+            /* 确保图标绝对居中 */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+          }
+          
+          &:hover, &.is-active {
+            transform: none !important;
+            /* 在折叠状态下，激活样式也要居中 */
+            background-color: var(--accent-color);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+          }
+          
+          /* 修复折叠时文字可能残留的问题 */
+          span, .el-tooltip__trigger {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 0 !important;
+          }
         }
       }
     }
     
     .collapse-btn {
-      height: 40px;
+      height: 32px;
+      width: 32px;
+      margin: 16px auto; /* 自动居中 */
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--glass-border);
       color: var(--text-secondary);
+      transition: all 0.3s ease;
       
       &:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-        color: var(--text-primary);
+        background-color: var(--accent-color);
+        color: #ffffff;
+        transform: scale(1.1);
+        border-color: var(--accent-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      
+      .el-icon {
+        font-size: 14px;
       }
     }
   }
@@ -367,7 +456,7 @@ onUnmounted(() => {
       }
       &::-webkit-scrollbar-thumb {
         background-color: rgba(0, 0, 0, 0.1);
-        border-radius: 3px;
+        border-radius: var(--border-radius-md);
       }
     }
   }

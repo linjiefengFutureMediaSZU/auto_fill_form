@@ -31,7 +31,7 @@
     <div class="form-list-container">
       <!-- 左列：日期文件夹管理 -->
       <div class="folder-management">
-        <div class="card">
+        <div class="glass-card">
           <div class="section-header">
             <h3 class="subtitle">文件夹管理</h3>
             <div class="header-actions">
@@ -95,7 +95,7 @@
 
       <!-- 右列：表单链接列表 -->
       <div class="form-link-list">
-        <div class="card">
+        <div class="glass-card">
           <div class="section-header">
             <h3 class="subtitle">
               {{ selectedFolder ? selectedFolder.folder_name : '全部表单' }}
@@ -751,7 +751,7 @@ onMounted(() => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-lg);
-    padding: 0 var(--spacing-xs);
+    padding-left: var(--spacing-sm);
 
     .title {
       font-size: 24px;
@@ -769,7 +769,7 @@ onMounted(() => {
         width: 4px;
         height: 20px;
         background: var(--primary-color);
-        border-radius: 2px;
+        border-radius: var(--border-radius-sm);
       }
     }
 
@@ -797,21 +797,6 @@ onMounted(() => {
       min-width: 0; // 防止 flex 子项溢出
       display: flex;
       flex-direction: column;
-    }
-  }
-
-  .card {
-    background: var(--bg-color-white);
-    border-radius: var(--border-radius-xl);
-    box-shadow: var(--box-shadow-light);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    transition: box-shadow 0.3s ease;
-    border: 1px solid var(--border-color-lighter);
-
-    &:hover {
-      box-shadow: var(--box-shadow);
     }
   }
 
@@ -849,11 +834,11 @@ onMounted(() => {
     }
     &::-webkit-scrollbar-thumb {
       background: rgba(0, 0, 0, 0.1);
-      border-radius: 4px;
+      border-radius: var(--border-radius-md);
     }
     &:hover::-webkit-scrollbar-thumb {
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
+      border-radius: var(--border-radius-md);
     }
   }
 
@@ -875,7 +860,7 @@ onMounted(() => {
     align-items: center;
     width: 100%;
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: var(--border-radius-lg);
     cursor: pointer;
     transition: all 0.2s ease;
     color: var(--text-color-regular);
@@ -906,7 +891,7 @@ onMounted(() => {
         width: 3px;
         height: 16px;
         background-color: var(--primary-color);
-        border-radius: 0 2px 2px 0;
+        border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
       }
     }
 
@@ -930,7 +915,7 @@ onMounted(() => {
       color: var(--text-color-secondary);
       background: var(--bg-color-light);
       padding: 2px 6px;
-      border-radius: 10px;
+      border-radius: var(--border-radius-xl);
       margin-left: 8px;
     }
 

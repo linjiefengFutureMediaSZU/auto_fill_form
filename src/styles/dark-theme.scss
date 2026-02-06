@@ -1,372 +1,258 @@
-/* 全局深色模式样式 */
+/* 全局深色模式样式 - Adapted for Apple Theme */
 body.dark-theme {
-  /* 重新定义 CSS 变量 */
-  --primary-color: #409EFF;
-  --success-color: #67C23A;
-  --warning-color: #E6A23C;
-  --danger-color: #F56C6C;
-  --info-color: #909399;
+  /* Element Plus 变量适配 - 使用透明或 Glass 风格 */
+  --el-bg-color: transparent;
+  --el-bg-color-page: transparent;
+  --el-bg-color-overlay: var(--glass-bg);
   
-  /* Element Plus 变量覆盖 - 核心 */
-  --el-bg-color: #1a1a1a;
-  --el-bg-color-page: #1a1a1a;
-  --el-bg-color-overlay: #242424;
-  --el-text-color-primary: #e0e0e0;
-  --el-text-color-regular: #b0b0b0;
-  --el-text-color-secondary: #909399;
-  --el-text-color-placeholder: #606266;
-  --el-border-color: #333;
-  --el-border-color-light: #333;
-  --el-border-color-lighter: #333;
-  --el-border-color-extra-light: #333;
-  --el-fill-color-blank: #2a2a2a;
-  --el-fill-color-light: #333;
-  --el-fill-color-lighter: #333;
-  --el-fill-color-extra-light: #333;
+  /* Global Custom Variables Overrides */
+  --bg-color: transparent;
+  --bg-color-white: var(--glass-bg);
+  --bg-color-light: rgba(255, 255, 255, 0.05);
+  
+  --text-color-primary: var(--text-primary);
+  --text-color-regular: var(--text-secondary);
+  --text-color-secondary: var(--text-secondary);
+  --text-color-placeholder: var(--input-placeholder);
+  
+  --el-text-color-primary: var(--text-primary);
+  --el-text-color-regular: var(--text-secondary);
+  --el-text-color-secondary: var(--text-secondary);
+  --el-text-color-placeholder: var(--input-placeholder);
+  
+  --el-border-color: var(--glass-border);
+  --el-border-color-light: var(--glass-border);
+  --el-border-color-lighter: var(--glass-border);
+  --el-border-color-extra-light: var(--glass-border);
+  
+  --el-fill-color-blank: transparent;
+  --el-fill-color-light: rgba(255, 255, 255, 0.05);
+  --el-fill-color-lighter: rgba(255, 255, 255, 0.05);
+  
   --el-mask-color: rgba(0, 0, 0, 0.8);
-  --el-mask-color-extra-light: rgba(0, 0, 0, 0.3);
 
-  /* 背景颜色 */
-  --bg-color: #1a1a1a;
-  --bg-color-white: #242424;
-  --bg-color-light: #2a2a2a;
-  
-  /* 文字颜色 */
-  --text-color-primary: #e0e0e0;
-  --text-color-regular: #b0b0b0;
-  --text-color-secondary: #909399;
-  --text-color-placeholder: #606266;
-  
-  /* 边框颜色 */
-  --border-color: #333;
-  --border-color-light: #333;
-  --border-color-lighter: #333;
-  
-  /* 阴影 */
-  --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  --box-shadow-light: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --box-shadow-dark: 0 4px 12px rgba(0, 0, 0, 0.6);
-
-  background-color: var(--bg-color);
-  color: var(--text-color-primary);
-
-  /* Element Plus 全局组件适配 */
-  
-  /* Dialog */
+  /* Dialog - Glass Style */
   .el-dialog {
-    background-color: #242424;
-    border: 1px solid #333;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--glass-shadow);
     
-    .el-dialog__header {
-      .el-dialog__title {
-        color: #e0e0e0;
-      }
+    .el-dialog__header .el-dialog__title {
+      color: var(--text-primary);
     }
-    
     .el-dialog__body {
-      color: #e0e0e0;
+      color: var(--text-primary);
     }
-    
     .el-dialog__footer {
-      border-top: 1px solid #333;
+      border-top: 1px solid var(--glass-border);
     }
   }
 
-  /* Message Box */
-  .el-message-box {
-    background-color: #242424;
-    border: 1px solid #333;
-    
-    .el-message-box__title {
-      color: #e0e0e0;
-    }
-    
-    .el-message-box__content {
-      color: #e0e0e0;
-    }
-  }
-
-  /* Form Elements */
+  /* Inputs - Glass Style */
   .el-input__wrapper,
   .el-textarea__inner,
   .el-select__wrapper {
-    background-color: #2a2a2a;
-    box-shadow: 0 0 0 1px #333 inset;
+    background-color: var(--input-bg) !important;
+    box-shadow: none !important;
+    border: 1px solid var(--input-border);
     
     &:hover {
-      box-shadow: 0 0 0 1px #444 inset;
+      border-color: var(--input-focus-border);
     }
     
-    &.is-focus,
-    &.is-focused {
-      box-shadow: 0 0 0 1px #409EFF inset;
+    &.is-focus, &.is-focused {
+      border-color: var(--input-focus-border);
+      box-shadow: var(--input-focus-shadow) !important;
     }
     
     .el-input__inner {
-      color: #e0e0e0;
-    }
-  }
-
-  .el-select-dropdown {
-    background-color: #242424;
-    border-color: #333;
-    
-    .el-select-dropdown__item {
-      color: #e0e0e0;
-      
-      &.hover, &:hover {
-        background-color: #333;
-      }
-      
-      &.selected {
-        background-color: #409EFF;
-        color: #fff;
-      }
-    }
-  }
-
-  /* Picker/Popper */
-  .el-picker-panel {
-    background-color: #242424;
-    border-color: #333;
-    color: #e0e0e0;
-    
-    .el-date-table th {
-      border-bottom-color: #333;
-    }
-    
-    .el-date-table td.next-month,
-    .el-date-table td.prev-month {
-      color: #666;
-    }
-  }
-
-  /* Popover */
-  .el-popover {
-    background-color: #242424;
-    border-color: #333;
-    color: #e0e0e0;
-    
-    .el-popover__title {
-      color: #e0e0e0;
-    }
-  }
-
-  /* Button */
-  .el-button:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--info) {
-    background-color: #2a2a2a;
-    border-color: #333;
-    color: #e0e0e0;
-    
-    &:hover {
-      background-color: #333;
-      border-color: #444;
-      color: #409EFF;
-    }
-  }
-
-  /* Checkbox */
-  .el-checkbox {
-    color: #e0e0e0;
-  }
-
-  /* Collapse */
-  .el-collapse {
-    border-color: #333;
-
-    .el-collapse-item__header {
-      background-color: #2a2a2a;
-      color: #e0e0e0;
-      border-color: #333;
-
-      &.is-active {
-        border-bottom-color: #333;
-      }
-    }
-
-    .el-collapse-item__wrap {
-      background-color: #242424;
-      border-color: #333;
-    }
-
-    .el-collapse-item__content {
-      color: #e0e0e0;
-      background-color: #242424;
-    }
-  }
-
-  /* Tree */
-  .el-tree {
-    background-color: #242424;
-    color: #e0e0e0;
-    
-    .el-tree-node__content {
-      &:hover {
-        background-color: #2c2c2c;
-      }
-    }
-    
-    .el-tree-node.is-current > .el-tree-node__content {
-      background-color: #2a2a2a;
+      color: var(--input-text);
     }
   }
   
-  /* Empty */
-  .el-empty {
-    .el-empty__description p {
-      color: #909399;
+  /* Dropdowns */
+  .el-select-dropdown,
+  .el-picker-panel,
+  .el-popover {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border) !important;
+    
+    .el-select-dropdown__item {
+      color: var(--text-primary);
+      &.hover, &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+      &.selected {
+        color: #fff;
+        background-color: var(--accent-color);
+      }
     }
   }
 
-  /* Table */
+  /* Table - Transparent/Glass */
   .el-table {
-    --el-table-border-color: #333;
-    --el-table-header-bg-color: #1e1e1e;
-    --el-table-header-text-color: #b0b0b0;
-    --el-table-text-color: #e0e0e0;
-    --el-table-bg-color: #242424;
-    --el-table-tr-bg-color: #242424;
-    --el-table-row-hover-bg-color: #2c2c2c;
-
-    background-color: #242424;
-    color: #e0e0e0;
+    --el-table-bg-color: transparent;
+    --el-table-tr-bg-color: transparent;
+    --el-table-header-bg-color: rgba(255, 255, 255, 0.05);
+    --el-table-header-text-color: var(--text-secondary);
+    --el-table-text-color: var(--text-primary);
+    --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.1);
+    --el-table-border-color: var(--glass-border);
+    
+    background-color: transparent !important;
+    color: var(--text-primary);
     
     th.el-table__cell {
-      background-color: #1e1e1e;
-      color: #b0b0b0;
-      border-bottom-color: #333;
+      background-color: rgba(255, 255, 255, 0.05) !important;
     }
     
     .el-table__row {
-      background-color: #242424;
-      color: #e0e0e0;
-      
-      &:hover > td.el-table__cell {
-        background-color: #2c2c2c !important;
-      }
-    }
-    
-    td.el-table__cell {
-      border-bottom-color: #333;
-    }
-
-    .el-table__inner-wrapper::before {
-      background-color: #333;
+      background-color: transparent !important;
     }
   }
 
   /* Pagination */
   .el-pagination {
-    --el-pagination-bg-color: #242424;
-    --el-pagination-text-color: #e0e0e0;
-    --el-pagination-button-color: #e0e0e0;
-    --el-pagination-button-disabled-color: #606266;
-    --el-pagination-button-bg-color: #2a2a2a;
-    --el-pagination-hover-color: #409EFF;
-
-    .el-pager li {
-      background: #2a2a2a;
-      color: #e0e0e0;
-      
-      &.is-active {
-        background-color: #409EFF;
-        color: #fff;
-      }
-      
-      &:hover:not(.is-active) {
-        color: #409EFF;
-      }
-    }
+    --el-pagination-bg-color: transparent;
+    --el-pagination-text-color: var(--text-primary);
+    --el-pagination-button-bg-color: transparent;
     
     button {
-      background-color: #2a2a2a;
-      color: #e0e0e0;
-      
-      &:disabled {
-        background-color: #2a2a2a;
-        color: #606266;
-      }
-    }
-  }
-
-  /* Card */
-  .card, .stat-card, .info-card, .security-card, .el-card, .login-card {
-    background-color: #242424;
-    border-color: #333;
-    color: #e0e0e0;
-    
-    .el-card__header {
-      border-bottom-color: #333;
-      color: #e0e0e0;
+      background-color: transparent !important;
     }
     
-    .el-card__body {
-      background-color: #242424;
-      color: #e0e0e0;
-    }
-  }
-
-  /* Tabs */
-  .el-tabs {
-    --el-text-color-primary: var(--text-color-primary);
-    --el-text-color-regular: var(--text-color-regular);
-    
-    .el-tabs__item {
-      color: var(--text-color-regular);
+    .el-pager li {
+      background-color: transparent !important;
       
       &.is-active {
-        color: var(--primary-color);
+        background-color: var(--accent-color) !important;
+        color: #fff;
+      }
+    }
+  }
+
+  /* 修复 el-tooltip 触发时的 aria-describedby 导致的样式问题 */
+  .el-button[aria-describedby] {
+    &:hover, &:focus {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* 强制去除可能的白色遮罩或背景 */
+    &.is-plain {
+      &::before, &::after {
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+    }
+  }
+
+  /* Buttons - Dark Mode Adaptation */
+  .el-button {
+    &.is-plain {
+      --el-button-hover-text-color: #ffffff !important;
+      
+      /* Primary (Blue) */
+      &.el-button--primary {
+        --el-button-text-color: #0a84ff;
+        --el-button-bg-color: rgba(10, 132, 255, 0.15);
+        --el-button-border-color: rgba(10, 132, 255, 0.3);
+        --el-button-hover-bg-color: #0a84ff;
+        --el-button-hover-border-color: #0a84ff;
+        
+        &:hover, &:focus, &[aria-describedby] {
+          background-color: #0a84ff !important;
+          border-color: #0a84ff !important;
+          color: #ffffff !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
       }
       
-      &:hover {
-        color: var(--text-color-primary);
+      /* Success (Green) */
+      &.el-button--success {
+        --el-button-text-color: #32d74b;
+        --el-button-bg-color: rgba(50, 215, 75, 0.15);
+        --el-button-border-color: rgba(50, 215, 75, 0.3);
+        --el-button-hover-bg-color: #32d74b;
+        --el-button-hover-border-color: #32d74b;
+        
+        &:hover, &:focus, &[aria-describedby] {
+          background-color: #32d74b !important;
+          border-color: #32d74b !important;
+          color: #ffffff !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
       }
-    }
-    
-    .el-tabs__nav-wrap::after {
-      background-color: var(--border-color);
-    }
-  }
-  
-  /* Empty */
-  .el-empty {
-    .el-empty__description p {
-      color: #b0b0b0;
-    }
-  }
-  
-  /* Chart Container */
-  .chart-container {
-    background-color: #242424 !important;
-  }
-  
-  /* Common Text Colors */
-  .title, .subtitle, .page-title, .section-title, .manual-title {
-    color: #e0e0e0 !important;
-  }
-  
-  .page-description, .form-tip, .unit, .feedback-tip {
-    color: #b0b0b0 !important;
-  }
-  
-  /* Info Item (Profile) */
-  .info-item {
-    background-color: #2a2a2a !important;
-    
-    &:hover {
-      background-color: #333 !important;
-    }
-    
-    .info-label {
-      color: #b0b0b0 !important;
-    }
-    
-    .info-value {
-      color: #e0e0e0 !important;
       
-      &.unset {
-        color: #808080 !important;
+      /* Warning (Orange) */
+      &.el-button--warning {
+        --el-button-text-color: #ff9f0a;
+        --el-button-bg-color: rgba(255, 159, 10, 0.15);
+        --el-button-border-color: rgba(255, 159, 10, 0.3);
+        --el-button-hover-bg-color: #ff9f0a;
+        --el-button-hover-border-color: #ff9f0a;
+        
+        &:hover, &:focus, &[aria-describedby] {
+          background-color: #ff9f0a !important;
+          border-color: #ff9f0a !important;
+          color: #ffffff !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
       }
+      
+      /* Danger (Red) */
+      &.el-button--danger {
+        --el-button-text-color: #ff453a;
+        --el-button-bg-color: rgba(255, 69, 58, 0.15);
+        --el-button-border-color: rgba(255, 69, 58, 0.3);
+        --el-button-hover-bg-color: #ff453a;
+        --el-button-hover-border-color: #ff453a;
+        
+        &:hover, &:focus, &[aria-describedby] {
+          background-color: #ff453a !important;
+          border-color: #ff453a !important;
+          color: #ffffff !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+      }
+      
+      /* Info (Gray) */
+      &.el-button--info {
+        --el-button-text-color: #8e8e93;
+        --el-button-bg-color: rgba(142, 142, 147, 0.15);
+        --el-button-border-color: rgba(142, 142, 147, 0.3);
+        --el-button-hover-bg-color: #8e8e93;
+        --el-button-hover-border-color: #8e8e93;
+        
+        &:hover, &:focus, &[aria-describedby] {
+          background-color: #8e8e93 !important;
+          border-color: #8e8e93 !important;
+          color: #ffffff !important;
+          outline: none !important;
+          box-shadow: none !important;
+        }
+      }
+    }
+  }
+
+  /* Tooltip Styles - Dark Mode */
+  /* 用户要求：深色模式下，悬停出现的框（Tooltip）背景应该是黑色，字体是白色 */
+  .el-popper.is-dark, .el-popper.is-light {
+    background: #1c1c1e !important; /* Apple Dark Grey */
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    
+    .el-popper__arrow::before {
+      background: #1c1c1e !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
     }
   }
 }

@@ -1,10 +1,10 @@
 <template>
-  <div class="forget-container" :class="{ 'is-dark': isDarkTheme }">
-    <!-- Liquid Background Orbs -->
-    <div class="liquid-bg">
-      <div class="orb orb-1"></div>
-      <div class="orb orb-2"></div>
-      <div class="orb orb-3"></div>
+  <div class="forget-container">
+    <!-- Global Liquid Background -->
+    <div class="liquid-bg-container">
+      <div class="liquid-bg-orb orb-1"></div>
+      <div class="liquid-bg-orb orb-2"></div>
+      <div class="liquid-bg-orb orb-3"></div>
     </div>
 
     <div class="forget-card">
@@ -109,64 +109,75 @@
             :loading="loading"
             @click="handleReset"
           >
-            确认重置
+            重置密码
           </el-button>
         </el-form-item>
       </el-form>
-      
-      <!-- 返回登录 -->
+
+      <!-- 底部链接 -->
       <div class="forget-footer">
-        <el-button link type="info" @click="goBack">
-          返回登录
-        </el-button>
+        <el-link type="info" @click="goBack">返回登录</el-link>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Lock, Iphone } from '@element-plus/icons-vue'
+import { User, Iphone, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useSettingsStore } from '../../stores/settings'
 
 const router = useRouter()
+const settingsStore = useSettingsStore()
+
+const isDarkTheme = computed(() => settingsStore.general.theme === 'dark')
+
 const activeStep = ref(0)
 const loading = ref(false)
+const verifyFormRef = ref(null)
+const resetFormRef = ref(null)
 const userId = ref(null)
 
-// 验证表单
-const verifyFormRef = ref(null)
+// 表单数据
 const verifyForm = reactive({
   username: '',
   phone: ''
 })
 
-const verifyRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  phone: [{ required: true, message: '请输入手机号', trigger: 'blur' }]
-}
-
-// 重置密码表单
-const resetFormRef = ref(null)
 const resetForm = reactive({
   password: '',
   confirmPassword: ''
 })
 
+// 验证规则
+const verifyRules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ]
+}
+
 const validatePass2 = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('请再次输入密码'))
   } else if (value !== resetForm.password) {
-    callback(new Error('两次输入密码不一致!'))
+    callback(new Error('两次输入密码不一致'))
   } else {
     callback()
   }
 }
 
 const resetRules = {
-  password: [{ required: true, message: '请输入新密码', trigger: 'blur' }],
-  confirmPassword: [{ validator: validatePass2, trigger: 'blur' }]
+  password: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能小于6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { validator: validatePass2, trigger: 'blur' }
+  ]
 }
 
 // 验证身份
@@ -177,20 +188,22 @@ const handleVerify = async () => {
     await verifyFormRef.value.validate()
     loading.value = true
     
-    const result = await window.electronAPI.auth.verifyReset(
-      verifyForm.username,
-      verifyForm.phone
-    )
+    // 调用验证接口
+    const result = await window.electronAPI.auth.verifyUser({
+      username: verifyForm.username,
+      phone: verifyForm.phone
+    })
     
     if (result.success) {
       userId.value = result.userId
       activeStep.value = 1
-      ElMessage.success('验证通过，请设置新密码')
+      ElMessage.success('验证成功，请设置新密码')
     } else {
-      ElMessage.error(result.message || '验证失败')
+      ElMessage.error(result.message || '验证失败，用户信息不匹配')
     }
   } catch (error) {
     console.error('Verify error:', error)
+    // validate throws error on failure
     if (error.message && !error.message.includes('validate')) {
        ElMessage.error('验证过程中发生错误')
     }
@@ -234,24 +247,31 @@ const goBack = () => {
 </script>
 
 <style scoped lang="scss">
+/* Apple Style Liquid Design System */
 .forget-container {
+  position: relative;
   width: 100vw;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--el-bg-color);
-  background-image: radial-gradient(var(--el-color-primary-light-9) 2px, transparent 2px);
-  background-size: 32px 32px;
+  overflow: hidden;
+  transition: all 0.5s ease;
 }
 
 .forget-card {
+  position: relative;
+  z-index: 1;
   width: 400px;
   padding: 40px;
-  background: var(--el-bg-color-overlay);
-  border-radius: 16px;
-  box-shadow: var(--el-box-shadow-light);
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-round);
+  box-shadow: var(--glass-shadow);
   text-align: center;
+  transition: all 0.3s ease;
 }
 
 .forget-header {
@@ -260,14 +280,15 @@ const goBack = () => {
 
 .forget-title {
   font-size: 24px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
+  font-weight: 700;
+  color: var(--text-primary);
   margin: 0 0 10px;
+  letter-spacing: -0.5px;
 }
 
 .forget-subtitle {
   font-size: 14px;
-  color: var(--el-text-color-secondary);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -286,5 +307,31 @@ const goBack = () => {
 
 .forget-footer {
   margin-top: 20px;
+}
+
+/* Input Styles Overrides */
+:deep(.el-input__wrapper) {
+  background-color: var(--input-bg) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--input-border);
+  border-radius: var(--border-radius-xl);
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+  
+  &.is-focus {
+    background-color: var(--glass-bg) !important;
+    border-color: var(--input-focus-border) !important;
+    box-shadow: var(--input-focus-shadow) !important;
+  }
+  
+  &:hover:not(.is-focus) {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+  }
+}
+
+:deep(.el-input__inner) {
+  color: var(--input-text) !important;
+  height: 44px;
+  font-size: 16px;
 }
 </style>

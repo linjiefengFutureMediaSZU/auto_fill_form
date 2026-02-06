@@ -42,8 +42,12 @@
             <el-option label="文本" value="text" />
             <el-option label="数字" value="number" />
             <el-option label="选择" value="select" />
+            <el-option label="多选" value="multiple_select" />
             <el-option label="开关" value="switch" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="选项配置" v-if="fieldForm.type === 'select' || fieldForm.type === 'multiple_select'">
+          <el-input v-model="fieldForm.options" placeholder="请输入选项，用逗号分隔 (如: 选项A,选项B)" />
         </el-form-item>
         <el-form-item label="字段分组">
           <el-select v-model="fieldForm.group" placeholder="请选择字段分组">
@@ -102,6 +106,7 @@ const fieldForm = reactive({
   group: 'basic',
   placeholder: '',
   defaultValue: '',
+  options: '',
   required: false
 })
 
@@ -111,6 +116,7 @@ const getFieldTypeTagType = (type) => {
     text: 'info',
     number: 'success',
     select: 'warning',
+    multiple_select: 'warning',
     switch: 'danger'
   }
   return typeMap[type] || 'info'
@@ -127,6 +133,7 @@ const openAddFieldDialog = () => {
   fieldForm.type = 'text'
   fieldForm.group = 'basic'
   fieldForm.required = false
+  fieldForm.options = ''
   fieldDialogVisible.value = true
 }
 
@@ -157,6 +164,7 @@ const saveField = () => {
     group: fieldForm.group,
     placeholder: fieldForm.placeholder,
     defaultValue: fieldForm.defaultValue,
+    options: fieldForm.options,
     required: fieldForm.required
   }
 
@@ -185,7 +193,7 @@ const removeField = (index) => {
 <style scoped lang="scss">
 .dynamic-field-manager {
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: var(--border-radius-lg);
   padding: 16px;
   background-color: var(--bg-color-light);
   transition: all 0.3s ease;
@@ -212,7 +220,7 @@ const removeField = (index) => {
       padding: 12px;
       background-color: var(--bg-color-white);
       border: 1px solid var(--border-color);
-      border-radius: 4px;
+      border-radius: var(--border-radius-md);
       margin-bottom: 10px;
       transition: all 0.3s ease;
 

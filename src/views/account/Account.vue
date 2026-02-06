@@ -8,7 +8,7 @@
 
 
     <!-- 搜索筛选区 -->
-    <div class="search-filter card" style="margin-bottom: 20px;">
+    <div class="search-filter glass-card" style="margin-bottom: 20px;">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="关键词搜索">
           <el-input
@@ -109,12 +109,12 @@
     </div>
 
     <!-- 字段管理面板 -->
-    <div v-if="fieldManagerVisible" class="field-manager-panel card" style="margin-bottom: 20px; padding: 20px;">
+    <div v-if="fieldManagerVisible" class="field-manager-panel glass-card" style="margin-bottom: 20px; padding: 20px;">
       <dynamic-field-manager v-model="customFields" />
     </div>
 
     <!-- 账号列表 -->
-    <div class="account-list-area card" style="margin-bottom: 20px;">
+    <div class="account-list-area glass-card" style="margin-bottom: 20px;">
       <!-- 账号表格 -->
       <el-table
         v-loading="loading"
@@ -320,6 +320,46 @@ const customFields = ref([
   },
   {
     id: '3',
+    label: '粉丝量',
+    name: 'fans_count',
+    type: 'number',
+    group: 'data',
+    placeholder: '请输入粉丝量',
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '4',
+    label: '平均阅读量',
+    name: 'avg_read_count',
+    type: 'number',
+    group: 'data',
+    placeholder: '请输入平均阅读量',
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '5',
+    label: '平均点赞量',
+    name: 'like_count',
+    type: 'number',
+    group: 'data',
+    placeholder: '请输入平均点赞量',
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '6',
+    label: '平均评论量',
+    name: 'comment_count',
+    type: 'number',
+    group: 'data',
+    placeholder: '请输入平均评论量',
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '7',
     label: '平均互动率',
     name: 'interaction_rate',
     type: 'number',
@@ -329,7 +369,7 @@ const customFields = ref([
     required: false
   },
   {
-    id: '4',
+    id: '8',
     label: '内容类型',
     name: 'content_type',
     type: 'text',
@@ -339,7 +379,48 @@ const customFields = ref([
     required: false
   },
   {
-    id: '5',
+    id: '9',
+    label: '套餐报价',
+    name: 'quote_package',
+    type: 'number',
+    group: 'cooperation',
+    placeholder: '请输入套餐报价',
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '10',
+    label: '合作形式',
+    name: 'cooperation_type',
+    type: 'multiple_select',
+    group: 'cooperation',
+    placeholder: '请选择合作形式',
+    defaultValue: [],
+    options: '图文,视频,直播',
+    required: false
+  },
+  {
+    id: '11',
+    label: '是否接受置换',
+    name: 'is_swap',
+    type: 'switch',
+    group: 'cooperation',
+    placeholder: '',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '12',
+    label: '联系方式',
+    name: 'contact',
+    type: 'text',
+    group: 'cooperation',
+    placeholder: '请输入联系方式',
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '13',
     label: '合作次数',
     name: 'cooperation_count',
     type: 'number',
@@ -349,7 +430,7 @@ const customFields = ref([
     required: false
   },
   {
-    id: '6',
+    id: '14',
     label: '返点比例',
     name: 'commission_rate',
     type: 'number',
@@ -359,7 +440,17 @@ const customFields = ref([
     required: false
   },
   {
-    id: '7',
+    id: '15',
+    label: '备注',
+    name: 'remark',
+    type: 'text',
+    group: 'remark',
+    placeholder: '请输入备注信息',
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '16',
     label: '账号特点',
     name: 'account_features',
     type: 'text',
@@ -369,7 +460,7 @@ const customFields = ref([
     required: false
   },
   {
-    id: '8',
+    id: '17',
     label: '运营策略',
     name: 'operation_strategy',
     type: 'text',
@@ -385,13 +476,12 @@ const standardColumns = [
   { label: 'ID', prop: 'id' },
   { label: '账号昵称', prop: 'account_nickname' },
   { label: '博主姓名', prop: 'blogger_name' },
-  { label: '粉丝量', prop: 'fans_count' },
   { label: '单条报价', prop: 'quote_single' },
   { label: '状态', prop: 'status' }
 ]
 
 // 可见列设置
-const visibleColumns = ref(['id', 'account_nickname', 'blogger_name', 'fans_count', 'quote_single', 'status'])
+const visibleColumns = ref(['id', 'account_nickname', 'blogger_name', 'fans_count', 'quote_single', 'status', 'wechat', 'email'])
 
 // 所有可用列
 const availableColumns = computed(() => {
@@ -427,6 +517,8 @@ const accountForm = reactive({
   quote_package: 0,
   cooperation_type: [],
   is_swap: false,
+  wechat: '',
+  email: '',
   contact: '',
   remark: '',
   group_id: '',
@@ -590,14 +682,18 @@ const toggleFieldManager = () => {
 
 // 保存字段配置到本地存储
 const saveFieldConfig = () => {
-  localStorage.setItem('customFields', JSON.stringify(customFields.value))
+  localStorage.setItem('customFields_v3', JSON.stringify(customFields.value))
 }
 
 // 从本地存储加载字段配置
 const loadFieldConfig = () => {
-  const savedFields = localStorage.getItem('customFields')
+  const savedFields = localStorage.getItem('customFields_v3')
   if (savedFields) {
-    customFields.value = JSON.parse(savedFields)
+    try {
+      customFields.value = JSON.parse(savedFields)
+    } catch (e) {
+      console.error('Failed to load field config:', e)
+    }
   }
 }
 
@@ -638,6 +734,17 @@ const openEditAccountDialog = (account) => {
   isEditMode.value = true
   // 复制账号数据到表单
   Object.assign(accountForm, account)
+  
+  // 解析 extra_json 并合并到表单数据中
+  if (account.extra_json) {
+    try {
+      const extra = JSON.parse(account.extra_json)
+      Object.assign(accountForm, extra)
+    } catch (e) {
+      console.error('Failed to parse extra_json:', e)
+    }
+  }
+
   // 处理合作形式数组
   if (typeof accountForm.cooperation_type === 'string') {
     accountForm.cooperation_type = accountForm.cooperation_type.split(',')
@@ -667,10 +774,37 @@ const saveAccount = async () => {
       accountForm.quote_single = accountForm.quote_single[0] || 0
     }
     
+    // 准备提交的数据
+    const submitData = { ...accountForm }
+    
+    // 数据库原生字段列表
+    const nativeFields = [
+      'id', 'group_id', 'blogger_name', 'account_nickname', 'account_type', 'account_id',
+      'homepage_url', 'fans_count', 'avg_read_count', 'like_count', 'comment_count',
+      'quote_single', 'quote_package', 'cooperation_type', 'is_swap', 'contact',
+      'remark', 'status', 'created_at'
+    ]
+    
+    // 打包自定义字段到 extra_json
+    const extraData = {}
+    customFields.value.forEach(field => {
+      if (!nativeFields.includes(field.name) && accountForm[field.name] !== undefined) {
+        extraData[field.name] = accountForm[field.name]
+      }
+    })
+    submitData.extra_json = JSON.stringify(extraData)
+    
+    // 移除不在数据库字段列表中的属性，避免 SQL 更新错误
+    Object.keys(submitData).forEach(key => {
+      if (!nativeFields.includes(key) && key !== 'extra_json') {
+        delete submitData[key]
+      }
+    })
+    
     if (isEditMode.value) {
-      await accountStore.updateAccount(accountForm.id, accountForm)
+      await accountStore.updateAccount(submitData.id, submitData)
     } else {
-      await accountStore.addAccount(accountForm)
+      await accountStore.addAccount(submitData)
     }
     
     // 恢复原始的报价数组
@@ -843,7 +977,7 @@ onMounted(async () => {
   loadFieldConfig()
 
   // 初始化可见列
-  const savedCols = localStorage.getItem('accountVisibleColumns')
+  const savedCols = localStorage.getItem('accountVisibleColumns_v3')
   if (savedCols) {
     visibleColumns.value = JSON.parse(savedCols)
   } else {
@@ -855,7 +989,7 @@ onMounted(async () => {
 
 // 监听可见列变化，自动保存
 watch(visibleColumns, () => {
-  localStorage.setItem('accountVisibleColumns', JSON.stringify(visibleColumns.value))
+  localStorage.setItem('accountVisibleColumns_v3', JSON.stringify(visibleColumns.value))
 }, { deep: true })
 
 // 监听字段配置变化，自动保存
@@ -880,6 +1014,7 @@ watch(customFields, () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
+  padding-left: var(--spacing-sm);
 
   .title {
     font-size: 24px;
@@ -896,23 +1031,13 @@ watch(customFields, () => {
       width: 6px;
       height: 24px;
       background: var(--primary-color);
-      border-radius: 3px;
+      border-radius: var(--border-radius-round);
     }
   }
 }
 
-/* 通用卡片样式优化 */
-.card {
-  background: var(--bg-color-white);
-  border-radius: var(--border-radius-xl);
-  box-shadow: var(--box-shadow-light);
-  border: 1px solid var(--border-color-light);
-  transition: all 0.3s ease;
-
-  &:hover {
-    box-shadow: var(--box-shadow);
-  }
-}
+/* 通用卡片样式优化 - 使用全局 glass-card */
+/* .card removed */
 
 /* 搜索筛选区 */
 .search-filter {
@@ -952,7 +1077,7 @@ watch(customFields, () => {
       width: 4px;
       height: 16px;
       background: var(--primary-color);
-      border-radius: 2px;
+      border-radius: var(--border-radius-sm);
     }
   }
 
@@ -963,7 +1088,7 @@ watch(customFields, () => {
     
     .el-button {
       margin-left: 0; /* 移除默认左边距 */
-      border-radius: 8px;
+      border-radius: var(--border-radius-lg);
       padding: 10px 20px;
       height: auto;
       font-weight: 500;
@@ -1111,7 +1236,7 @@ watch(customFields, () => {
         color: var(--text-color-secondary);
         background: var(--bg-color-page);
         padding: 2px 6px;
-        border-radius: 4px;
+        border-radius: var(--border-radius-md);
         width: fit-content;
       }
     }

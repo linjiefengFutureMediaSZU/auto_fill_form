@@ -128,7 +128,7 @@
       <!-- 常见问题标签页 -->
       <el-tab-pane label="常见问题" name="faq">
         <div class="faq-content">
-          <div class="card">
+          <div class="glass-card">
             <div class="section-header">
               <h3 class="subtitle">FAQ</h3>
               <el-select v-model="faqCategory" placeholder="按分类筛选">
@@ -161,7 +161,7 @@
       <!-- 反馈提交标签页 -->
       <el-tab-pane label="反馈提交" name="feedback">
         <div class="feedback-content">
-          <div class="card">
+          <div class="glass-card">
             <div class="section-header">
               <h3 class="subtitle">问题反馈</h3>
               <p class="feedback-tip">请详细描述您遇到的问题，我们会尽快处理</p>

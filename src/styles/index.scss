@@ -1,3 +1,7 @@
+/* 使用@use规则引入样式模块 */
+@use 'apple-theme';
+@use 'dark-theme';
+
 /* 全局样式变量 */
 :root {
   /* 颜色变量 */
@@ -40,6 +44,9 @@
   --border-radius-md: 4px;
   --border-radius-lg: 8px;
   --border-radius-xl: 12px;
+  --border-radius-2xl: 16px;
+  --border-radius-round: 24px;
+  --border-radius-circle: 50%;
   
   /* 字体大小 */
   --font-size-xs: 12px;
@@ -54,9 +61,8 @@
   --height-lg: 44px;
 }
 
-/* 暂时使用@import规则，因为dark-theme.scss包含直接的CSS规则 */
-/* @import './dark-theme.scss'; */
-@import './apple-theme.scss';
+
+
 
 /* 全局样式重置 */
 * {
@@ -70,7 +76,7 @@ body {
   font-size: var(--font-size-sm);
   line-height: 1.5;
   color: var(--text-color-primary);
-  background-color: var(--bg-color);
+  background-color: var(--bg-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -244,4 +250,15 @@ body {
   .button-row {
     flex-wrap: wrap;
   }
+}
+
+/* Element Plus Input Styles Override */
+:root {
+  --el-input-border-radius: var(--border-radius-lg);
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  border-radius: var(--border-radius-lg) !important;
 }

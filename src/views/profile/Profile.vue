@@ -1,7 +1,7 @@
 <template>
   <div class="profile-container">
     <!-- 页面标题 -->
-    <div class="page-header">
+    <div class="page-header glass-card">
       <h1 class="page-title">个人中心</h1>
       <p class="page-description">管理您的个人信息和账户设置</p>
     </div>
@@ -9,14 +9,12 @@
     <!-- 内容区域 -->
     <div class="content-wrapper">
       <!-- 用户信息卡片 -->
-      <el-card class="info-card">
-        <template #header>
-          <div class="card-header">
-            <span>基本信息</span>
-          </div>
-        </template>
-        
-        <div class="user-info">
+    <div class="info-card glass-card">
+      <div class="section-header">
+        <h3 class="subtitle">基本信息</h3>
+      </div>
+      
+      <div class="user-info">
           <div class="avatar-section">
             <el-avatar size="large" :src="userAvatar">
               <span v-if="!userAvatar">{{ userInitial }}</span>
@@ -52,17 +50,15 @@
             </div>
           </div>
         </div>
-      </el-card>
+      </div>
       
-
+      
       
       <!-- 账号安全设置卡片 -->
-      <el-card class="security-card">
-        <template #header>
-          <div class="card-header">
-            <span>账号安全设置</span>
-          </div>
-        </template>
+      <div class="security-card glass-card">
+        <div class="section-header">
+          <h3 class="subtitle">账号安全设置</h3>
+        </div>
         
         <el-form
           ref="securityFormRef"
@@ -136,7 +132,7 @@
             </el-button>
           </el-form-item>
         </el-form>
-      </el-card>
+      </div>
     </div>
   </div>
 </template>
@@ -310,13 +306,18 @@ onMounted(() => {
 <style scoped lang="scss">
 .profile-container {
   width: 100%;
-  min-height: 100vh;
-  background-color: var(--bg-color);
+  height: 100%;
   padding: 24px;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .page-header {
   margin-bottom: 32px;
+  padding: 24px;
+  border-radius: var(--border-radius-xl);
 
   .page-title {
     font-size: 24px;
@@ -340,6 +341,25 @@ onMounted(() => {
 
 .info-card {
   max-width: 800px;
+  padding: 24px;
+}
+
+.security-card {
+  max-width: 600px;
+  padding: 24px;
+}
+
+.section-header {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.subtitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color-primary);
+  margin: 0;
 }
 
 .card-header {
@@ -384,7 +404,7 @@ onMounted(() => {
       margin-bottom: 16px;
       padding: 12px;
       background-color: var(--input-bg);
-      border-radius: 8px;
+      border-radius: var(--border-radius-lg);
       transition: all 0.3s ease;
 
       &:hover {
@@ -442,7 +462,7 @@ onMounted(() => {
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-color-secondary);
   margin-top: 4px;
 }
 

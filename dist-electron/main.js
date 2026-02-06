@@ -862,6 +862,35 @@ const UserService = {
     }
   },
   /**
+   * 验证用户是否可以重置密码 (通过用户名和手机号)
+   */
+  async verifyUserForReset(username, phone) {
+    const users = await queryAll(
+      "SELECT id, phone FROM users WHERE username = ?",
+      [username]
+    );
+    if (users.length === 0) {
+      return { success: false, message: "用户不存在" };
+    }
+    const user = users[0];
+    if (user.phone !== phone) {
+      return { success: false, message: "手机号不匹配" };
+    }
+    return { success: true, userId: user.id };
+  },
+  /**
+   * 重置密码
+   */
+  async resetPassword(userId, newPassword) {
+    const hashedPassword = this.hashPassword(newPassword);
+    try {
+      await queryRun("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, userId]);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: "重置密码失败: " + error.message };
+    }
+  },
+  /**
    * 初始化管理员账号
    */
   async initAdmin() {
@@ -876,9 +905,107 @@ const UserService = {
     }
   }
 };
+async function seedData() {
+  console.log("Checking if data seeding is needed...");
+  try {
+    const accounts = await AccountService.getAllAccounts();
+    if (accounts.length > 5) {
+      console.log("Data already exists, skipping seed.");
+      return;
+    }
+    console.log("Seeding data...");
+    const groups = ["美食", "美妆", "科技", "生活", "旅行"];
+    const groupIds = [];
+    const existingGroups = await AccountService.getAllGroups();
+    if (existingGroups.length === 0) {
+      for (const g of groups) {
+        const id = await AccountService.addGroup({ group_name: g, description: "Mock Group" });
+        groupIds.push({ id, name: g });
+      }
+    } else {
+      existingGroups.forEach((g) => groupIds.push({ id: g.id, name: g.group_name }));
+    }
+    const platforms = ["小红书", "抖音", "B站", "微博", "微信公众号"];
+    for (let i = 1; i <= 15; i++) {
+      const platform = platforms[Math.floor(Math.random() * platforms.length)];
+      const group = groupIds[Math.floor(Math.random() * groupIds.length)];
+      const extraData = {
+        wechat: `wx_id_${i}`,
+        email: `user${i}@example.com`,
+        interaction_rate: (Math.random() * 5).toFixed(2),
+        content_type: "图文",
+        commission_rate: Math.floor(Math.random() * 20),
+        account_features: "优质, 活跃",
+        operation_strategy: "日更"
+      };
+      const account = {
+        group_id: group ? group.id : null,
+        blogger_name: `博主_${i}_${platform}`,
+        account_nickname: `昵称_${i}`,
+        account_type: platform,
+        account_id: `id_${Date.now()}_${i}`,
+        homepage_url: `https://example.com/user/${i}`,
+        fans_count: Math.floor(Math.random() * 1e6),
+        avg_read_count: Math.floor(Math.random() * 5e4),
+        like_count: Math.floor(Math.random() * 2e4),
+        comment_count: Math.floor(Math.random() * 5e3),
+        quote_single: Math.floor(Math.random() * 5e4),
+        quote_package: Math.floor(Math.random() * 1e5),
+        cooperation_type: "图文,视频",
+        is_swap: Math.random() > 0.5 ? 1 : 0,
+        contact: `138001380${i < 10 ? "0" + i : i}`,
+        remark: `这是第 ${i} 个模拟账号`,
+        status: 1,
+        extra_json: JSON.stringify(extraData)
+      };
+      await AccountService.addAccount(account);
+    }
+    let folderId;
+    const folders = await FormService.getAllFolders();
+    if (folders.length === 0) {
+      folderId = await FormService.addFolder({ folder_name: "默认文件夹", description: "自动生成" });
+    } else {
+      folderId = folders[0].id;
+    }
+    const templates = [];
+    for (let i = 1; i <= 15; i++) {
+      const template = {
+        folder_id: folderId,
+        template_name: `模拟表单_${i}`,
+        form_url: `https://example.com/form/${i}`,
+        form_type: "问卷星",
+        is_default: 0
+      };
+      const id = await FormService.addTemplate(template);
+      templates.push({ id, ...template });
+    }
+    const allAccounts = await AccountService.getAllAccounts();
+    if (allAccounts.length > 0 && templates.length > 0) {
+      for (let i = 1; i <= 50; i++) {
+        const isSuccess = Math.random() > 0.2;
+        const acc = allAccounts[Math.floor(Math.random() * allAccounts.length)];
+        const tmpl = templates[Math.floor(Math.random() * templates.length)];
+        const log = {
+          account_id: acc.id,
+          template_id: tmpl.id,
+          fill_result: isSuccess ? "success" : "fail",
+          fail_reason: isSuccess ? "" : "选择器未找到",
+          submit_count: 1
+        };
+        await DataService.addLog(log);
+      }
+    }
+    console.log("Seeding completed.");
+  } catch (err) {
+    console.error("Seeding failed:", err);
+  }
+}
 const __filename$1 = url.fileURLToPath(typeof document === "undefined" ? require("url").pathToFileURL(__filename).href : _documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === "SCRIPT" && _documentCurrentScript.src || new URL("main.js", document.baseURI).href);
 const __dirname$1 = path.dirname(__filename$1);
-initDatabase().then(() => UserService.initAdmin()).catch(console.error);
+initDatabase().then(() => UserService.initAdmin()).then(() => seedData()).catch(console.error);
+if (process.env.VITE_DEV_SERVER_URL) {
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
+}
 function createWindow() {
   const win = new electron.BrowserWindow({
     width: 1200,
@@ -981,4 +1108,10 @@ electron.ipcMain.handle("auth:updateProfile", async (event, userId, data) => {
 });
 electron.ipcMain.handle("auth:saveAvatar", async (event, userId, base64Data) => {
   return await UserService.saveAvatar(userId, base64Data);
+});
+electron.ipcMain.handle("auth:verifyReset", async (event, username, phone) => {
+  return await UserService.verifyUserForReset(username, phone);
+});
+electron.ipcMain.handle("auth:resetPassword", async (event, userId, newPassword) => {
+  return await UserService.resetPassword(userId, newPassword);
 });

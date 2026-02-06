@@ -8,7 +8,7 @@
     <!-- 设置内容 -->
     <div class="settings-container">
       <!-- 通用设置 -->
-      <div class="card">
+      <div class="glass-card">
         <h3 class="subtitle">通用设置</h3>
         <el-form
           :model="generalSettings"
@@ -142,7 +142,7 @@
       </div>
 
       <!-- 填写设置 -->
-      <div class="card">
+      <div class="glass-card">
         <h3 class="subtitle">填写设置</h3>
         <el-form
           :model="fillSettings"
@@ -172,7 +172,7 @@
       </div>
 
       <!-- 版本信息 -->
-      <div class="card">
+      <div class="glass-card">
         <h3 class="subtitle">版本信息</h3>
         <div class="version-info">
           <div class="info-item">
@@ -364,6 +364,7 @@ onMounted(() => {
 .settings-page {
   .page-header {
     margin-bottom: var(--spacing-lg);
+    padding-left: var(--spacing-sm);
   }
 
   .settings-container {

@@ -1,5 +1,12 @@
 <template>
   <div class="login-container">
+    <!-- Global Liquid Background -->
+    <div class="liquid-bg-container">
+      <div class="liquid-bg-orb orb-1"></div>
+      <div class="liquid-bg-orb orb-2"></div>
+      <div class="liquid-bg-orb orb-3"></div>
+    </div>
+
     <div class="login-card">
       <!-- 注册卡片头部 -->
       <div class="login-header">
@@ -245,27 +252,6 @@ const handleLogin = () => {
 <style scoped lang="scss">
 /* Apple Style Liquid Design System */
 .login-container {
-  /* Light Mode Variables */
-  --bg-base: #f5f5f7;
-  --text-primary: #1d1d1f;
-  --text-secondary: #86868b;
-  --accent-color: #007aff;
-  
-  --orb-1: #a1c4fd; /* Pastel Blue */
-  --orb-2: #c2e9fb; /* Light Cyan */
-  --orb-3: #ffecd2; /* Light Peach */
-  
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-  
-  --input-bg: rgba(255, 255, 255, 0.5);
-  --input-border: transparent;
-  --input-text: #1d1d1f;
-  --input-placeholder: #86868b;
-  --input-focus-border: #007aff;
-  --input-focus-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
-
   position: relative;
   width: 100vw;
   height: 100vh;
@@ -276,111 +262,34 @@ const handleLogin = () => {
   transition: all 0.5s ease;
 }
 
-/* Dark Mode Overrides */
-.login-container.is-dark {
-  --bg-base: #000000;
-  --text-primary: #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --accent-color: #0a84ff;
-  
-  /* Deep, vibrant liquid colors for dark mode */
-  --orb-1: #2b5876; /* Deep Navy */
-  --orb-2: #4e4376; /* Deep Purple */
-  --orb-3: #141e30; /* Dark Blue */
-  
-  --glass-bg: rgba(28, 28, 30, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  
-  --input-bg: rgba(255, 255, 255, 0.1);
-  --input-border: rgba(255, 255, 255, 0.05);
-  --input-text: #ffffff;
-  --input-placeholder: #86868b;
-  --input-focus-border: #0a84ff;
-  --input-focus-shadow: 0 0 0 4px rgba(10, 132, 255, 0.25);
-}
-
-/* Liquid Background Animation */
-.liquid-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  background-color: var(--bg-base);
-  transition: background-color 0.5s ease;
-  overflow: hidden;
-}
-
-.orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.8;
-  animation: float 10s infinite ease-in-out alternate;
-  will-change: transform;
-}
-
-.orb-1 {
-  background: var(--orb-1);
-  width: 60vw;
-  height: 60vw;
-  top: -10%;
-  left: -10%;
-}
-
-.orb-2 {
-  background: var(--orb-2);
-  width: 50vw;
-  height: 50vw;
-  bottom: -10%;
-  right: -10%;
-  animation-delay: -5s;
-}
-
-.orb-3 {
-  background: var(--orb-3);
-  width: 40vw;
-  height: 40vw;
-  top: 30%;
-  left: 30%;
-  animation-delay: -2s;
-}
-
-@keyframes float {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { transform: translate(30px, 50px) rotate(10deg); }
-}
-
 .login-card {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 420px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px;
-  box-shadow: var(--glass-shadow);
-  padding: 40px;
-  text-align: center;
-  transition: all 0.3s ease;
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 32px;
-  position: relative;
-
-  .login-logo {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 16px;
-    border-radius: 18px; /* Slightly more rounded */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius-round);
+    box-shadow: var(--glass-shadow);
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s ease;
   }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 32px;
+    position: relative;
+
+    .login-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+      border-radius: var(--border-radius-2xl); /* Slightly more rounded */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
 
   .login-title {
     font-size: 24px;
@@ -415,7 +324,7 @@ const handleLogin = () => {
   background-color: var(--input-bg) !important;
   box-shadow: none !important;
   border: 1px solid var(--input-border);
-  border-radius: 12px;
+  border-radius: var(--border-radius-xl);
   padding: 8px 12px;
   transition: all 0.3s ease;
 }
@@ -449,7 +358,7 @@ const handleLogin = () => {
   height: 48px;
   font-size: 16px;
   font-weight: 600;
-  border-radius: 14px;
+  border-radius: var(--border-radius-xl);
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid rgba(134, 134, 139, 0.3);
@@ -467,7 +376,7 @@ const handleLogin = () => {
   height: 48px;
   font-size: 16px;
   font-weight: 600;
-  border-radius: 14px;
+  border-radius: var(--border-radius-xl);
   background: var(--accent-color);
   border: none;
   transition: all 0.3s ease;

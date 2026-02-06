@@ -10,7 +10,7 @@
       <!-- 填报数据管理标签页 -->
       <el-tab-pane label="填报数据管理" name="fillData">
         <div class="fill-data-management">
-          <div class="card">
+          <div class="glass-card">
             <div class="section-header">
               <h3 class="subtitle">填报数据概览</h3>
               <div class="header-actions">
@@ -53,7 +53,7 @@
       <!-- 备份管理标签页 -->
       <el-tab-pane label="备份管理" name="backup">
         <div class="backup-management">
-          <div class="card">
+          <div class="glass-card">
             <div class="section-header">
               <h3 class="subtitle">备份列表</h3>
               <div class="header-actions">
@@ -153,7 +153,7 @@
       <!-- 日志管理标签页 -->
       <el-tab-pane label="日志管理" name="log">
         <div class="log-management">
-          <div class="card">
+          <div class="glass-card">
             <div class="section-header">
               <h3 class="subtitle">填写日志</h3>
               <div class="header-actions">
@@ -368,7 +368,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useDataStore, useAccountStore, useFormStore } from '../../stores'
 import { useSettingsStore } from '../../stores/settings'
 import { Upload, Setting, Download, Delete, DocumentCopy, Search, Refresh } from '@element-plus/icons-vue'
@@ -469,13 +469,22 @@ const successRate = computed(() => {
 const dailyFillData = computed(() => {
   const dailyMap = new Map()
   
+  if (!logs.value || !Array.isArray(logs.value)) return []
+
   // 按日期分组
   logs.value.forEach(log => {
-    const date = new Date(log.fill_time).toISOString().split('T')[0]
-    if (dailyMap.has(date)) {
-      dailyMap.set(date, dailyMap.get(date) + 1)
-    } else {
-      dailyMap.set(date, 1)
+    if (!log || !log.fill_time) return
+    try {
+      const dateObj = new Date(log.fill_time)
+      if (isNaN(dateObj.getTime())) return
+      const date = dateObj.toISOString().split('T')[0]
+      if (dailyMap.has(date)) {
+        dailyMap.set(date, dailyMap.get(date) + 1)
+      } else {
+        dailyMap.set(date, 1)
+      }
+    } catch (e) {
+      console.warn('Error parsing log date:', log, e)
     }
   })
   
@@ -502,27 +511,37 @@ const dailyFillData = computed(() => {
 // 方法
 // 格式化日期时间
 const formatDateTime = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
+  if (!dateString) return '-'
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return '-'
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  } catch (e) {
+    return '-'
+  }
 }
 
 // 获取账号信息
 const getAccountInfo = (accountId) => {
-  const account = accountStore.accounts.find(a => a.id === accountId)
-  return account ? account.account_nickname : '未知账号'
+  if (!accountId) return '未知账号'
+  const accounts = accountStore.accounts || []
+  const account = accounts.find(a => a.id === accountId)
+  return account ? (account.account_nickname || '未命名账号') : '未知账号'
 }
 
 // 获取表单信息
 const getFormInfo = (templateId) => {
-  const template = formStore.templates.find(t => t.id === templateId)
-  return template ? template.template_name : '未知表单'
+  if (!templateId) return '未知表单'
+  const templates = formStore.templates || []
+  const template = templates.find(t => t.id === templateId)
+  return template ? (template.template_name || '未命名表单') : '未知表单'
 }
 
 // 手动备份
@@ -669,9 +688,17 @@ const handleExportFillData = () => {
 
 // 初始化填报数据图表（日志管理标签页）
 const initFillChart = () => {
-  if (fillChartRef.value) {
-    fillChart = echarts.init(fillChartRef.value)
-    updateFillChart()
+  try {
+    if (fillChartRef.value && activeTab.value === 'log') {
+      // 如果已经初始化过，先销毁
+      if (fillChart) {
+        fillChart.dispose()
+      }
+      fillChart = echarts.init(fillChartRef.value)
+      updateFillChart()
+    }
+  } catch (error) {
+    console.error('Failed to init fill chart:', error)
   }
 }
 
@@ -679,63 +706,75 @@ const initFillChart = () => {
 const updateFillChart = () => {
   if (!fillChart) return
   
-  const data = dailyFillData.value
-  const dates = data.map(item => item.date)
-  const counts = data.map(item => item.count)
-  
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-      formatter: '{b}: {c} 次'
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: dates
-    },
-    yAxis: {
-      type: 'value',
-      minInterval: 1
-    },
-    series: [
-      {
-        name: '填报表单数量',
-        type: 'line',
-        data: counts,
-        smooth: true,
-        itemStyle: {
-          color: '#409EFF'
-        },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            {
-              offset: 0,
-              color: 'rgba(64, 158, 255, 0.5)'
-            },
-            {
-              offset: 1,
-              color: 'rgba(64, 158, 255, 0.1)'
-            }
-          ])
+  try {
+    const data = dailyFillData.value
+    const dates = data.map(item => item.date)
+    const counts = data.map(item => item.count)
+    
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        formatter: '{b}: {c} 次'
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: dates
+      },
+      yAxis: {
+        type: 'value',
+        minInterval: 1
+      },
+      series: [
+        {
+          name: '填报表单数量',
+          type: 'line',
+          data: counts,
+          smooth: true,
+          itemStyle: {
+            color: '#409EFF'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              {
+                offset: 0,
+                color: 'rgba(64, 158, 255, 0.5)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(64, 158, 255, 0.1)'
+              }
+            ])
+          }
         }
-      }
-    ]
+      ]
+    }
+    
+    fillChart.setOption(option)
+  } catch (error) {
+    console.error('Failed to update fill chart:', error)
   }
-  
-  fillChart.setOption(option)
 }
 
 // 初始化填报数据管理图表
 const initFillDataChart = () => {
-  if (fillDataChartRef.value) {
-    fillDataChart = echarts.init(fillDataChartRef.value)
-    updateFillDataChart()
+  try {
+    if (fillDataChartRef.value && activeTab.value === 'fillData') {
+      // 如果已经初始化过，先销毁
+      if (fillDataChart) {
+        fillDataChart.dispose()
+      }
+      fillDataChart = echarts.init(fillDataChartRef.value)
+      updateFillDataChart()
+    }
+  } catch (error) {
+    console.error('Failed to init fill data chart:', error)
   }
 }
 
@@ -743,93 +782,128 @@ const initFillDataChart = () => {
 const updateFillDataChart = () => {
   if (!fillDataChart) return
   
-  const data = dailyFillData.value
-  const dates = data.map(item => item.date)
-  const counts = data.map(item => item.count)
-  
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-      formatter: '{b}: {c} 次'
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: dates
-    },
-    yAxis: {
-      type: 'value',
-      minInterval: 1
-    },
-    series: [
-      {
-        name: '填报表单数量',
-        type: 'line',
-        data: counts,
-        smooth: true,
-        itemStyle: {
-          color: '#409EFF'
-        },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            {
-              offset: 0,
-              color: 'rgba(64, 158, 255, 0.5)'
-            },
-            {
-              offset: 1,
-              color: 'rgba(64, 158, 255, 0.1)'
-            }
-          ])
+  try {
+    const data = dailyFillData.value
+    const dates = data.map(item => item.date)
+    const counts = data.map(item => item.count)
+    
+    const option = {
+      tooltip: {
+        trigger: 'axis',
+        formatter: '{b}: {c} 次'
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: dates
+      },
+      yAxis: {
+        type: 'value',
+        minInterval: 1
+      },
+      series: [
+        {
+          name: '填报表单数量',
+          type: 'line',
+          data: counts,
+          smooth: true,
+          itemStyle: {
+            color: '#409EFF'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              {
+                offset: 0,
+                color: 'rgba(64, 158, 255, 0.5)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(64, 158, 255, 0.1)'
+              }
+            ])
+          }
         }
-      }
-    ]
+      ]
+    }
+    
+    fillDataChart.setOption(option)
+  } catch (error) {
+    console.error('Failed to update fill data chart:', error)
   }
-  
-  fillDataChart.setOption(option)
 }
 
 // 监听窗口大小变化
 const handleResize = () => {
-  if (fillChart) {
-    fillChart.resize()
-  }
-  if (fillDataChart) {
-    fillDataChart.resize()
+  try {
+    if (fillChart) {
+      fillChart.resize()
+    }
+    if (fillDataChart) {
+      fillDataChart.resize()
+    }
+  } catch (error) {
+    console.error('Failed to resize charts:', error)
   }
 }
 
+// 监听 Tab 切换
+watch(activeTab, (newTab) => {
+  nextTick(() => {
+    if (newTab === 'fillData') {
+      if (!fillDataChart) {
+        initFillDataChart()
+      } else {
+        fillDataChart.resize()
+      }
+    } else if (newTab === 'log') {
+      if (!fillChart) {
+        initFillChart()
+      } else {
+        fillChart.resize()
+      }
+    }
+  })
+})
+
 // 生命周期
 onMounted(() => {
-  // 初始化数据
-  if (backups.value.length === 0) {
-    // 添加默认备份记录
-    const defaultBackup = {
-      id: 1,
-      backup_time: new Date().toISOString(),
-      backup_path: 'D:/backup/backup_default.json',
-      backup_size: '1.2 MB',
-      account_count: accountStore.accounts.length,
-      template_count: formStore.templates.length,
-      log_count: dataStore.logs.length
+  try {
+    // 初始化数据
+    if (backups.value.length === 0) {
+      // 添加默认备份记录
+      const defaultBackup = {
+        id: 1,
+        backup_time: new Date().toISOString(),
+        backup_path: 'D:/backup/backup_default.json',
+        backup_size: '1.2 MB',
+        account_count: accountStore.accounts?.length || 0,
+        template_count: formStore.templates?.length || 0,
+        log_count: dataStore.logs?.length || 0
+      }
+      dataStore.addBackup(defaultBackup).catch(err => console.error('Failed to add default backup', err))
     }
-    dataStore.addBackup(defaultBackup)
+    
+    // 初始化图表
+    setTimeout(() => {
+      // 只初始化当前激活的 Tab 的图表
+      if (activeTab.value === 'fillData') {
+        initFillDataChart()
+      } else if (activeTab.value === 'log') {
+        initFillChart()
+      }
+    }, 100)
+    
+    // 添加窗口大小变化监听
+    window.addEventListener('resize', handleResize)
+  } catch (error) {
+    console.error('Error in onMounted:', error)
   }
-  
-  // 初始化图表
-  setTimeout(() => {
-    initFillChart()
-    initFillDataChart()
-  }, 100)
-  
-  // 添加窗口大小变化监听
-  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
@@ -849,6 +923,7 @@ onUnmounted(() => {
 .data-page {
   .page-header {
     margin-bottom: var(--spacing-lg);
+    padding-left: var(--spacing-sm);
   }
 
   .data-tabs {
@@ -864,7 +939,6 @@ onUnmounted(() => {
     margin-bottom: var(--spacing-lg);
 
     .stat-card {
-      @include glass-card;
       padding: var(--spacing-lg);
       text-align: center;
 
