@@ -2,14 +2,14 @@
   <div class="settings-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2 class="title">基础设置</h2>
+      <h2 class="title">{{ $t('settings.title') }}</h2>
     </div>
 
     <!-- 设置内容 -->
     <div class="settings-container">
       <!-- 通用设置 -->
       <div class="glass-card">
-        <h3 class="subtitle">通用设置</h3>
+        <h3 class="subtitle">{{ $t('settings.generalSettings') }}</h3>
         <el-form
           :model="generalSettings"
           :rules="generalSettingsRules"
@@ -17,23 +17,23 @@
           label-width="120px"
           class="settings-form"
         >
-          <el-form-item label="界面语言">
-            <el-select v-model="generalSettings.language" disabled>
-              <el-option label="中文" value="zh-CN" />
+          <el-form-item :label="$t('settings.language')">
+            <el-select v-model="generalSettings.language" @change="handleLanguageChange">
+              <el-option label="简体中文" value="zh-CN" />
+              <el-option label="English" value="en-US" />
             </el-select>
-            <div class="form-tip">当前仅支持中文</div>
           </el-form-item>
-          <el-form-item label="界面主题">
+          <el-form-item :label="$t('settings.theme')">
             <el-select v-model="generalSettings.theme" @change="handleThemeChange">
-              <el-option label="浅色主题" value="light" />
-              <el-option label="深色主题" value="dark" />
+              <el-option :label="$t('settings.themeLight')" value="light" />
+              <el-option :label="$t('settings.themeDark')" value="dark" />
             </el-select>
           </el-form-item>
-          <el-form-item label="字体大小">
+          <el-form-item :label="$t('settings.fontSize')">
             <el-select v-model="generalSettings.fontSize">
-              <el-option label="小" value="small" />
-              <el-option label="中" value="medium" />
-              <el-option label="大" value="large" />
+              <el-option :label="$t('settings.fontSizeSmall')" value="small" />
+              <el-option :label="$t('settings.fontSizeMedium')" value="medium" />
+              <el-option :label="$t('settings.fontSizeLarge')" value="large" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -41,11 +41,11 @@
 
       <!-- 部署设置 -->
       <div class="glass-card">
-        <h3 class="subtitle">部署设置</h3>
+        <h3 class="subtitle">{{ $t('settings.deploymentSettings') }}</h3>
         
         <!-- 本地部署设置 -->
         <div class="deployment-section">
-          <h4 class="section-title">本地部署</h4>
+          <h4 class="section-title">{{ $t('settings.localDeployment') }}</h4>
           <el-form
             :model="localDeploymentSettings"
             :rules="localDeploymentRules"
@@ -53,24 +53,24 @@
             label-width="120px"
             class="settings-form"
           >
-            <el-form-item label="数据存储路径">
-              <el-input v-model="localDeploymentSettings.dataPath" placeholder="请输入数据存储路径" />
-              <div class="form-tip">本地数据文件的存储位置</div>
+            <el-form-item :label="$t('settings.dataPath')">
+              <el-input v-model="localDeploymentSettings.dataPath" :placeholder="$t('settings.dataPathPlaceholder')" />
+              <div class="form-tip">{{ $t('settings.dataPathTip') }}</div>
             </el-form-item>
-            <el-form-item label="备份路径">
-              <el-input v-model="localDeploymentSettings.backupPath" placeholder="请输入备份路径" />
-              <div class="form-tip">备份文件的存储位置</div>
+            <el-form-item :label="$t('settings.backupPath')">
+              <el-input v-model="localDeploymentSettings.backupPath" :placeholder="$t('settings.backupPathPlaceholder')" />
+              <div class="form-tip">{{ $t('settings.backupPathTip') }}</div>
             </el-form-item>
-            <el-form-item label="运行端口">
+            <el-form-item :label="$t('settings.runPort')">
               <el-input-number
                 v-model="localDeploymentSettings.port"
                 :min="1024"
                 :max="65535"
-                placeholder="请输入端口号"
+                :placeholder="$t('settings.portPlaceholder')"
               />
             </el-form-item>
-            <el-form-item label="运行状态">
-              <el-tag type="success">已启动</el-tag>
+            <el-form-item :label="$t('settings.runStatus')">
+              <el-tag type="success">{{ $t('settings.started') }}</el-tag>
             </el-form-item>
           </el-form>
         </div>
@@ -78,9 +78,9 @@
         <!-- 线上部署设置（预留） -->
         <div class="deployment-section">
           <div class="section-header">
-            <h4 class="section-title">线上部署（预留）</h4>
+            <h4 class="section-title">{{ $t('settings.onlineDeployment') }}</h4>
             <el-button size="small" @click="toggleOnlineDeployment">
-              {{ onlineDeploymentEnabled ? '收起' : '展开' }}
+              {{ onlineDeploymentEnabled ? $t('settings.collapse') : $t('settings.expand') }}
             </el-button>
           </div>
           <div v-if="onlineDeploymentEnabled" class="online-deployment">
@@ -91,38 +91,38 @@
               label-width="120px"
               class="settings-form"
             >
-              <el-form-item label="服务器地址">
-                <el-input v-model="onlineDeploymentSettings.serverAddress" placeholder="请输入服务器地址" />
+              <el-form-item :label="$t('settings.serverAddress')">
+                <el-input v-model="onlineDeploymentSettings.serverAddress" :placeholder="$t('settings.serverAddressPlaceholder')" />
               </el-form-item>
-              <el-form-item label="服务器端口">
+              <el-form-item :label="$t('settings.serverPort')">
                 <el-input-number
                   v-model="onlineDeploymentSettings.port"
                   :min="1024"
                   :max="65535"
-                  placeholder="请输入端口号"
+                  :placeholder="$t('settings.portPlaceholder')"
                 />
               </el-form-item>
-              <el-form-item label="数据库配置">
+              <el-form-item :label="$t('settings.dbConfig')">
                 <div class="database-config">
-                  <el-form-item label="主机" prop="database.host">
-                    <el-input v-model="onlineDeploymentSettings.database.host" placeholder="请输入数据库主机" />
+                  <el-form-item :label="$t('settings.dbHost')" prop="database.host">
+                    <el-input v-model="onlineDeploymentSettings.database.host" :placeholder="$t('settings.dbHostPlaceholder')" />
                   </el-form-item>
-                  <el-form-item label="端口" prop="database.port">
+                  <el-form-item :label="$t('settings.dbPort')" prop="database.port">
                     <el-input-number
                       v-model="onlineDeploymentSettings.database.port"
                       :min="1024"
                       :max="65535"
-                      placeholder="请输入端口号"
+                      :placeholder="$t('settings.portPlaceholder')"
                     />
                   </el-form-item>
-                  <el-form-item label="用户名" prop="database.username">
-                    <el-input v-model="onlineDeploymentSettings.database.username" placeholder="请输入数据库用户名" />
+                  <el-form-item :label="$t('settings.dbUser')" prop="database.username">
+                    <el-input v-model="onlineDeploymentSettings.database.username" :placeholder="$t('settings.dbUserPlaceholder')" />
                   </el-form-item>
-                  <el-form-item label="密码" prop="database.password">
+                  <el-form-item :label="$t('settings.dbPassword')" prop="database.password">
                     <el-input
                       v-model="onlineDeploymentSettings.database.password"
                       type="password"
-                      placeholder="请输入数据库密码"
+                      :placeholder="$t('settings.dbPasswordPlaceholder')"
                       show-password
                     />
                   </el-form-item>
@@ -130,12 +130,12 @@
               </el-form-item>
             </el-form>
             <el-alert
-              title="提示"
+              :title="$t('common.warning')"
               type="info"
               :closable="false"
               show-icon
             >
-              线上部署功能暂未启用，仅用于后续配置
+              {{ $t('settings.onlineDeployTip') }}
             </el-alert>
           </div>
         </div>
@@ -143,7 +143,7 @@
 
       <!-- 填写设置 -->
       <div class="glass-card">
-        <h3 class="subtitle">填写设置</h3>
+        <h3 class="subtitle">{{ $t('settings.fillSettings') }}</h3>
         <el-form
           :model="fillSettings"
           :rules="fillSettingsRules"
@@ -151,21 +151,21 @@
           label-width="120px"
           class="settings-form"
         >
-          <el-form-item label="提交间隔">
+          <el-form-item :label="$t('settings.submitInterval')">
             <el-input-number
               v-model="fillSettings.submitInterval"
               :min="1"
               :max="10"
               :step="1"
-              placeholder="请输入间隔时间"
+              :placeholder="$t('settings.intervalPlaceholder')"
             />
-            <span class="unit">秒</span>
-            <div class="form-tip">避免触发表单反爬</div>
+            <span class="unit">{{ $t('settings.unitSecond') }}</span>
+            <div class="form-tip">{{ $t('settings.intervalTip') }}</div>
           </el-form-item>
-          <el-form-item label="必填字段提醒">
+          <el-form-item :label="$t('settings.requiredAlert')">
             <el-select v-model="fillSettings.requiredFieldAlert">
-              <el-option label="弹窗提醒" value="popup" />
-              <el-option label="提示框" value="tooltip" />
+              <el-option :label="$t('settings.alertPopup')" value="popup" />
+              <el-option :label="$t('settings.alertTooltip')" value="tooltip" />
             </el-select>
           </el-form-item>
         </el-form>
@@ -173,20 +173,20 @@
 
       <!-- 版本信息 -->
       <div class="glass-card">
-        <h3 class="subtitle">版本信息</h3>
+        <h3 class="subtitle">{{ $t('settings.versionInfo') }}</h3>
         <div class="version-info">
           <div class="info-item">
-            <span class="label">当前版本：</span>
+            <span class="label">{{ $t('settings.currentVersion') }}</span>
             <span class="value">{{ versionInfo.current }}</span>
           </div>
           <div class="info-item">
-            <span class="label">最新版本：</span>
+            <span class="label">{{ $t('settings.latestVersion') }}</span>
             <span class="value">{{ versionInfo.latest }}</span>
           </div>
           <div class="info-item">
-            <span class="label">更新状态：</span>
+            <span class="label">{{ $t('settings.updateStatus') }}</span>
             <span class="value" :class="{ 'update-available': versionInfo.updateAvailable }">
-              {{ versionInfo.updateAvailable ? '有新版本可用' : '当前为最新版本' }}
+              {{ versionInfo.updateAvailable ? $t('settings.updateAvailable') : $t('settings.isLatest') }}
             </span>
           </div>
           <el-button
@@ -195,7 +195,7 @@
             @click="handleUpdate"
           >
             <el-icon><Download /></el-icon>
-            立即更新
+            {{ $t('settings.updateNow') }}
           </el-button>
         </div>
       </div>
@@ -204,7 +204,7 @@
       <div class="save-button-container">
         <el-button type="primary" size="large" @click="saveAllSettings">
           <el-icon><Check /></el-icon>
-          保存所有设置
+          {{ $t('settings.save') }}
         </el-button>
       </div>
     </div>
@@ -216,6 +216,9 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useSettingsStore } from '../../stores'
 import { Check, Download } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t, locale } = useI18n()
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -231,11 +234,11 @@ const generalSettings = reactive({
 })
 
 // 通用设置验证规则
-const generalSettingsRules = {
-  language: [{ required: true, message: '请选择语言', trigger: 'change' }],
-  theme: [{ required: true, message: '请选择主题', trigger: 'change' }],
-  fontSize: [{ required: true, message: '请选择字体大小', trigger: 'change' }]
-}
+const generalSettingsRules = computed(() => ({
+  language: [{ required: true, message: t('settings.validation.selectLanguage'), trigger: 'change' }],
+  theme: [{ required: true, message: t('settings.validation.selectTheme'), trigger: 'change' }],
+  fontSize: [{ required: true, message: t('settings.validation.selectFontSize'), trigger: 'change' }]
+}))
 
 // 本地部署设置
 const localDeploymentSettings = reactive({
@@ -245,11 +248,11 @@ const localDeploymentSettings = reactive({
 })
 
 // 本地部署验证规则
-const localDeploymentRules = {
-  dataPath: [{ required: true, message: '请输入数据存储路径', trigger: 'blur' }],
-  backupPath: [{ required: true, message: '请输入备份路径', trigger: 'blur' }],
-  port: [{ required: true, message: '请输入端口号', trigger: 'blur' }]
-}
+const localDeploymentRules = computed(() => ({
+  dataPath: [{ required: true, message: t('settings.validation.inputDataPath'), trigger: 'blur' }],
+  backupPath: [{ required: true, message: t('settings.validation.inputBackupPath'), trigger: 'blur' }],
+  port: [{ required: true, message: t('settings.validation.inputPort'), trigger: 'blur' }]
+}))
 
 // 线上部署设置
 const onlineDeploymentSettings = reactive({
@@ -264,14 +267,14 @@ const onlineDeploymentSettings = reactive({
 })
 
 // 线上部署验证规则
-const onlineDeploymentRules = {
-  serverAddress: [{ required: true, message: '请输入服务器地址', trigger: 'blur' }],
-  port: [{ required: true, message: '请输入端口号', trigger: 'blur' }],
-  'database.host': [{ required: true, message: '请输入数据库主机', trigger: 'blur' }],
-  'database.port': [{ required: true, message: '请输入数据库端口', trigger: 'blur' }],
-  'database.username': [{ required: true, message: '请输入数据库用户名', trigger: 'blur' }],
-  'database.password': [{ required: true, message: '请输入数据库密码', trigger: 'blur' }]
-}
+const onlineDeploymentRules = computed(() => ({
+  serverAddress: [{ required: true, message: t('settings.validation.inputServerAddress'), trigger: 'blur' }],
+  port: [{ required: true, message: t('settings.validation.inputPort'), trigger: 'blur' }],
+  'database.host': [{ required: true, message: t('settings.validation.inputDbHost'), trigger: 'blur' }],
+  'database.port': [{ required: true, message: t('settings.validation.inputDbPort'), trigger: 'blur' }],
+  'database.username': [{ required: true, message: t('settings.validation.inputDbUser'), trigger: 'blur' }],
+  'database.password': [{ required: true, message: t('settings.validation.inputDbPassword'), trigger: 'blur' }]
+}))
 
 // 填写设置
 const fillSettings = reactive({
@@ -280,10 +283,10 @@ const fillSettings = reactive({
 })
 
 // 填写设置验证规则
-const fillSettingsRules = {
-  submitInterval: [{ required: true, message: '请输入提交间隔', trigger: 'blur' }],
-  requiredFieldAlert: [{ required: true, message: '请选择提醒方式', trigger: 'change' }]
-}
+const fillSettingsRules = computed(() => ({
+  submitInterval: [{ required: true, message: t('settings.validation.inputInterval'), trigger: 'blur' }],
+  requiredFieldAlert: [{ required: true, message: t('settings.validation.selectAlert'), trigger: 'change' }]
+}))
 
 // 版本信息
 const versionInfo = reactive({
@@ -299,11 +302,19 @@ const onlineDeploymentFormRef = ref(null)
 const fillSettingsFormRef = ref(null)
 
 // 方法
+// 切换语言
+const handleLanguageChange = (val) => {
+  locale.value = val
+  localStorage.setItem('language', val)
+  settingsStore.updateGeneralSettings({ language: val })
+  ElMessage.success(t('settings.languageChanged'))
+}
+
 // 切换主题
 const handleThemeChange = (theme) => {
   // 这里可以添加切换主题的逻辑
   settingsStore.updateGeneralSettings({ theme })
-  ElMessage.success('主题已切换，需重启应用生效')
+  ElMessage.success(t('settings.themeChanged'))
 }
 
 // 切换线上部署设置显示
@@ -339,15 +350,15 @@ const saveAllSettings = async () => {
     await settingsStore.updateLocalDeploymentSettings(localDeploymentSettings)
     await settingsStore.updateFillSettings(fillSettings)
     
-    ElMessage.success('设置已保存，部分设置需重启应用生效')
+    ElMessage.success(t('settings.saveSuccess'))
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('Form validation failed:', error)
   }
 }
 
 // 处理更新
 const handleUpdate = () => {
-  ElMessage.info('版本更新功能开发中')
+  ElMessage.info(t('settings.updateDev'))
 }
 
 // 生命周期

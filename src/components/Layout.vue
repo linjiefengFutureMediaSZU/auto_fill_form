@@ -15,7 +15,7 @@
     >
       <div class="sidebar-header">
         <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=auto%20fill%20form%20tool%20logo%2C%20simple%20modern%20design%2C%20blue%20color%20scheme&image_size=square_hd" alt="Logo" class="logo" />
-        <span v-if="!isCollapse" class="logo-text">自动填写工具</span>
+        <span v-if="!isCollapse" class="logo-text">{{ $t('app.title') }}</span>
       </div>
       <el-menu
         :default-active="activeMenu"
@@ -28,31 +28,31 @@
       >
         <el-menu-item index="/profile">
           <el-icon><User /></el-icon>
-          <template #title>个人中心</template>
+          <template #title>{{ $t('menu.profile') }}</template>
         </el-menu-item>
         <el-menu-item index="/account">
           <el-icon><UserFilled /></el-icon>
-          <template #title>账号管理</template>
+          <template #title>{{ $t('menu.account') }}</template>
         </el-menu-item>
         <el-menu-item index="/form">
           <el-icon><Document /></el-icon>
-          <template #title>表单填写</template>
+          <template #title>{{ $t('menu.fillForm') }}</template>
         </el-menu-item>
         <el-menu-item index="/formList">
           <el-icon><List /></el-icon>
-          <template #title>表单列表</template>
+          <template #title>{{ $t('menu.formList') }}</template>
         </el-menu-item>
         <el-menu-item index="/data">
           <el-icon><DataAnalysis /></el-icon>
-          <template #title>数据管理</template>
+          <template #title>{{ $t('menu.data') }}</template>
         </el-menu-item>
         <el-menu-item index="/settings">
           <el-icon><Setting /></el-icon>
-          <template #title>基础设置</template>
+          <template #title>{{ $t('menu.settings') }}</template>
         </el-menu-item>
         <el-menu-item index="/help">
           <el-icon><HelpFilled /></el-icon>
-          <template #title>帮助与反馈</template>
+          <template #title>{{ $t('menu.help') }}</template>
         </el-menu-item>
       </el-menu>
       <div class="collapse-btn" @click="toggleCollapse">
@@ -68,7 +68,7 @@
         <div class="top-bar-left">
           <span class="current-time">{{ currentTime }}</span>
           <span class="deployment-status">
-            <el-tag size="small" type="success" effect="dark" round>本地部署已启动</el-tag>
+            <el-tag size="small" type="success" effect="dark" round>{{ $t('app.deploymentStatus') }}</el-tag>
           </span>
         </div>
         <div class="top-bar-right">
@@ -86,12 +86,12 @@
               <el-avatar size="small" :src="userInfo.avatar">
                 <span v-if="!userInfo.avatar">{{ userInfo.name ? userInfo.name.charAt(0) : 'A' }}</span>
               </el-avatar>
-              <span v-if="!isCollapse">{{ userInfo.name || '管理员' }}</span>
+              <span v-if="!isCollapse">{{ userInfo.name || $t('app.admin') }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item @click="handleProfile">个人中心</el-dropdown-item>
-                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+                <el-dropdown-item @click="handleProfile">{{ $t('menu.profile') }}</el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">{{ $t('menu.logout') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -112,8 +112,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { useSettingsStore } from '../stores'
 import { useAccountStore } from '../stores/account'
 import { User, UserFilled, Document, List, DataAnalysis, Setting, HelpFilled, ArrowLeft, ArrowRight, MoonNight, Sunny } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 
 // 状态管理
+const { t, locale } = useI18n()
 const settingsStore = useSettingsStore()
 const accountStore = useAccountStore()
 const route = useRoute()
@@ -160,7 +162,7 @@ const handleLogout = () => {
 
 const updateCurrentTime = () => {
   const now = new Date()
-  currentTime.value = now.toLocaleString('zh-CN', {
+  currentTime.value = now.toLocaleString(locale.value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

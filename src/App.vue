@@ -1,11 +1,20 @@
 <template>
-  <!-- 直接使用router-view，让路由配置决定显示内容 -->
-  <router-view />
+  <el-config-provider :locale="elementLocale">
+    <!-- 直接使用router-view，让路由配置决定显示内容 -->
+    <router-view />
+  </el-config-provider>
 </template>
 
 <script setup>
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, computed } from 'vue'
 import { useSettingsStore, useAccountStore, useFormStore, useDataStore } from './stores'
+import { ElConfigProvider } from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import en from 'element-plus/es/locale/lang/en'
+import { useI18n } from 'vue-i18n'
+
+const { locale } = useI18n()
+const elementLocale = computed(() => locale.value === 'zh-CN' ? zhCn : en)
 
 const settingsStore = useSettingsStore()
 const accountStore = useAccountStore()

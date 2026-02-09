@@ -12,8 +12,8 @@
       <!-- 登录卡片头部 -->
       <div class="login-header">
         <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=auto%20fill%20form%20tool%20logo%2C%20simple%20modern%20design%2C%20blue%20color%20scheme&image_size=square_hd" alt="Logo" class="login-logo" />
-        <h1 class="login-title">自动填写工具</h1>
-        <p class="login-subtitle">多账号表单自动填写解决方案</p>
+        <h1 class="login-title">{{ $t('login.title') }}</h1>
+        <p class="login-subtitle">{{ $t('login.subtitle') }}</p>
         <!-- 主题切换按钮 -->
         <div class="theme-toggle">
           <el-button
@@ -21,7 +21,7 @@
             circle
             size="small"
             @click="handleThemeToggle"
-            :title="isDarkTheme ? '切换到浅色主题' : '切换到深色主题'"
+            :title="isDarkTheme ? $t('login.themeLight') : $t('login.themeDark')"
           >
             <el-icon v-if="isDarkTheme"><Sunny /></el-icon>
             <el-icon v-else><Moon /></el-icon>
@@ -39,7 +39,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="loginForm.username"
-            placeholder="请输入用户名"
+            :placeholder="$t('login.usernamePlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -52,7 +52,7 @@
           <el-input
             v-model="loginForm.password"
             type="password"
-            placeholder="请输入密码"
+            :placeholder="$t('login.passwordPlaceholder')"
             show-password
             size="large"
           >
@@ -64,9 +64,9 @@
         
         <el-form-item class="remember-me">
           <el-checkbox v-model="loginForm.remember">
-            记住我
+            {{ $t('login.rememberMe') }}
           </el-checkbox>
-          <el-link type="primary" class="forgot-password" @click="router.push('/forget-password')">忘记密码？</el-link>
+          <el-link type="primary" class="forgot-password" @click="router.push('/forget-password')">{{ $t('login.forgotPassword') }}</el-link>
         </el-form-item>
         
         <el-form-item>
@@ -78,7 +78,7 @@
             :loading="loading"
             @click="handleLogin"
           >
-            登录
+            {{ $t('login.loginBtn') }}
           </el-button>
         </el-form-item>
         
@@ -89,7 +89,7 @@
             size="large"
             @click="handleRegister"
           >
-            注册
+            {{ $t('login.registerBtn') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -109,6 +109,9 @@ import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
 import { User, Lock, Moon, Sunny } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -143,10 +146,10 @@ const loginFormRef = ref(null)
 // 表单验证规则
 const rules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+    { required: true, message: computed(() => t('login.usernamePlaceholder')), trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' }
+    { required: true, message: computed(() => t('login.passwordPlaceholder')), trigger: 'blur' }
   ]
 }
 
@@ -157,7 +160,7 @@ const rules = {
 const handleLogin = async () => {
   // 非空校验提示
   if (!loginForm.username || !loginForm.password) {
-    ElMessage.warning('请输入账号和密码')
+    ElMessage.warning(t('login.inputRequired'))
     return
   }
 
@@ -184,13 +187,13 @@ const handleLogin = async () => {
         // 保存登录状态
         accountStore.setLoginStatus(true)
         
-        ElMessage.success('登录成功')
+        ElMessage.success(t('login.success'))
         // 跳转到首页
         router.push('/account')
       } else {
         // 使用弹窗提示错误（账号不存在或密码错误）
-        ElMessageBox.alert(result.message || '登录失败', '登录错误', {
-          confirmButtonText: '确定',
+        ElMessageBox.alert(result.message || t('login.failed'), t('common.error'), {
+          confirmButtonText: t('common.confirm'),
           type: 'error'
         })
       }
@@ -198,7 +201,7 @@ const handleLogin = async () => {
       console.error('登录异常:', error)
       // 如果是表单校验失败，不需要弹窗，Element Plus 会有红字提示
       if (error && error.username) return 
-      ElMessage.error('登录过程中发生错误')
+      ElMessage.error(t('common.error'))
     } finally {
       loading.value = false
     }
@@ -334,6 +337,10 @@ const handleRegister = () => {
   background-color: var(--accent-color);
   border: none;
   transition: all 0.2s ease;
+  
+  &.is-loading {
+    opacity: 0.8;
+  }
   
   &:hover {
     transform: scale(1.02);

@@ -11,9 +11,9 @@
       <!-- 注册卡片头部 -->
       <div class="login-header">
         <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=auto%20fill%20form%20tool%20logo%2C%20simple%20modern%20design%2C%20blue%20color%20scheme&image_size=square_hd" alt="Logo" class="login-logo" />
-        <h1 class="login-title">自动填写工具</h1>
-        <p class="login-subtitle">多账号表单自动填写解决方案</p>
-        <h2 class="register-title">用户注册</h2>
+        <h1 class="login-title">{{ $t('login.title') }}</h1>
+        <p class="login-subtitle">{{ $t('login.subtitle') }}</p>
+        <h2 class="register-title">{{ $t('register.title') }}</h2>
         <!-- 主题切换按钮 -->
         <div class="theme-toggle">
           <el-button
@@ -21,7 +21,7 @@
             circle
             size="small"
             @click="handleThemeToggle"
-            :title="isDarkTheme ? '切换到浅色主题' : '切换到深色主题'"
+            :title="isDarkTheme ? $t('login.themeLight') : $t('login.themeDark')"
           >
             <el-icon v-if="isDarkTheme"><Sunny /></el-icon>
             <el-icon v-else><Moon /></el-icon>
@@ -39,7 +39,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="registerForm.username"
-            placeholder="请输入用户名"
+            :placeholder="$t('register.usernamePlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -51,7 +51,7 @@
         <el-form-item prop="email">
           <el-input
             v-model="registerForm.email"
-            placeholder="请输入邮箱"
+            :placeholder="$t('register.emailPlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -63,7 +63,7 @@
         <el-form-item prop="phone">
           <el-input
             v-model="registerForm.phone"
-            placeholder="请输入手机号"
+            :placeholder="$t('register.phonePlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -76,7 +76,7 @@
           <el-input
             v-model="registerForm.password"
             type="password"
-            placeholder="请输入密码"
+            :placeholder="$t('register.passwordPlaceholder')"
             show-password
             size="large"
           >
@@ -90,7 +90,7 @@
           <el-input
             v-model="registerForm.confirmPassword"
             type="password"
-            placeholder="请确认密码"
+            :placeholder="$t('register.confirmPasswordPlaceholder')"
             show-password
             size="large"
           >
@@ -108,7 +108,7 @@
             :loading="loading"
             @click="handleRegister"
           >
-            注册
+            {{ $t('register.registerBtn') }}
           </el-button>
         </el-form-item>
         
@@ -119,14 +119,14 @@
             size="large"
             @click="handleLogin"
           >
-            已有账号？去登录
+            {{ $t('register.hasAccount') }}
           </el-button>
         </el-form-item>
       </el-form>
       
       <!-- 注册卡片底部 -->
       <div class="login-footer">
-        <p class="copyright">© 2026 自动填写工具. 保留所有权利.</p>
+        <p class="copyright">{{ $t('register.copyright') }}</p>
       </div>
     </div>
   </div>
@@ -139,6 +139,9 @@ import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
 import { User, Lock, Message, Phone, Moon, Sunny } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -173,29 +176,29 @@ const loading = ref(false)
 const registerFormRef = ref(null)
 
 // 表单验证规则
-const rules = {
+const rules = computed(() => ({
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度应在3-20个字符之间', trigger: 'blur' }
+    { required: true, message: t('register.validation.usernameRequired'), trigger: 'blur' },
+    { min: 3, max: 20, message: t('register.validation.usernameLength'), trigger: 'blur' }
   ],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    { required: true, message: t('register.validation.emailRequired'), trigger: 'blur' },
+    { type: 'email', message: t('register.validation.emailInvalid'), trigger: 'blur' }
   ],
   phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur' }
+    { required: true, message: t('register.validation.phoneRequired'), trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: t('register.validation.phoneInvalid'), trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度至少为6个字符', trigger: 'blur' }
+    { required: true, message: t('register.validation.passwordRequired'), trigger: 'blur' },
+    { min: 6, message: t('register.validation.passwordLength'), trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
+    { required: true, message: t('register.validation.confirmPasswordRequired'), trigger: 'blur' },
     {
       validator: (rule, value, callback) => {
         if (value !== registerForm.password) {
-          callback(new Error('两次输入的密码不一致'))
+          callback(new Error(t('register.validation.passwordMismatch')))
         } else {
           callback()
         }
@@ -203,7 +206,7 @@ const rules = {
       trigger: 'blur'
     }
   ]
-}
+}))
 
 // 方法
 /**
@@ -227,15 +230,15 @@ const handleRegister = async () => {
       })
 
       if (result.success) {
-        ElMessage.success('注册成功，请登录')
+        ElMessage.success(t('register.success'))
         // 跳转到登录页
         router.push('/login')
       } else {
-        ElMessage.error(result.message || '注册失败')
+        ElMessage.error(result.message || t('register.failed'))
       }
     } catch (error) {
       console.error('注册异常:', error)
-      ElMessage.error('注册过程中发生错误')
+      ElMessage.error(t('register.error'))
     } finally {
       loading.value = false
     }

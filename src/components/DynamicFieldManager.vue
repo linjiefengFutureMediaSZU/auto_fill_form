@@ -2,75 +2,75 @@
   <div class="dynamic-field-manager">
     <!-- 字段管理标题 -->
     <div class="manager-header">
-      <h3>字段管理</h3>
-      <el-button type="primary" size="small" @click="openAddFieldDialog">添加字段</el-button>
+      <h3>{{ $t('fieldManager.title') }}</h3>
+      <el-button type="primary" size="small" @click="openAddFieldDialog">{{ $t('fieldManager.addField') }}</el-button>
     </div>
 
     <!-- 字段列表 -->
     <div class="field-list">
       <div v-for="(field, index) in fields" :key="field.id" class="field-item">
         <div class="field-info">
-          <el-tag size="small" :type="getFieldTypeTagType(field.type)">{{ field.type }}</el-tag>
+          <el-tag size="small" :type="getFieldTypeTagType(field.type)">{{ $t(`fieldManager.types.${field.type}`) }}</el-tag>
           <span class="field-label">{{ field.label }}</span>
           <span class="field-name">{{ field.name }}</span>
         </div>
         <div class="field-actions">
-          <el-button type="primary" size="small" @click="openEditFieldDialog(field)" style="margin-right: 8px;">编辑</el-button>
-          <el-button type="danger" size="small" @click="removeField(index)">删除</el-button>
+          <el-button type="primary" size="small" @click="openEditFieldDialog(field)" style="margin-right: 8px;">{{ $t('common.edit') }}</el-button>
+          <el-button type="danger" size="small" @click="removeField(index)">{{ $t('common.delete') }}</el-button>
         </div>
       </div>
       <div v-if="fields.length === 0" class="empty-fields">
-        <el-empty description="暂无自定义字段" />
+        <el-empty :description="$t('fieldManager.noFields')" />
       </div>
     </div>
 
     <!-- 添加/编辑字段弹窗 -->
     <el-dialog
       v-model="fieldDialogVisible"
-      :title="isEditFieldMode ? '编辑字段' : '添加字段'"
+      :title="isEditFieldMode ? $t('fieldManager.editField') : $t('fieldManager.addField')"
       width="500px"
     >
-      <el-form :model="fieldForm" label-width="80px">
-        <el-form-item label="字段标签">
-          <el-input v-model="fieldForm.label" placeholder="请输入字段标签" />
+      <el-form :model="fieldForm" label-width="100px">
+        <el-form-item :label="$t('fieldManager.fieldLabel')">
+          <el-input v-model="fieldForm.label" :placeholder="$t('fieldManager.placeholders.label')" />
         </el-form-item>
-        <el-form-item label="字段名称">
-          <el-input v-model="fieldForm.name" placeholder="请输入字段名称（英文）" />
+        <el-form-item :label="$t('fieldManager.fieldName')">
+          <el-input v-model="fieldForm.name" :placeholder="$t('fieldManager.placeholders.name')" />
         </el-form-item>
-        <el-form-item label="字段类型">
-          <el-select v-model="fieldForm.type" placeholder="请选择字段类型">
-            <el-option label="文本" value="text" />
-            <el-option label="数字" value="number" />
-            <el-option label="选择" value="select" />
-            <el-option label="多选" value="multiple_select" />
-            <el-option label="开关" value="switch" />
+        <el-form-item :label="$t('fieldManager.fieldType')">
+          <el-select v-model="fieldForm.type" :placeholder="$t('fieldManager.placeholders.type')">
+            <el-option :label="$t('fieldManager.types.text')" value="text" />
+            <el-option :label="$t('fieldManager.types.number')" value="number" />
+            <el-option :label="$t('fieldManager.types.select')" value="select" />
+            <el-option :label="$t('fieldManager.types.multiple_select')" value="multiple_select" />
+            <el-option :label="$t('fieldManager.types.switch')" value="switch" />
           </el-select>
         </el-form-item>
-        <el-form-item label="选项配置" v-if="fieldForm.type === 'select' || fieldForm.type === 'multiple_select'">
-          <el-input v-model="fieldForm.options" placeholder="请输入选项，用逗号分隔 (如: 选项A,选项B)" />
+        <el-form-item :label="$t('fieldManager.optionsConfig')" v-if="fieldForm.type === 'select' || fieldForm.type === 'multiple_select'">
+          <el-input v-model="fieldForm.options" :placeholder="$t('fieldManager.placeholders.options')" />
         </el-form-item>
-        <el-form-item label="字段分组">
-          <el-select v-model="fieldForm.group" placeholder="请选择字段分组">
-            <el-option label="基础信息" value="basic" />
-            <el-option label="运营数据" value="data" />
-            <el-option label="合作信息" value="cooperation" />
-            <el-option label="备注信息" value="remark" />
+        <el-form-item :label="$t('fieldManager.fieldGroup')">
+          <el-select v-model="fieldForm.group" :placeholder="$t('fieldManager.placeholders.group')">
+            <el-option :label="$t('fieldManager.groups.basic')" value="basic" />
+            <el-option :label="$t('fieldManager.groups.data')" value="data" />
+            <el-option :label="$t('fieldManager.groups.cooperation')" value="cooperation" />
+            <el-option :label="$t('fieldManager.groups.remark')" value="remark" />
           </el-select>
         </el-form-item>
-        <el-form-item label="占位符">
-          <el-input v-model="fieldForm.placeholder" placeholder="请输入占位符文本" />
+        <el-form-item :label="$t('fieldManager.placeholder')">
+          <el-input v-model="fieldForm.placeholder" :placeholder="$t('fieldManager.placeholders.placeholder')" />
         </el-form-item>
-        <el-form-item label="默认值">
-          <el-input v-model="fieldForm.defaultValue" placeholder="请输入默认值" />
+        <el-form-item :label="$t('fieldManager.defaultValue')">
+          <el-input v-model="fieldForm.defaultValue" :placeholder="$t('fieldManager.placeholders.defaultValue')" />
         </el-form-item>
-        <el-form-item label="是否必填">
+        <el-form-item :label="$t('fieldManager.isRequired')">
           <el-switch v-model="fieldForm.required" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="fieldDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveField">保存</el-button>
+          <el-button @click="fieldDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="saveField">{{ $t('common.save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -80,6 +80,9 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // Props
 const props = defineProps({
@@ -148,7 +151,7 @@ const openEditFieldDialog = (field) => {
 const saveField = () => {
   // 验证必填字段
   if (!fieldForm.label || !fieldForm.name) {
-    ElMessage.warning('字段标签和字段名称不能为空')
+    ElMessage.warning(t('fieldManager.messages.labelNameRequired'))
     return
   }
 
@@ -180,13 +183,13 @@ const saveField = () => {
   
   // 关闭弹窗
   fieldDialogVisible.value = false
-  ElMessage.success(isEditFieldMode.value ? '字段编辑成功' : '字段添加成功')
+  ElMessage.success(isEditFieldMode.value ? t('fieldManager.messages.editSuccess') : t('fieldManager.messages.addSuccess'))
 }
 
 const removeField = (index) => {
   fields.value.splice(index, 1)
   emit('update:modelValue', [...fields.value])
-  ElMessage.success('字段删除成功')
+  ElMessage.success(t('fieldManager.messages.deleteSuccess'))
 }
 </script>
 

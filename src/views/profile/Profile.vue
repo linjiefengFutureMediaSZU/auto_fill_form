@@ -2,8 +2,8 @@
   <div class="profile-container">
     <!-- 页面标题 -->
     <div class="page-header glass-card">
-      <h1 class="page-title">个人中心</h1>
-      <p class="page-description">管理您的个人信息和账户设置</p>
+      <h1 class="page-title">{{ t('profile.title') }}</h1>
+      <p class="page-description">{{ t('profile.description') }}</p>
     </div>
     
     <!-- 内容区域 -->
@@ -11,7 +11,7 @@
       <!-- 用户信息卡片 -->
     <div class="info-card glass-card">
       <div class="section-header">
-        <h3 class="subtitle">基本信息</h3>
+        <h3 class="subtitle">{{ t('profile.basicInfo') }}</h3>
       </div>
       
       <div class="user-info">
@@ -19,9 +19,9 @@
             <el-avatar size="large" :src="userAvatar">
               <span v-if="!userAvatar">{{ userInitial }}</span>
             </el-avatar>
-            <el-button type="primary" size="small" @click="handleAvatarUpload" :loading="avatarLoading">上传头像</el-button>
+            <el-button type="primary" size="small" @click="handleAvatarUpload" :loading="avatarLoading">{{ t('profile.uploadAvatar') }}</el-button>
             <h3 class="user-name">{{ userInfo.nickname || userInfo.username }}</h3>
-            <p class="user-role">{{ userInfo.role === 'admin' ? '管理员' : '普通用户' }}</p>
+            <p class="user-role">{{ userInfo.role === 'admin' ? t('profile.admin') : t('profile.user') }}</p>
           </div>
           <input
             ref="fileInput"
@@ -33,19 +33,19 @@
           
           <div class="info-section">
             <div class="info-item">
-              <div class="info-label">用户名</div>
+              <div class="info-label">{{ t('profile.username') }}</div>
               <div class="info-value">{{ userInfo.username }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">邮箱</div>
-              <div class="info-value" :class="{ unset: !userInfo.email }">{{ userInfo.email || '未设置' }}</div>
+              <div class="info-label">{{ t('profile.email') }}</div>
+              <div class="info-value" :class="{ unset: !userInfo.email }">{{ userInfo.email || t('profile.notSet') }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">手机号</div>
-              <div class="info-value" :class="{ unset: !userInfo.phone }">{{ userInfo.phone || '未设置' }}</div>
+              <div class="info-label">{{ t('profile.phone') }}</div>
+              <div class="info-value" :class="{ unset: !userInfo.phone }">{{ userInfo.phone || t('profile.notSet') }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">注册时间</div>
+              <div class="info-label">{{ t('profile.registrationTime') }}</div>
               <div class="info-value">{{ registrationTime }}</div>
             </div>
           </div>
@@ -57,7 +57,7 @@
       <!-- 账号安全设置卡片 -->
       <div class="security-card glass-card">
         <div class="section-header">
-          <h3 class="subtitle">账号安全设置</h3>
+          <h3 class="subtitle">{{ t('profile.securitySettings') }}</h3>
         </div>
         
         <el-form
@@ -66,7 +66,7 @@
           :rules="securitySettingsRules"
           class="security-form"
         >
-          <el-form-item label="启用密码">
+          <el-form-item :label="t('profile.enablePassword')">
             <el-switch v-model="securitySettings.passwordEnabled" />
           </el-form-item>
           
@@ -74,7 +74,7 @@
             <el-input
               v-model="securitySettings.currentPassword"
               type="password"
-              placeholder="请输入当前密码"
+              :placeholder="t('profile.enterCurrentPassword')"
               show-password
             >
               <template #prefix>
@@ -87,21 +87,21 @@
             <el-input
               v-model="securitySettings.newPassword"
               type="password"
-              placeholder="请输入新密码"
+              :placeholder="t('profile.enterNewPassword')"
               show-password
             >
               <template #prefix>
                 <el-icon><Lock /></el-icon>
               </template>
             </el-input>
-            <div class="form-tip">密码长度至少6位</div>
+            <div class="form-tip">{{ t('profile.passwordTip') }}</div>
           </el-form-item>
           
           <el-form-item prop="confirmPassword" v-if="securitySettings.passwordEnabled">
             <el-input
               v-model="securitySettings.confirmPassword"
               type="password"
-              placeholder="请确认新密码"
+              :placeholder="t('profile.confirmNewPassword')"
               show-password
             >
               <template #prefix>
@@ -113,13 +113,13 @@
           <el-form-item prop="email">
             <el-input
               v-model="securitySettings.email"
-              placeholder="请输入邮箱地址"
+              :placeholder="t('profile.enterEmail')"
             >
               <template #prefix>
                 <el-icon><Message /></el-icon>
               </template>
             </el-input>
-            <div class="form-tip">用于找回密码</div>
+            <div class="form-tip">{{ t('profile.emailTip') }}</div>
           </el-form-item>
           
           <el-form-item>
@@ -128,7 +128,7 @@
               :loading="securityLoading"
               @click="handleSecuritySave"
             >
-              保存安全设置
+              {{ t('profile.saveSecuritySettings') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -142,6 +142,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useAccountStore } from '../../stores/account'
 import { Lock, Message } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t, locale } = useI18n()
 
 // 状态管理
 const accountStore = useAccountStore()
@@ -180,25 +183,29 @@ const userAvatar = computed(() => {
 
 const registrationTime = computed(() => {
   if (!userInfo.value.created_at) return '-'
-  const date = new Date(userInfo.value.created_at)
-  return date.toLocaleString('zh-CN')
+  try {
+    const date = new Date(userInfo.value.created_at)
+    return date.toLocaleString(locale.value)
+  } catch (e) {
+    return '-'
+  }
 })
 
-// 安全设置验证规则
-const securitySettingsRules = {
+// 安全设置验证规则 - 改为 computed 以支持国际化切换
+const securitySettingsRules = computed(() => ({
   currentPassword: [
-    { required: true, message: '请输入当前密码', trigger: 'blur' }
+    { required: true, message: t('profile.enterCurrentPassword'), trigger: 'blur' }
   ],
   newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度至少为6个字符', trigger: 'blur' }
+    { required: true, message: t('profile.enterNewPassword'), trigger: 'blur' },
+    { min: 6, message: t('profile.passwordLengthTip'), trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, message: '请确认新密码', trigger: 'blur' },
+    { required: true, message: t('profile.confirmNewPassword'), trigger: 'blur' },
     {
       validator: (rule, value, callback) => {
         if (value !== securitySettings.value.newPassword) {
-          callback(new Error('两次输入的密码不一致'))
+          callback(new Error(t('profile.passwordMismatch')))
         } else {
           callback()
         }
@@ -207,10 +214,10 @@ const securitySettingsRules = {
     }
   ],
   email: [
-    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+    { required: true, message: t('profile.enterEmail'), trigger: 'blur' },
+    { type: 'email', message: t('profile.invalidEmail'), trigger: 'blur' }
   ]
-}
+}))
 
 // 方法
 /**
@@ -229,13 +236,13 @@ const handleFileChange = async (event) => {
   
   // 验证文件大小（限制为2MB）
   if (file.size > 2 * 1024 * 1024) {
-    ElMessage.error('头像文件大小不能超过2MB')
+    ElMessage.error(t('profile.avatarSizeLimit'))
     return
   }
   
   // 验证文件类型
   if (!file.type.startsWith('image/')) {
-    ElMessage.error('请选择图片文件')
+    ElMessage.error(t('profile.imageOnly'))
     return
   }
   
@@ -246,9 +253,9 @@ const handleFileChange = async (event) => {
     try {
       const base64Data = e.target.result
       await accountStore.updateAvatar(base64Data)
-      ElMessage.success('头像上传成功')
+      ElMessage.success(t('profile.avatarSuccess'))
     } catch (error) {
-      ElMessage.error('头像上传失败: ' + error.message)
+      ElMessage.error(t('profile.avatarFail') + ': ' + error.message)
     } finally {
       avatarLoading.value = false
     }
@@ -277,7 +284,7 @@ const handleSecuritySave = async () => {
     // 如果启用了密码修改，这里可以扩展逻辑，目前先处理基本资料
     await accountStore.updateProfile(updateData)
     
-    ElMessage.success('安全设置保存成功')
+    ElMessage.success(t('profile.securitySaveSuccess'))
     
     // 重置密码相关字段
     securitySettings.value.currentPassword = ''
@@ -285,8 +292,8 @@ const handleSecuritySave = async () => {
     securitySettings.value.confirmPassword = ''
     
   } catch (error) {
-    console.error('安全设置保存失败:', error)
-    ElMessage.error(error.message || '保存失败')
+    console.error('Failed to save security settings:', error)
+    ElMessage.error(error.message || t('profile.saveFail'))
   } finally {
     securityLoading.value = false
   }
@@ -295,7 +302,7 @@ const handleSecuritySave = async () => {
 // 生命周期
 onMounted(() => {
   // 组件挂载时的初始化操作
-  console.log('个人中心页面挂载')
+  console.log('Profile page mounted')
   // 从用户信息中设置邮箱
   if (userInfo.value.email) {
     securitySettings.value.email = userInfo.value.email

@@ -10,14 +10,14 @@
     <div class="forget-card">
       <!-- 卡片头部 -->
       <div class="forget-header">
-        <h1 class="forget-title">重置密码</h1>
-        <p class="forget-subtitle">通过验证手机号重置您的密码</p>
+        <h1 class="forget-title">{{ $t('forgetPassword.title') }}</h1>
+        <p class="forget-subtitle">{{ $t('forgetPassword.subtitle') }}</p>
       </div>
       
       <!-- 步骤条 -->
       <el-steps :active="activeStep" finish-status="success" align-center class="forget-steps">
-        <el-step title="验证身份" />
-        <el-step title="重置密码" />
+        <el-step :title="$t('forgetPassword.step1')" />
+        <el-step :title="$t('forgetPassword.step2')" />
       </el-steps>
 
       <!-- 步骤 1: 验证身份 -->
@@ -31,7 +31,7 @@
         <el-form-item prop="username">
           <el-input
             v-model="verifyForm.username"
-            placeholder="请输入用户名"
+            :placeholder="$t('forgetPassword.usernamePlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -43,7 +43,7 @@
         <el-form-item prop="phone">
           <el-input
             v-model="verifyForm.phone"
-            placeholder="请输入注册手机号"
+            :placeholder="$t('forgetPassword.phonePlaceholder')"
             size="large"
           >
             <template #prefix>
@@ -60,7 +60,7 @@
             :loading="loading"
             @click="handleVerify"
           >
-            下一步
+            {{ $t('forgetPassword.nextBtn') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -77,7 +77,7 @@
           <el-input
             v-model="resetForm.password"
             type="password"
-            placeholder="请输入新密码"
+            :placeholder="$t('forgetPassword.passwordPlaceholder')"
             show-password
             size="large"
           >
@@ -91,7 +91,7 @@
           <el-input
             v-model="resetForm.confirmPassword"
             type="password"
-            placeholder="请确认新密码"
+            :placeholder="$t('forgetPassword.confirmPasswordPlaceholder')"
             show-password
             size="large"
           >
@@ -109,14 +109,14 @@
             :loading="loading"
             @click="handleReset"
           >
-            重置密码
+            {{ $t('forgetPassword.resetBtn') }}
           </el-button>
         </el-form-item>
       </el-form>
 
       <!-- 底部链接 -->
       <div class="forget-footer">
-        <el-link type="info" @click="goBack">返回登录</el-link>
+        <el-link type="info" @click="goBack">{{ $t('forgetPassword.backToLogin') }}</el-link>
       </div>
     </div>
   </div>
@@ -128,6 +128,9 @@ import { useRouter } from 'vue-router'
 import { User, Iphone, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useSettingsStore } from '../../stores/settings'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const settingsStore = useSettingsStore()
@@ -152,33 +155,33 @@ const resetForm = reactive({
 })
 
 // 验证规则
-const verifyRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+const verifyRules = computed(() => ({
+  username: [{ required: true, message: t('forgetPassword.validation.usernameRequired'), trigger: 'blur' }],
   phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+    { required: true, message: t('forgetPassword.validation.phoneRequired'), trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: t('forgetPassword.validation.phoneInvalid'), trigger: 'blur' }
   ]
-}
+}))
 
 const validatePass2 = (rule, value, callback) => {
   if (value === '') {
-    callback(new Error('请再次输入密码'))
+    callback(new Error(t('forgetPassword.validation.confirmPasswordRequired')))
   } else if (value !== resetForm.password) {
-    callback(new Error('两次输入密码不一致'))
+    callback(new Error(t('forgetPassword.validation.passwordMismatch')))
   } else {
     callback()
   }
 }
 
-const resetRules = {
+const resetRules = computed(() => ({
   password: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能小于6位', trigger: 'blur' }
+    { required: true, message: t('forgetPassword.validation.passwordRequired'), trigger: 'blur' },
+    { min: 6, message: t('forgetPassword.validation.passwordLength'), trigger: 'blur' }
   ],
   confirmPassword: [
     { validator: validatePass2, trigger: 'blur' }
   ]
-}
+}))
 
 // 验证身份
 const handleVerify = async () => {
@@ -197,15 +200,15 @@ const handleVerify = async () => {
     if (result.success) {
       userId.value = result.userId
       activeStep.value = 1
-      ElMessage.success('验证成功，请设置新密码')
+      ElMessage.success(t('forgetPassword.successVerify'))
     } else {
-      ElMessage.error(result.message || '验证失败，用户信息不匹配')
+      ElMessage.error(result.message || t('forgetPassword.failedVerify'))
     }
   } catch (error) {
     console.error('Verify error:', error)
     // validate throws error on failure
     if (error.message && !error.message.includes('validate')) {
-       ElMessage.error('验证过程中发生错误')
+       ElMessage.error(t('forgetPassword.errorVerify'))
     }
   } finally {
     loading.value = false
@@ -226,15 +229,15 @@ const handleReset = async () => {
     )
     
     if (result.success) {
-      ElMessage.success('密码重置成功，请重新登录')
+      ElMessage.success(t('forgetPassword.successReset'))
       router.push('/login')
     } else {
-      ElMessage.error(result.message || '重置失败')
+      ElMessage.error(result.message || t('forgetPassword.failedReset'))
     }
   } catch (error) {
     console.error('Reset error:', error)
      if (error.message && !error.message.includes('validate')) {
-       ElMessage.error('重置过程中发生错误')
+       ElMessage.error(t('forgetPassword.errorReset'))
     }
   } finally {
     loading.value = false

@@ -2,9 +2,9 @@
   <div class="form-page" :class="{ 'dark-theme': isDarkTheme }">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2 class="title">表单填写</h2>
+      <h2 class="title">{{ $t('form.title') }}</h2>
       <div class="header-actions">
-        <el-tooltip content="刷新表单列表" placement="bottom">
+        <el-tooltip :content="$t('form.refreshList')" placement="bottom">
           <el-button circle size="small" type="primary" plain @click="refreshFormList">
             <el-icon><Refresh /></el-icon>
           </el-button>
@@ -18,10 +18,10 @@
     <div class="account-selection">
       <div class="glass-card">
         <div class="section-header">
-            <h3 class="subtitle">账号选择</h3>
+            <h3 class="subtitle">{{ $t('form.accountSelection') }}</h3>
             <div class="header-actions">
-              <el-select v-model="selectedGroupId" placeholder="按分组筛选">
-                <el-option label="全部账号" value="" />
+              <el-select v-model="selectedGroupId" :placeholder="$t('form.filterByGroup')">
+                <el-option :label="$t('form.allAccounts')" value="" />
                 <el-option
                   v-for="group in groups"
                   :key="group.id"
@@ -35,7 +35,7 @@
           <!-- 账号搜索 -->
           <el-input
             v-model="accountSearchKeyword"
-            placeholder="搜索账号"
+            :placeholder="$t('form.searchAccount')"
             clearable
             class="account-search"
           >
@@ -60,15 +60,15 @@
               </div>
             </el-checkbox>
             <div v-if="filteredAccounts.length === 0" class="empty-state">
-              <el-empty description="暂无账号" />
+              <el-empty :description="$t('form.noAccount')" />
             </div>
           </div>
 
           <!-- 账号选择统计 -->
           <div class="selection-footer">
-            <div class="selected-count">已选择 {{ selectedAccountIds.length }} 个账号</div>
+            <div class="selected-count">{{ $t('form.selectedCount', { count: selectedAccountIds.length }) }}</div>
             <div class="selection-actions">
-              <el-button size="small" @click="toggleSelectAll">{{ isAllSelected ? '取消全选' : '全选' }}</el-button>
+              <el-button size="small" @click="toggleSelectAll">{{ isAllSelected ? $t('form.cancelSelectAll') : $t('form.selectAll') }}</el-button>
             </div>
           </div>
         </div>
@@ -78,10 +78,10 @@
       <div class="form-link-selection">
         <div class="glass-card">
           <div class="section-header">
-            <h3 class="subtitle">表单选择</h3>
+            <h3 class="subtitle">{{ $t('form.formSelection') }}</h3>
             <div class="header-actions">
-              <el-select v-model="selectedFolderId" placeholder="按文件夹筛选">
-                <el-option label="全部表单" value="" />
+              <el-select v-model="selectedFolderId" :placeholder="$t('form.filterByFolder')">
+                <el-option :label="$t('form.allForms')" value="" />
                 <el-option
                   v-for="folder in folders"
                   :key="folder.id"
@@ -103,15 +103,15 @@
             >
               <div class="form-info">
                 <div class="form-name">{{ template.template_name }}</div>
-                <div class="form-type">{{ template.form_type }}</div>
+                <div class="form-type">{{ getFormTypeLabel(template.form_type) }}</div>
               </div>
               <div class="form-meta">
                 <div class="last-fill-time" v-if="template.last_fill_time">
-                  最后填写：{{ formatDate(template.last_fill_time) }}
+                  {{ $t('form.lastFill') }}{{ formatDate(template.last_fill_time) }}
                 </div>
               </div>
               <div class="form-actions">
-                <el-tooltip content="编辑字段匹配" placement="top">
+                <el-tooltip :content="$t('form.editMapping')" placement="top">
                   <el-button
                     circle
                     size="small"
@@ -125,7 +125,7 @@
               </div>
             </div>
             <div v-if="filteredTemplates.length === 0" class="empty-state">
-              <el-empty description="暂无表单" />
+              <el-empty :description="$t('form.noForm')" />
             </div>
           </div>
         </div>
@@ -136,15 +136,15 @@
         <div class="glass-card">
           <div class="section-header">
             <h3 class="subtitle">
-              {{ selectedTemplate ? selectedTemplate.template_name : '表单预览' }}
+              {{ selectedTemplate ? selectedTemplate.template_name : $t('form.preview') }}
             </h3>
             <div class="header-actions" v-if="selectedTemplate">
-              <el-tooltip content="自动匹配" placement="top">
+              <el-tooltip :content="$t('form.autoMap')" placement="top">
                 <el-button circle size="small" type="primary" plain @click="autoMapFields">
                   <el-icon><MagicStick /></el-icon>
                 </el-button>
               </el-tooltip>
-              <el-tooltip content="预览匹配" placement="top">
+              <el-tooltip :content="$t('form.previewMap')" placement="top">
                 <el-button circle size="small" type="primary" plain @click="previewMapping">
                   <el-icon><View /></el-icon>
                 </el-button>
@@ -155,13 +155,13 @@
           <!-- 表单预览区 -->
           <div v-if="selectedTemplate" class="form-preview">
             <div class="form-url">
-              <el-tag size="small" class="form-type-tag">{{ selectedTemplate.form_type }}</el-tag>
+              <el-tag size="small" class="form-type-tag">{{ getFormTypeLabel(selectedTemplate.form_type) }}</el-tag>
               <a :href="selectedTemplate.form_url" target="_blank" class="form-link">{{ selectedTemplate.form_url }}</a>
             </div>
             
             <!-- 表单嵌入预览 -->
             <div class="form-iframe-preview">
-              <h4 class="preview-title">表单预览</h4>
+              <h4 class="preview-title">{{ $t('form.preview') }}</h4>
               <div class="iframe-container">
                 <iframe :src="selectedTemplate.form_url" frameborder="0" class="form-iframe"></iframe>
               </div>
@@ -169,7 +169,7 @@
             
             <!-- 字段匹配区 -->
             <div class="field-mapping">
-              <h4 class="mapping-title">字段匹配规则</h4>
+              <h4 class="mapping-title">{{ $t('form.mappingRules') }}</h4>
               <div class="mapping-list">
                 <div
                   v-for="(mapping, index) in fieldMappings"
@@ -178,23 +178,23 @@
                 >
                   <div class="form-field">
                     <span class="field-name">{{ mapping.form_field_name }}</span>
-                    <el-tag size="small" v-if="mapping.is_required" type="danger">必填</el-tag>
+                    <el-tag size="small" v-if="mapping.is_required" type="danger">{{ $t('form.required') }}</el-tag>
                   </div>
                   <div class="account-field">
-                    <el-select v-model="mapping.account_field_name" placeholder="选择账号字段">
-                      <el-option label="博主姓名" value="blogger_name" />
-                      <el-option label="账号昵称" value="account_nickname" />
-                      <el-option label="账号类型" value="account_type" />
-                      <el-option label="账号ID" value="account_id" />
-                      <el-option label="主页链接" value="homepage_url" />
-                      <el-option label="粉丝量" value="fans_count" />
-                      <el-option label="平均阅读量" value="avg_read_count" />
-                      <el-option label="平均点赞量" value="like_count" />
-                      <el-option label="平均评论量" value="comment_count" />
-                      <el-option label="单条报价" value="quote_single" />
-                      <el-option label="套餐报价" value="quote_package" />
-                      <el-option label="合作形式" value="cooperation_type" />
-                      <el-option label="联系方式" value="contact" />
+                    <el-select v-model="mapping.account_field_name" :placeholder="$t('form.selectAccountField')">
+                      <el-option :label="$t('form.bloggerName')" value="blogger_name" />
+                      <el-option :label="$t('form.accountNickname')" value="account_nickname" />
+                      <el-option :label="$t('account.accountType')" value="account_type" />
+                      <el-option :label="$t('form.accountId')" value="account_id" />
+                      <el-option :label="$t('form.homepageUrl')" value="homepage_url" />
+                      <el-option :label="$t('account.fansCount')" value="fans_count" />
+                      <el-option :label="$t('form.avgRead')" value="avg_read_count" />
+                      <el-option :label="$t('form.likeCount')" value="like_count" />
+                      <el-option :label="$t('form.commentCount')" value="comment_count" />
+                      <el-option :label="$t('account.quoteSingle')" value="quote_single" />
+                      <el-option :label="$t('form.quotePackage')" value="quote_package" />
+                      <el-option :label="$t('form.cooperationType')" value="cooperation_type" />
+                      <el-option :label="$t('form.contact')" value="contact" />
                     </el-select>
                   </div>
                 </div>
@@ -203,19 +203,19 @@
 
             <!-- 填写设置 -->
             <div class="fill-settings">
-              <h4 class="settings-title">填写设置</h4>
+              <h4 class="settings-title">{{ $t('form.fillSettings') }}</h4>
               <el-form :inline="true" :model="fillSettings" class="settings-form">
-                <el-form-item label="提交间隔">
+                <el-form-item :label="$t('form.submitInterval')">
                   <el-input-number
                     v-model="fillSettings.submitInterval"
                     :min="1"
                     :max="10"
                     :step="1"
-                    placeholder="秒"
+                    :placeholder="$t('form.seconds')"
                   />
-                  <span class="unit">秒</span>
+                  <span class="unit">{{ $t('form.seconds') }}</span>
                 </el-form-item>
-                <el-form-item label="自动提交">
+                <el-form-item :label="$t('form.autoSubmit')">
                   <el-switch v-model="fillSettings.autoSubmit" />
                 </el-form-item>
               </el-form>
@@ -231,7 +231,7 @@
                 class="action-button"
               >
                 <el-icon><EditPen /></el-icon>
-                一键填写（单个）
+                {{ $t('form.singleFill') }}
               </el-button>
               <el-button
                 type="success"
@@ -241,7 +241,7 @@
                 class="action-button"
               >
                 <el-icon><CopyDocument /></el-icon>
-                批量填写（多个）
+                {{ $t('form.batchFill') }}
               </el-button>
             </div>
           </div>
@@ -249,11 +249,11 @@
           <!-- 未选择表单时的提示 -->
           <div v-else class="no-template-selected">
             <el-empty
-              description="请选择一个表单模板"
+              :description="$t('form.selectTemplate')"
               image-size="200"
             >
               <el-button type="primary" @click="$router.push('/formList')">
-                去表单列表添加
+                {{ $t('form.gotoList') }}
               </el-button>
             </el-empty>
           </div>
@@ -264,7 +264,7 @@
     <!-- 字段匹配编辑弹窗 -->
     <el-dialog
       v-model="fieldMappingDialogVisible"
-      title="编辑字段匹配规则"
+      :title="$t('form.editMappingTitle')"
       width="600px"
     >
       <div class="field-mapping-edit">
@@ -274,35 +274,35 @@
           class="mapping-item-edit"
         >
           <el-form :inline="true" :model="mapping">
-            <el-form-item label="表单字段">
-              <el-input v-model="mapping.form_field_name" placeholder="表单字段名称" />
+            <el-form-item :label="$t('form.formField')">
+              <el-input v-model="mapping.form_field_name" :placeholder="$t('form.formFieldPlaceholder')" />
             </el-form-item>
-            <el-form-item label="字段类型">
-              <el-select v-model="mapping.form_field_type" placeholder="选择字段类型">
-                <el-option label="输入框" value="输入框" />
-                <el-option label="下拉框" value="下拉框" />
-                <el-option label="单选框" value="单选框" />
-                <el-option label="复选框" value="复选框" />
+            <el-form-item :label="$t('form.fieldType')">
+              <el-select v-model="mapping.form_field_type" :placeholder="$t('form.fieldTypePlaceholder')">
+                <el-option :label="$t('form.inputType')" :value="FIELD_TYPES.INPUT" />
+                <el-option :label="$t('form.selectType')" :value="FIELD_TYPES.SELECT" />
+                <el-option :label="$t('form.radioType')" :value="FIELD_TYPES.RADIO" />
+                <el-option :label="$t('form.checkboxType')" :value="FIELD_TYPES.CHECKBOX" />
               </el-select>
             </el-form-item>
-            <el-form-item label="是否必填">
+            <el-form-item :label="$t('form.isRequired')">
               <el-switch v-model="mapping.is_required" />
             </el-form-item>
-            <el-form-item label="匹配账号字段">
-              <el-select v-model="mapping.account_field_name" placeholder="选择账号字段">
-                <el-option label="博主姓名" value="blogger_name" />
-                <el-option label="账号昵称" value="account_nickname" />
-                <el-option label="账号类型" value="account_type" />
-                <el-option label="账号ID" value="account_id" />
-                <el-option label="主页链接" value="homepage_url" />
-                <el-option label="粉丝量" value="fans_count" />
-                <el-option label="平均阅读量" value="avg_read_count" />
-                <el-option label="平均点赞量" value="like_count" />
-                <el-option label="平均评论量" value="comment_count" />
-                <el-option label="单条报价" value="quote_single" />
-                <el-option label="套餐报价" value="quote_package" />
-                <el-option label="合作形式" value="cooperation_type" />
-                <el-option label="联系方式" value="contact" />
+            <el-form-item :label="$t('form.matchAccountField')">
+              <el-select v-model="mapping.account_field_name" :placeholder="$t('form.selectAccountField')">
+                <el-option :label="$t('form.bloggerName')" value="blogger_name" />
+                <el-option :label="$t('form.accountNickname')" value="account_nickname" />
+                <el-option :label="$t('account.accountType')" value="account_type" />
+                <el-option :label="$t('form.accountId')" value="account_id" />
+                <el-option :label="$t('form.homepageUrl')" value="homepage_url" />
+                <el-option :label="$t('account.fansCount')" value="fans_count" />
+                <el-option :label="$t('form.avgRead')" value="avg_read_count" />
+                <el-option :label="$t('form.likeCount')" value="like_count" />
+                <el-option :label="$t('form.commentCount')" value="comment_count" />
+                <el-option :label="$t('account.quoteSingle')" value="quote_single" />
+                <el-option :label="$t('form.quotePackage')" value="quote_package" />
+                <el-option :label="$t('form.cooperationType')" value="cooperation_type" />
+                <el-option :label="$t('form.contact')" value="contact" />
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -316,7 +316,7 @@
             </el-form-item>
           </el-form>
         </div>
-        <el-tooltip content="添加字段" placement="top">
+        <el-tooltip :content="$t('form.addField')" placement="top">
           <el-button
             circle
             size="small"
@@ -331,8 +331,8 @@
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="fieldMappingDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveFieldMappings">保存</el-button>
+          <el-button @click="fieldMappingDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="saveFieldMappings">{{ $t('common.save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -340,7 +340,7 @@
     <!-- 填写进度弹窗 -->
     <el-dialog
       v-model="fillProgressDialogVisible"
-      title="填写进度"
+      :title="$t('form.fillProgress')"
       width="500px"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
@@ -353,11 +353,11 @@
         <div class="progress-info">
           <div class="current-status">{{ fillProgress.currentStatus }}</div>
           <div class="fill-stats">
-            成功：{{ fillProgress.successCount }} | 失败：{{ fillProgress.failCount }} | 总数：{{ selectedAccountIds.length }}
+            {{ $t('form.progressStats', { success: fillProgress.successCount, fail: fillProgress.failCount, total: selectedAccountIds.length }) }}
           </div>
         </div>
         <div class="progress-log" v-if="fillProgress.logs.length > 0">
-          <h4 class="log-title">填写日志</h4>
+          <h4 class="log-title">{{ $t('form.fillLog') }}</h4>
           <div class="log-list">
             <div
               v-for="(log, index) in fillProgress.logs"
@@ -377,14 +377,14 @@
             :disabled="fillProgress.isRunning"
             @click="fillProgressDialogVisible = false"
           >
-            关闭
+            {{ $t('form.close') }}
           </el-button>
           <el-button
             v-if="fillProgress.isRunning"
             type="danger"
             @click="stopFillProcess"
           >
-            停止填写
+            {{ $t('form.stopFill') }}
           </el-button>
         </span>
       </template>
@@ -399,6 +399,11 @@ import { useAccountStore, useFormStore } from '../../stores'
 import { useSettingsStore } from '../../stores/settings'
 import { Refresh, Search, MagicStick, View, Edit, EditPen, CopyDocument, Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+import { FIELD_TYPES, FORM_TYPES } from '../../constants/form'
+
+// i18n
+const { t, locale } = useI18n()
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -502,7 +507,8 @@ const fieldMappings = computed(() => {
 // 格式化日期
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(locale.value, {
+    year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -510,10 +516,24 @@ const formatDate = (dateString) => {
   })
 }
 
+// 获取表单类型显示标签
+const getFormTypeLabel = (type) => {
+  const map = {
+    [FORM_TYPES.TENCENT]: 'tencent',
+    [FORM_TYPES.WENJUANXING]: 'wenjuanxing',
+    [FORM_TYPES.SHIMO]: 'shimo',
+    [FORM_TYPES.MIKE]: 'mike',
+    [FORM_TYPES.WPS]: 'wps',
+    [FORM_TYPES.MINIPROGRAM]: 'miniprogram'
+  }
+  const key = map[type]
+  return key ? t(`formList.types.${key}`) : type
+}
+
 // 刷新表单列表
 const refreshFormList = () => {
   // 这里可以添加刷新表单列表的逻辑
-  ElMessage.success('表单列表已刷新')
+  ElMessage.success(t('form.listRefreshed'))
 }
 
 // 选择分组
@@ -566,7 +586,7 @@ const editFieldMapping = (template) => {
 const addMappingItem = () => {
   editableFieldMappings.value.push({
     form_field_name: '',
-    form_field_type: '输入框',
+    form_field_type: FIELD_TYPES.INPUT,
     is_required: false,
     account_field_name: '',
     is_auto_mapping: false
@@ -579,32 +599,66 @@ const removeMappingItem = (index) => {
 }
 
 // 保存字段匹配规则
-const saveFieldMappings = () => {
-  // 这里可以添加保存字段匹配规则的逻辑
-  ElMessage.success('字段匹配规则已保存')
-  fieldMappingDialogVisible.value = false
+const saveFieldMappings = async () => {
+  if (!selectedTemplateId.value) return
+  
+  const currentMappings = fieldMappings.value
+  const newMappings = editableFieldMappings.value
+  
+  // 1. Identify items to delete (in current but not in new)
+  const toDelete = currentMappings.filter(c => !newMappings.find(n => n.id === c.id))
+  
+  // 2. Identify items to add (no id)
+  const toAdd = newMappings.filter(n => !n.id)
+  
+  // 3. Identify items to update (has id)
+  const toUpdate = newMappings.filter(n => n.id)
+  
+  try {
+    const promises = []
+    
+    // Delete
+    toDelete.forEach(m => promises.push(formStore.deleteFieldMapping(m.id)))
+    
+    // Add
+    toAdd.forEach(m => {
+      const mapping = { ...m, template_id: selectedTemplateId.value }
+      promises.push(formStore.addFieldMapping(mapping))
+    })
+    
+    // Update
+    toUpdate.forEach(m => promises.push(formStore.updateFieldMapping(m.id, m)))
+    
+    await Promise.all(promises)
+    
+    ElMessage.success(t('form.mappingSaved'))
+    fieldMappingDialogVisible.value = false
+  } catch (error) {
+    console.error('Failed to save mappings:', error)
+    ElMessage.error(t('form.errorMsg', { msg: error.message || 'Unknown error' }))
+  }
 }
 
 // 自动匹配字段
 const autoMapFields = () => {
   // 这里可以添加自动匹配字段的逻辑
-  ElMessage.success('字段已自动匹配')
+  ElMessage.success(t('form.autoMapped'))
 }
 
 // 预览匹配结果
 const previewMapping = () => {
   // 这里可以添加预览匹配结果的逻辑
-  ElMessage.info('预览匹配结果功能开发中')
+  ElMessage.info(t('form.previewDev'))
 }
 
 // 开始单个填写
 const startSingleFill = () => {
   if (selectedAccountIds.value.length === 0) {
-    ElMessage.warning('请选择至少一个账号')
+    ElMessage.warning(t('form.selectOneAccount'))
     return
   }
   if (!selectedTemplateId.value) {
-    ElMessage.warning('请选择一个表单模板')
+    ElMessage.warning(t('form.selectTemplate'))
     return
   }
   
@@ -615,11 +669,11 @@ const startSingleFill = () => {
 // 开始批量填写
 const startBatchFill = () => {
   if (selectedAccountIds.value.length === 0) {
-    ElMessage.warning('请选择至少一个账号')
+    ElMessage.warning(t('form.selectOneAccount'))
     return
   }
   if (!selectedTemplateId.value) {
-    ElMessage.warning('请选择一个表单模板')
+    ElMessage.warning(t('form.selectTemplate'))
     return
   }
   
@@ -633,7 +687,7 @@ const startFillProcess = (isBatch) => {
   fillProgress.isRunning = true
   fillProgress.percentage = 0
   fillProgress.status = ''
-  fillProgress.currentStatus = '准备开始填写...'
+  fillProgress.currentStatus = t('form.readyToFill')
   fillProgress.successCount = 0
   fillProgress.failCount = 0
   fillProgress.logs = []
@@ -656,10 +710,10 @@ const realFillProcess = async (isBatch) => {
   window.electronAPI.autofill.onProgress((progress) => {
     switch (progress.type) {
       case 'start':
-        fillProgress.currentStatus = `正在准备填写：${progress.accountName}`;
+        fillProgress.currentStatus = t('form.preparingFill', { name: progress.accountName });
         fillProgress.logs.push({
           time: new Date().toLocaleTimeString(),
-          content: `开始处理账号：${progress.accountName}`,
+          content: t('form.startProcessing', { name: progress.accountName }),
           status: 'info'
         });
         break;
@@ -678,7 +732,7 @@ const realFillProcess = async (isBatch) => {
       case 'error':
         fillProgress.logs.push({
           time: new Date().toLocaleTimeString(),
-          content: `错误: ${progress.message}`,
+          content: t('form.errorMsg', { msg: progress.message }),
           status: 'error'
         });
         break;
@@ -698,20 +752,20 @@ const realFillProcess = async (isBatch) => {
     fillProgress.isRunning = false;
     fillProgress.percentage = 100;
     fillProgress.status = result.failCount === 0 ? 'success' : 'warning';
-    fillProgress.currentStatus = '自动化任务已结束';
+    fillProgress.currentStatus = t('form.taskFinished');
     fillProgress.logs.push({
       time: new Date().toLocaleTimeString(),
-      content: `任务总结：成功 ${result.successCount} 个，失败 ${result.failCount} 个`,
+      content: t('form.taskSummary', { success: result.successCount, fail: result.failCount }),
       status: 'success'
     });
 
   } catch (error) {
     fillProgress.isRunning = false;
     fillProgress.status = 'exception';
-    fillProgress.currentStatus = '任务异常终止';
+    fillProgress.currentStatus = t('form.taskTerminated');
     fillProgress.logs.push({
       time: new Date().toLocaleTimeString(),
-      content: `核心引擎错误: ${error.message}`,
+      content: t('form.engineError', { msg: error.message }),
       status: 'error'
     });
   } finally {
@@ -730,10 +784,10 @@ const simulateFillProcess = (isBatch) => {
       fillProgress.isRunning = false
       fillProgress.percentage = 100
       fillProgress.status = fillProgress.successCount === totalAccounts ? 'success' : 'warning'
-      fillProgress.currentStatus = '填写完成'
+      fillProgress.currentStatus = t('form.fillCompleted')
       fillProgress.logs.push({
         time: new Date().toLocaleTimeString(),
-        content: `填写完成：成功 ${fillProgress.successCount} 个，失败 ${fillProgress.failCount} 个`,
+        content: t('form.fillCompletedStats', { success: fillProgress.successCount, fail: fillProgress.failCount }),
         status: 'success'
       })
       return
@@ -744,10 +798,10 @@ const simulateFillProcess = (isBatch) => {
     
     // 更新进度
     fillProgress.percentage = Math.round((currentIndex / totalAccounts) * 100)
-    fillProgress.currentStatus = `正在填写账号：${account.account_nickname}`
+    fillProgress.currentStatus = t('form.fillingAccount', { name: account.account_nickname })
     fillProgress.logs.push({
       time: new Date().toLocaleTimeString(),
-      content: `开始填写账号：${account.account_nickname}`,
+      content: t('form.startFillingAccount', { name: account.account_nickname }),
       status: 'info'
     })
     
@@ -760,14 +814,14 @@ const simulateFillProcess = (isBatch) => {
         fillProgress.successCount++
         fillProgress.logs.push({
           time: new Date().toLocaleTimeString(),
-          content: `账号 ${account.account_nickname} 填写成功`,
+          content: t('form.accountFillSuccess', { name: account.account_nickname }),
           status: 'success'
         })
       } else {
         fillProgress.failCount++
         fillProgress.logs.push({
           time: new Date().toLocaleTimeString(),
-          content: `账号 ${account.account_nickname} 填写失败：网络异常`,
+          content: t('form.accountFillFail', { name: account.account_nickname }),
           status: 'error'
         })
       }
@@ -786,10 +840,10 @@ const simulateFillProcess = (isBatch) => {
 // 停止填写过程
 const stopFillProcess = () => {
   fillProgress.isRunning = false
-  fillProgress.currentStatus = '填写已停止'
+  fillProgress.currentStatus = t('form.fillStopped')
   fillProgress.logs.push({
     time: new Date().toLocaleTimeString(),
-    content: '填写过程已手动停止',
+    content: t('form.fillManualStopped'),
     status: 'info'
   })
 }

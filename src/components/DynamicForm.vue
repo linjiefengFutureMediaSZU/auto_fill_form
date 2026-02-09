@@ -1,30 +1,30 @@
 <template>
   <div class="dynamic-form">
     <el-collapse v-model="activeNames">
-    <el-collapse-item title="基础信息" name="basic">
+    <el-collapse-item :title="$t('dynamicForm.basicInfo')" name="basic">
       <!-- 固定字段 -->
-      <el-form-item label="博主姓名" prop="blogger_name">
-        <el-input v-model="formData.blogger_name" placeholder="请输入博主姓名" />
+      <el-form-item :label="$t('dynamicForm.bloggerName')" prop="blogger_name">
+        <el-input v-model="formData.blogger_name" :placeholder="$t('dynamicForm.bloggerNamePlaceholder')" />
       </el-form-item>
-      <el-form-item label="账号昵称" prop="account_nickname">
-        <el-input v-model="formData.account_nickname" placeholder="请输入账号昵称" />
+      <el-form-item :label="$t('dynamicForm.accountNickname')" prop="account_nickname">
+        <el-input v-model="formData.account_nickname" :placeholder="$t('dynamicForm.accountNicknamePlaceholder')" />
       </el-form-item>
-      <el-form-item label="账号类型" prop="account_type">
-        <el-select v-model="formData.account_type" placeholder="请选择账号类型">
-          <el-option label="微博" value="weibo" />
-          <el-option label="微信" value="wechat" />
-          <el-option label="抖音" value="douyin" />
-          <el-option label="快手" value="kuaishou" />
-          <el-option label="B站" value="bilibili" />
-          <el-option label="小红书" value="xiaohongshu" />
-          <el-option label="其他" value="other" />
+      <el-form-item :label="$t('dynamicForm.accountType')" prop="account_type">
+        <el-select v-model="formData.account_type" :placeholder="$t('dynamicForm.accountTypePlaceholder')">
+          <el-option :label="$t('dynamicForm.types.weibo')" value="weibo" />
+          <el-option :label="$t('dynamicForm.types.wechat')" value="wechat" />
+          <el-option :label="$t('dynamicForm.types.douyin')" value="douyin" />
+          <el-option :label="$t('dynamicForm.types.kuaishou')" value="kuaishou" />
+          <el-option :label="$t('dynamicForm.types.bilibili')" value="bilibili" />
+          <el-option :label="$t('dynamicForm.types.xiaohongshu')" value="xiaohongshu" />
+          <el-option :label="$t('dynamicForm.types.other')" value="other" />
         </el-select>
       </el-form-item>
-      <el-form-item label="账号ID">
-        <el-input v-model="formData.account_id" placeholder="请输入账号平台ID" />
+      <el-form-item :label="$t('dynamicForm.accountId')">
+        <el-input v-model="formData.account_id" :placeholder="$t('dynamicForm.accountIdPlaceholder')" />
       </el-form-item>
-      <el-form-item label="主页链接" prop="homepage_url">
-        <el-input v-model="formData.homepage_url" placeholder="请输入账号主页链接" />
+      <el-form-item :label="$t('dynamicForm.homepageUrl')" prop="homepage_url">
+        <el-input v-model="formData.homepage_url" :placeholder="$t('dynamicForm.homepageUrlPlaceholder')" />
       </el-form-item>
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('basic')" :key="field.id">
@@ -43,7 +43,7 @@
       </template>
     </el-collapse-item>
 
-    <el-collapse-item title="运营数据" name="data">
+    <el-collapse-item :title="$t('dynamicForm.dataInfo')" name="data">
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('data')" :key="field.id">
         <el-form-item :label="field.label" :prop="field.name">
@@ -61,14 +61,14 @@
       </template>
     </el-collapse-item>
 
-    <el-collapse-item title="合作信息" name="cooperation">
+    <el-collapse-item :title="$t('dynamicForm.cooperationInfo')" name="cooperation">
       <!-- 固定字段 -->
-      <el-form-item label="单条报价">
+      <el-form-item :label="$t('dynamicForm.quoteSingle')">
         <div v-for="(item, index) in formData.quote_single" :key="index" class="quote-item">
-          <el-input-number v-model="formData.quote_single[index]" :min="0" :step="0.01" placeholder="请输入单条报价" style="width: 200px; margin-right: 10px;" />
-          <el-button type="danger" size="small" @click="removeQuoteItem(index)" v-if="formData.quote_single.length > 1">删除</el-button>
+          <el-input-number v-model="formData.quote_single[index]" :min="0" :step="0.01" :placeholder="$t('dynamicForm.quoteSinglePlaceholder')" style="width: 200px; margin-right: 10px;" />
+          <el-button type="danger" size="small" @click="removeQuoteItem(index)" v-if="formData.quote_single.length > 1">{{ $t('dynamicForm.delete') }}</el-button>
         </div>
-        <el-button type="primary" size="small" @click="addQuoteItem" style="margin-top: 10px;">添加</el-button>
+        <el-button type="primary" size="small" @click="addQuoteItem" style="margin-top: 10px;">{{ $t('dynamicForm.add') }}</el-button>
       </el-form-item>
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('cooperation')" :key="field.id">
@@ -87,7 +87,7 @@
       </template>
     </el-collapse-item>
 
-    <el-collapse-item title="备注信息" name="remark">
+    <el-collapse-item :title="$t('dynamicForm.remarkInfo')" name="remark">
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('remark')" :key="field.id">
         <el-form-item :label="field.label" :prop="field.name">
@@ -110,6 +110,9 @@
 
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // Props
 const props = defineProps({
@@ -155,7 +158,7 @@ const getFieldProps = (field) => {
 
   const baseProps = {
     modelValue: formData.value[field.name],
-    placeholder: field.placeholder || `请输入${field.label}`,
+    placeholder: field.placeholder || t('account.enter') + field.label,
     'onUpdate:modelValue': (value) => {
       formData.value[field.name] = value
       emit('update:modelValue', { ...formData.value })
@@ -173,11 +176,11 @@ const getFieldProps = (field) => {
     },
     select: {
       ...baseProps,
-      placeholder: field.placeholder || `请选择${field.label}`
+      placeholder: field.placeholder || t('account.select') + field.label
     },
     multiple_select: {
       ...baseProps,
-      placeholder: field.placeholder || `请选择${field.label}`,
+      placeholder: field.placeholder || t('account.select') + field.label,
       multiple: true,
       'collapse-tags': true
     },

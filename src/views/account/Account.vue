@@ -2,18 +2,16 @@
   <div class="account-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2 class="title">账号管理</h2>
+      <h2 class="title">{{ $t('account.title') }}</h2>
     </div>
-
-
 
     <!-- 搜索筛选区 -->
     <div class="search-filter glass-card" style="margin-bottom: 20px;">
       <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item label="关键词搜索">
+        <el-form-item :label="$t('account.searchKeyword')">
           <el-input
             v-model="searchForm.keyword"
-            placeholder="账号昵称/博主姓名"
+            :placeholder="$t('account.searchPlaceholder')"
             clearable
             @keyup.enter="handleSearch"
             style="width: 200px;"
@@ -23,32 +21,32 @@
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item label="账号类型">
-          <el-select v-model="searchForm.account_type" placeholder="选择账号类型" clearable style="width: 150px;">
-            <el-option label="抖音" value="douyin" />
-            <el-option label="小红书" value="xiaohongshu" />
-            <el-option label="视频号" value="shipinhao" />
-            <el-option label="微博" value="weibo" />
-            <el-option label="B站" value="bilibili" />
-            <el-option label="快手" value="kuaishou" />
-            <el-option label="微信" value="wechat" />
-            <el-option label="其他" value="other" />
+        <el-form-item :label="$t('account.accountType')">
+          <el-select v-model="searchForm.account_type" :placeholder="$t('account.selectType')" clearable style="width: 150px;">
+            <el-option :label="$t('dynamicForm.types.douyin')" value="douyin" />
+            <el-option :label="$t('dynamicForm.types.xiaohongshu')" value="xiaohongshu" />
+            <el-option :label="$t('dynamicForm.types.shipinhao')" value="shipinhao" />
+            <el-option :label="$t('dynamicForm.types.weibo')" value="weibo" />
+            <el-option :label="$t('dynamicForm.types.bilibili')" value="bilibili" />
+            <el-option :label="$t('dynamicForm.types.kuaishou')" value="kuaishou" />
+            <el-option :label="$t('dynamicForm.types.wechat')" value="wechat" />
+            <el-option :label="$t('dynamicForm.types.other')" value="other" />
           </el-select>
         </el-form-item>
-        <el-form-item label="账号状态">
-          <el-select v-model="searchForm.status" placeholder="选择账号状态" clearable style="width: 150px;">
-            <el-option label="正常" value="1" />
-            <el-option label="暂停" value="2" />
-            <el-option label="过期" value="0" />
+        <el-form-item :label="$t('account.accountStatus')">
+          <el-select v-model="searchForm.status" :placeholder="$t('account.selectStatus')" clearable style="width: 150px;">
+            <el-option :label="$t('account.statusNormal')" value="1" />
+            <el-option :label="$t('account.statusPaused')" value="2" />
+            <el-option :label="$t('account.statusExpired')" value="0" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-tooltip content="搜索" placement="top">
+          <el-tooltip :content="$t('common.search')" placement="top">
             <el-button circle size="small" type="primary" @click="handleSearch">
               <el-icon><Search /></el-icon>
             </el-button>
           </el-tooltip>
-          <el-tooltip content="重置" placement="top">
+          <el-tooltip :content="$t('common.reset')" placement="top">
             <el-button circle size="small" @click="resetSearch">
               <el-icon><Refresh /></el-icon>
             </el-button>
@@ -59,20 +57,20 @@
 
     <!-- 账号管理功能 -->
     <div class="account-management glass-card" style="margin-bottom: 20px;">
-      <h3 class="subtitle">账号管理功能</h3>
+      <h3 class="subtitle">{{ $t('account.title') }}</h3>
       <div class="header-actions" style="margin-top: 10px; display: flex; gap: 16px; align-items: center;">
-        <el-tooltip content="新增账号" placement="top">
+        <el-tooltip :content="$t('account.addAccount')" placement="top">
           <el-button circle size="small" type="primary" plain @click="openAddAccountDialog">
             <el-icon><Plus /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="字段管理" placement="top">
+        <el-tooltip :content="$t('account.fieldManager')" placement="top">
           <el-button circle size="small" type="warning" plain @click="toggleFieldManager">
             <el-icon><Edit /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="列展示" placement="top">
-          <el-popover placement="bottom" title="列展示设置" :width="200" trigger="click">
+        <el-tooltip :content="$t('account.columnDisplay')" placement="top">
+          <el-popover placement="bottom" :title="$t('account.columnDisplay')" :width="200" trigger="click">
             <template #reference>
               <el-button circle size="small" type="info" plain>
                 <el-icon><Setting /></el-icon>
@@ -85,22 +83,22 @@
             </el-checkbox-group>
           </el-popover>
         </el-tooltip>
-        <el-tooltip content="批量导入" placement="top">
+        <el-tooltip :content="$t('account.batchImport')" placement="top">
           <el-button circle size="small" type="primary" plain @click="handleBatchImport">
             <el-icon><Upload /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="批量导出" placement="top">
+        <el-tooltip :content="$t('account.batchExport')" placement="top">
           <el-button circle size="small" type="success" plain @click="handleBatchExport">
             <el-icon><Download /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="批量修改" placement="top">
+        <el-tooltip :content="$t('account.batchModify')" placement="top">
           <el-button circle size="small" type="warning" plain @click="handleBatchModify">
             <el-icon><Edit /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="批量删除" placement="top">
+        <el-tooltip :content="$t('account.batchDelete')" placement="top">
           <el-button circle size="small" type="danger" plain @click="handleBatchDelete">
             <el-icon><Delete /></el-icon>
           </el-button>
@@ -124,27 +122,27 @@
         border
       >
         <el-table-column type="selection" width="55" :resizable="false" />
-        <el-table-column v-if="visibleColumns.includes('id')" prop="id" label="ID" width="80" :resizable="false" />
-        <el-table-column v-if="visibleColumns.includes('account_nickname')" prop="account_nickname" label="账号昵称" min-width="180" :resizable="false">
+        <el-table-column v-if="visibleColumns.includes('id')" prop="id" :label="$t('common.id')" width="80" :resizable="false" />
+        <el-table-column v-if="visibleColumns.includes('account_nickname')" prop="account_nickname" :label="$t('account.nickname')" min-width="180" :resizable="false">
           <template #default="scope">
             <div class="account-info">
               <span class="nickname">{{ scope.row.account_nickname }}</span>
-              <span class="type-tag">{{ scope.row.account_type }}</span>
+              <span class="type-tag">{{ getAccountTypeLabel(scope.row.account_type) }}</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column v-if="visibleColumns.includes('blogger_name')" prop="blogger_name" label="博主姓名" width="120" :resizable="false" />
-        <el-table-column v-if="visibleColumns.includes('fans_count')" prop="fans_count" label="粉丝量" width="120" :resizable="false">
+        <el-table-column v-if="visibleColumns.includes('blogger_name')" prop="blogger_name" :label="$t('account.bloggerName')" width="120" :resizable="false" />
+        <el-table-column v-if="visibleColumns.includes('fans_count')" prop="fans_count" :label="$t('account.fansCount')" width="120" :resizable="false">
           <template #default="scope">
             {{ formatNumber(scope.row.fans_count) }}
           </template>
         </el-table-column>
-        <el-table-column v-if="visibleColumns.includes('quote_single')" prop="quote_single" label="单条报价" width="120" :resizable="false">
+        <el-table-column v-if="visibleColumns.includes('quote_single')" prop="quote_single" :label="$t('account.quoteSingle')" width="120" :resizable="false">
           <template #default="scope">
             ¥{{ scope.row.quote_single.toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column v-if="visibleColumns.includes('status')" prop="status" label="状态" width="100" :resizable="false">
+        <el-table-column v-if="visibleColumns.includes('status')" prop="status" :label="$t('common.status')" width="100" :resizable="false">
           <template #default="scope">
             <el-tag
               :type="getTagType(scope.row.status)"
@@ -167,10 +165,10 @@
           />
         </template>
 
-        <el-table-column label="操作" width="120" fixed="right" :resizable="false" align="center">
+        <el-table-column :label="$t('common.operation')" width="120" fixed="right" :resizable="false" align="center">
           <template #default="scope">
             <div class="table-actions" style="display: flex; justify-content: center; gap: 8px;">
-              <el-tooltip content="编辑" placement="top">
+              <el-tooltip :content="$t('common.edit')" placement="top">
                 <el-button
                   circle
                   size="small"
@@ -181,7 +179,7 @@
                   <el-icon><Edit /></el-icon>
                 </el-button>
               </el-tooltip>
-              <el-tooltip content="删除" placement="top">
+              <el-tooltip :content="$t('common.delete')" placement="top">
                 <el-button
                   circle
                   size="small"
@@ -201,7 +199,7 @@
     <!-- 新增/编辑账号弹窗 -->
     <el-dialog
       v-model="accountDialogVisible"
-      :title="isEditMode ? '编辑账号' : '新增账号'"
+      :title="isEditMode ? $t('account.editAccount') : $t('account.addAccount')"
       width="800px"
     >
       <el-form
@@ -216,8 +214,8 @@
 
 
         <!-- 分组和状态 -->
-        <el-form-item label="账号分组">
-          <el-select v-model="accountForm.group_id" placeholder="请选择账号分组">
+        <el-form-item :label="$t('account.group')">
+          <el-select v-model="accountForm.group_id" :placeholder="$t('account.selectGroup')">
             <el-option
               v-for="group in groups"
               :key="group.id"
@@ -226,18 +224,18 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="账号状态">
-          <el-select v-model="accountForm.status" placeholder="请选择账号状态">
-            <el-option label="正常" value="1" />
-            <el-option label="暂停" value="2" />
-            <el-option label="过期" value="0" />
+        <el-form-item :label="$t('account.accountStatus')">
+          <el-select v-model="accountForm.status" :placeholder="$t('account.selectStatus')">
+            <el-option :label="$t('account.statusNormal')" value="1" />
+            <el-option :label="$t('account.statusPaused')" value="2" />
+            <el-option :label="$t('account.statusExpired')" value="0" />
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="accountDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveAccount">保存</el-button>
+          <el-button @click="accountDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="saveAccount">{{ $t('common.save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -245,7 +243,7 @@
     <!-- 新增/编辑分组弹窗 -->
     <el-dialog
       v-model="groupDialogVisible"
-      :title="isEditGroupMode ? '编辑分组' : '新增分组'"
+      :title="isEditGroupMode ? $t('account.editGroup') : $t('account.addGroup')"
       width="400px"
     >
       <el-form
@@ -254,22 +252,22 @@
         ref="groupFormRef"
         label-width="80px"
       >
-        <el-form-item label="分组名称" prop="group_name">
-          <el-input v-model="groupForm.group_name" placeholder="请输入分组名称" />
+        <el-form-item :label="$t('account.groupName')" prop="group_name">
+          <el-input v-model="groupForm.group_name" :placeholder="$t('account.inputGroupName')" />
         </el-form-item>
-        <el-form-item label="分组描述">
+        <el-form-item :label="$t('account.groupDesc')">
           <el-input
             v-model="groupForm.description"
             type="textarea"
             rows="2"
-            placeholder="请输入分组描述"
+            :placeholder="$t('account.inputGroupDesc')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="groupDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveGroup">保存</el-button>
+          <el-button @click="groupDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="saveGroup">{{ $t('common.save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -283,6 +281,9 @@ import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown,
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DynamicFieldManager from '../../components/DynamicFieldManager.vue'
 import DynamicForm from '../../components/DynamicForm.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 状态管理
 const accountStore = useAccountStore()
@@ -297,111 +298,111 @@ const isEditGroupMode = ref(false)
 const selectedAccountIds = ref([])
 const activeCollapseNames = ref(['basic'])
 const fieldManagerVisible = ref(false)
-const customFields = ref([
+const customFields = computed(() => [
   {
     id: '1',
-    label: '微信号',
+    label: t('account.wechat'),
     name: 'wechat',
     type: 'text',
     group: 'basic',
-    placeholder: '请输入微信号',
+    placeholder: t('account.enter') + t('account.wechat'),
     defaultValue: '',
     required: false
   },
   {
     id: '2',
-    label: '邮箱',
+    label: t('account.email'),
     name: 'email',
     type: 'text',
     group: 'basic',
-    placeholder: '请输入邮箱地址',
+    placeholder: t('account.enter') + t('account.email'),
     defaultValue: '',
     required: false
   },
   {
     id: '3',
-    label: '粉丝量',
+    label: t('account.fansCount'),
     name: 'fans_count',
     type: 'number',
     group: 'data',
-    placeholder: '请输入粉丝量',
+    placeholder: t('account.enter') + t('account.fansCount'),
     defaultValue: 0,
     required: false
   },
   {
     id: '4',
-    label: '平均阅读量',
+    label: t('account.avgRead'),
     name: 'avg_read_count',
     type: 'number',
     group: 'data',
-    placeholder: '请输入平均阅读量',
+    placeholder: t('account.enter') + t('account.avgRead'),
     defaultValue: 0,
     required: false
   },
   {
     id: '5',
-    label: '平均点赞量',
+    label: t('account.likeCount'),
     name: 'like_count',
     type: 'number',
     group: 'data',
-    placeholder: '请输入平均点赞量',
+    placeholder: t('account.enter') + t('account.likeCount'),
     defaultValue: 0,
     required: false
   },
   {
     id: '6',
-    label: '平均评论量',
+    label: t('account.commentCount'),
     name: 'comment_count',
     type: 'number',
     group: 'data',
-    placeholder: '请输入平均评论量',
+    placeholder: t('account.enter') + t('account.commentCount'),
     defaultValue: 0,
     required: false
   },
   {
     id: '7',
-    label: '平均互动率',
+    label: t('account.interactionRate'),
     name: 'interaction_rate',
     type: 'number',
     group: 'data',
-    placeholder: '请输入平均互动率',
+    placeholder: t('account.enter') + t('account.interactionRate'),
     defaultValue: '0',
     required: false
   },
   {
     id: '8',
-    label: '内容类型',
+    label: t('account.contentType'),
     name: 'content_type',
     type: 'text',
     group: 'data',
-    placeholder: '请输入内容类型',
+    placeholder: t('account.enter') + t('account.contentType'),
     defaultValue: '',
     required: false
   },
   {
     id: '9',
-    label: '套餐报价',
+    label: t('account.quotePackage'),
     name: 'quote_package',
     type: 'number',
     group: 'cooperation',
-    placeholder: '请输入套餐报价',
+    placeholder: t('account.enter') + t('account.quotePackage'),
     defaultValue: 0,
     required: false
   },
   {
     id: '10',
-    label: '合作形式',
+    label: t('account.cooperationType'),
     name: 'cooperation_type',
     type: 'multiple_select',
     group: 'cooperation',
-    placeholder: '请选择合作形式',
+    placeholder: t('account.select') + t('account.cooperationType'),
     defaultValue: [],
-    options: '图文,视频,直播',
+    options: t('account.cooperationOptions'),
     required: false
   },
   {
     id: '11',
-    label: '是否接受置换',
+    label: t('account.isSwap'),
     name: 'is_swap',
     type: 'switch',
     group: 'cooperation',
@@ -411,74 +412,74 @@ const customFields = ref([
   },
   {
     id: '12',
-    label: '联系方式',
+    label: t('account.contact'),
     name: 'contact',
     type: 'text',
     group: 'cooperation',
-    placeholder: '请输入联系方式',
+    placeholder: t('account.enter') + t('account.contact'),
     defaultValue: '',
     required: false
   },
   {
     id: '13',
-    label: '合作次数',
+    label: t('account.cooperationCount'),
     name: 'cooperation_count',
     type: 'number',
     group: 'cooperation',
-    placeholder: '请输入合作次数',
+    placeholder: t('account.enter') + t('account.cooperationCount'),
     defaultValue: '0',
     required: false
   },
   {
     id: '14',
-    label: '返点比例',
+    label: t('account.commissionRate'),
     name: 'commission_rate',
     type: 'number',
     group: 'cooperation',
-    placeholder: '请输入返点比例',
+    placeholder: t('account.enter') + t('account.commissionRate'),
     defaultValue: '0',
     required: false
   },
   {
     id: '15',
-    label: '备注',
+    label: t('common.remark'),
     name: 'remark',
     type: 'text',
     group: 'remark',
-    placeholder: '请输入备注信息',
+    placeholder: t('account.enter') + t('common.remark'),
     defaultValue: '',
     required: false
   },
   {
     id: '16',
-    label: '账号特点',
+    label: t('account.accountFeatures'),
     name: 'account_features',
     type: 'text',
     group: 'remark',
-    placeholder: '请输入账号特点',
+    placeholder: t('account.enter') + t('account.accountFeatures'),
     defaultValue: '',
     required: false
   },
   {
     id: '17',
-    label: '运营策略',
+    label: t('account.operationStrategy'),
     name: 'operation_strategy',
     type: 'text',
     group: 'remark',
-    placeholder: '请输入运营策略',
+    placeholder: t('account.enter') + t('account.operationStrategy'),
     defaultValue: '',
     required: false
   }
 ])
 
 // 标准列定义
-const standardColumns = [
-  { label: 'ID', prop: 'id' },
-  { label: '账号昵称', prop: 'account_nickname' },
-  { label: '博主姓名', prop: 'blogger_name' },
-  { label: '单条报价', prop: 'quote_single' },
-  { label: '状态', prop: 'status' }
-]
+const standardColumns = computed(() => [
+  { label: t('common.id'), prop: 'id' },
+  { label: t('account.nickname'), prop: 'account_nickname' },
+  { label: t('account.bloggerName'), prop: 'blogger_name' },
+  { label: t('account.quoteSingle'), prop: 'quote_single' },
+  { label: t('common.status'), prop: 'status' }
+])
 
 // 可见列设置
 const visibleColumns = ref(['id', 'account_nickname', 'blogger_name', 'fans_count', 'quote_single', 'status', 'wechat', 'email'])
@@ -486,7 +487,7 @@ const visibleColumns = ref(['id', 'account_nickname', 'blogger_name', 'fans_coun
 // 所有可用列
 const availableColumns = computed(() => {
   const customCols = customFields.value.map(f => ({ label: f.label, prop: f.name }))
-  return [...standardColumns, ...customCols]
+  return [...standardColumns.value, ...customCols]
 })
 
 // 搜索表单
@@ -526,14 +527,14 @@ const accountForm = reactive({
 })
 
 // 账号表单验证规则
-const accountRules = {
-  blogger_name: [{ required: true, message: '请输入博主姓名', trigger: 'blur' }],
-  account_nickname: [{ required: true, message: '请输入账号昵称', trigger: 'blur' }],
-  account_type: [{ required: true, message: '请选择账号类型', trigger: 'change' }],
-  homepage_url: [{ required: true, message: '请输入主页链接', trigger: 'blur' }],
-  fans_count: [{ required: true, message: '请输入粉丝量', trigger: 'blur' }],
-  quote_single: [{ required: true, message: '请输入单条报价', trigger: 'blur' }]
-}
+const accountRules = computed(() => ({
+  blogger_name: [{ required: true, message: t('account.enter') + t('account.bloggerName'), trigger: 'blur' }],
+  account_nickname: [{ required: true, message: t('account.enter') + t('account.nickname'), trigger: 'blur' }],
+  account_type: [{ required: true, message: t('account.select') + t('account.accountType'), trigger: 'change' }],
+  homepage_url: [{ required: true, message: t('account.enter') + t('form.homepageUrl'), trigger: 'blur' }],
+  fans_count: [{ required: true, message: t('account.enter') + t('account.fansCount'), trigger: 'blur' }],
+  quote_single: [{ required: true, message: t('account.enter') + t('account.quoteSingle'), trigger: 'blur' }]
+}))
 
 // 分组表单
 const groupForm = reactive({
@@ -542,9 +543,9 @@ const groupForm = reactive({
 })
 
 // 分组表单验证规则
-const groupRules = {
-  group_name: [{ required: true, message: '请输入分组名称', trigger: 'blur' }]
-}
+const groupRules = computed(() => ({
+  group_name: [{ required: true, message: t('account.inputGroupName'), trigger: 'blur' }]
+}))
 
 // 表单引用
 const accountFormRef = ref(null)
@@ -594,7 +595,7 @@ const groupTreeProps = {
 // 格式化数字
 const formatNumber = (num) => {
   if (num >= 10000) {
-    return (num / 10000).toFixed(1) + 'w'
+    return (num / 10000).toFixed(1) + t('common.unitTenThousand')
   }
   return num
 }
@@ -602,11 +603,17 @@ const formatNumber = (num) => {
 // 获取状态文本
 const getStatusText = (status) => {
   const statusMap = {
-    0: '过期',
-    1: '正常',
-    2: '暂停'
+    0: t('account.statusExpired'),
+    1: t('account.statusNormal'),
+    2: t('account.statusPaused')
   }
-  return statusMap[status] || '未知'
+  return statusMap[status] || t('common.unknown')
+}
+
+// 获取账号类型显示文本
+const getAccountTypeLabel = (type) => {
+  if (!type) return ''
+  return t(`dynamicForm.types.${type}`)
 }
 
 // 获取标签类型
@@ -621,8 +628,9 @@ const getTagType = (status) => {
 
 // 获取分组名称
 const getGroupName = (groupId) => {
+  if (!groupId) return t('account.group.unorganized')
   const group = groups.value.find(g => g.id === groupId)
-  return group ? group.group_name : '未分组'
+  return group ? group.group_name : t('account.group.unorganized')
 }
 
 // 获取分组下的账号数量
@@ -811,21 +819,21 @@ const saveAccount = async () => {
     accountForm.quote_single = originalQuoteSingle
     
     accountDialogVisible.value = false
-    ElMessage.success(isEditMode.value ? '账号编辑成功' : '账号新增成功')
+    ElMessage.success(isEditMode.value ? t('account.editSuccess') : t('account.addSuccess'))
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error(t('account.validateErrorConsole'), error)
   }
 }
 
 // 删除账号
 const handleDeleteAccount = (id) => {
-  ElMessageBox.confirm('确定要删除该账号吗？删除后不可恢复', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('account.deleteConfirm'), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(async () => {
     await accountStore.deleteAccount(id)
-    ElMessage.success('账号删除成功')
+    ElMessage.success(t('account.deleteSuccess'))
   }).catch(() => {
     // 取消删除
   })
@@ -834,20 +842,20 @@ const handleDeleteAccount = (id) => {
 // 批量删除
 const handleBatchDelete = () => {
   if (selectedAccountIds.value.length === 0) {
-    ElMessage.warning('请选择要删除的账号')
+    ElMessage.warning(t('account.selectDelete'))
     return
   }
   
-  ElMessageBox.confirm(`确定要删除选中的 ${selectedAccountIds.value.length} 个账号吗？删除后不可恢复`, '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('account.batchDeleteConfirm', { count: selectedAccountIds.value.length }), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(async () => {
     for (const id of selectedAccountIds.value) {
       await accountStore.deleteAccount(id)
     }
     selectedAccountIds.value = []
-    ElMessage.success('账号删除成功')
+    ElMessage.success(t('account.deleteSuccess'))
   }).catch(() => {
     // 取消删除
   })
@@ -856,27 +864,27 @@ const handleBatchDelete = () => {
 // 批量导入
 const handleBatchImport = async () => {
   if (!window.electronAPI) {
-    ElMessage.warning('请在桌面端使用此功能')
+    ElMessage.warning(t('common.desktopOnly'))
     return
   }
   try {
     const count = await window.electronAPI.excel.importAccounts()
     if (count !== null) {
-      ElMessage.success(`成功导入 ${count} 个账号`)
+      ElMessage.success(t('account.importSuccess', { count }))
       // 重新加载数据
       await accountStore.loadInitialData()
       handleSearch()
     }
   } catch (error) {
     console.error('导入失败:', error)
-    ElMessage.error('导入失败，请检查文件格式')
+    ElMessage.error(t('account.importFailed'))
   }
 }
 
 // 批量导出
 const handleBatchExport = async () => {
   if (!window.electronAPI) {
-    ElMessage.warning('请在桌面端使用此功能')
+    ElMessage.warning(t('common.desktopOnly'))
     return
   }
   try {
@@ -889,27 +897,27 @@ const handleBatchExport = async () => {
     }
     
     if (accountsToExport.length === 0) {
-      ElMessage.warning('暂无账号可导出')
+      ElMessage.warning(t('account.noAccountExport'))
       return
     }
 
     const success = await window.electronAPI.excel.exportAccounts(JSON.parse(JSON.stringify(accountsToExport)))
     if (success) {
-      ElMessage.success('导出成功')
+      ElMessage.success(t('account.exportSuccess'))
     }
   } catch (error) {
-    console.error('导出失败:', error)
-    ElMessage.error('导出失败')
+    console.error('Export failed:', error)
+    ElMessage.error(t('common.error'))
   }
 }
 
 // 批量修改
 const handleBatchModify = () => {
   if (selectedAccountIds.value.length === 0) {
-    ElMessage.warning('请选择要修改的账号')
+    ElMessage.warning(t('account.selectAccount'))
     return
   }
-  ElMessage.info('批量修改功能开发中')
+  ElMessage.info(t('account.batchModifyDev'))
 }
 
 // 打开新增分组弹窗
@@ -944,9 +952,9 @@ const saveGroup = async () => {
     }
     
     groupDialogVisible.value = false
-    ElMessage.success(isEditGroupMode.value ? '分组编辑成功' : '分组新增成功')
+    ElMessage.success(isEditGroupMode.value ? t('account.editSuccess') : t('account.addSuccess'))
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error(t('account.validateErrorConsole'), error)
   }
 }
 
@@ -955,17 +963,17 @@ const handleDeleteGroup = (id) => {
   // 检查分组下是否有账号
   const accountCount = getAccountCountByGroup(id)
   if (accountCount > 0) {
-    ElMessage.warning(`该分组下还有 ${accountCount} 个账号，无法删除`)
+    ElMessage.warning(t('account.groupDeleteWarn', { count: accountCount }))
     return
   }
   
-  ElMessageBox.confirm('确定要删除该分组吗？删除后不可恢复', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('account.groupDeleteConfirm'), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(async () => {
     await accountStore.deleteGroup(id)
-    ElMessage.success('分组删除成功')
+    ElMessage.success(t('account.groupDeleteSuccess'))
   }).catch(() => {
     // 取消删除
   })

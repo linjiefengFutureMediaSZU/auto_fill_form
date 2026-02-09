@@ -2,20 +2,20 @@
   <div class="help-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2 class="title">帮助与反馈</h2>
+      <h2 class="title">{{ $t('help.title') }}</h2>
     </div>
 
     <!-- 标签页 -->
     <el-tabs v-model="activeTab" class="help-tabs">
       <!-- 使用手册标签页 -->
-      <el-tab-pane label="使用手册" name="manual">
+      <el-tab-pane :label="$t('help.manual')" name="manual">
         <div class="manual-content">
           <div class="glass-card">
             <div class="section-header">
-              <h3 class="subtitle">使用指南</h3>
+              <h3 class="subtitle">{{ $t('help.guide') }}</h3>
               <el-input
                 v-model="manualSearchKeyword"
-                placeholder="搜索教程内容"
+                :placeholder="$t('help.searchManual')"
                 clearable
                 class="manual-search"
               >
@@ -31,19 +31,19 @@
               <div class="manual-item">
                 <h4 class="manual-title">
                   <el-icon><User /></el-icon>
-                  账号管理
+                  {{ $t('help.manualContent.accountManagement.title') }}
                 </h4>
                 <div class="manual-content">
-                  <h5>1. 新增账号</h5>
-                  <p>点击"新增账号"按钮，填写账号基础信息、运营数据、合作信息和备注信息，点击保存即可。</p>
-                  <h5>2. 编辑账号</h5>
-                  <p>在账号列表中，点击对应账号的"编辑"按钮，修改信息后点击保存。</p>
-                  <h5>3. 删除账号</h5>
-                  <p>在账号列表中，点击对应账号的"删除"按钮，确认后即可删除。</p>
-                  <h5>4. 账号分组</h5>
-                  <p>在右侧分组管理中，点击"新增分组"按钮创建分组，然后在编辑账号时选择对应分组。</p>
-                  <h5>5. 批量操作</h5>
-                  <p>勾选多个账号后，点击"批量操作"下拉菜单，可进行批量导入、导出、修改和删除操作。</p>
+                  <h5>{{ $t('help.manualContent.accountManagement.addAccount.title') }}</h5>
+                  <p>{{ $t('help.manualContent.accountManagement.addAccount.content') }}</p>
+                  <h5>{{ $t('help.manualContent.accountManagement.editAccount.title') }}</h5>
+                  <p>{{ $t('help.manualContent.accountManagement.editAccount.content') }}</p>
+                  <h5>{{ $t('help.manualContent.accountManagement.deleteAccount.title') }}</h5>
+                  <p>{{ $t('help.manualContent.accountManagement.deleteAccount.content') }}</p>
+                  <h5>{{ $t('help.manualContent.accountManagement.accountGroup.title') }}</h5>
+                  <p>{{ $t('help.manualContent.accountManagement.accountGroup.content') }}</p>
+                  <h5>{{ $t('help.manualContent.accountManagement.batchOperation.title') }}</h5>
+                  <p>{{ $t('help.manualContent.accountManagement.batchOperation.content') }}</p>
                 </div>
               </div>
 
@@ -51,19 +51,19 @@
               <div class="manual-item">
                 <h4 class="manual-title">
                   <el-icon><EditPen /></el-icon>
-                  表单填写
+                  {{ $t('help.manualContent.formFilling.title') }}
                 </h4>
                 <div class="manual-content">
-                  <h5>1. 选择账号</h5>
-                  <p>在左侧账号选择区，勾选需要填写的账号。</p>
-                  <h5>2. 选择表单</h5>
-                  <p>在中间表单链接区，选择目标表单模板。</p>
-                  <h5>3. 字段匹配</h5>
-                  <p>在右侧表单预览区，点击"自动匹配"按钮，系统会自动匹配表单字段与账号信息字段。</p>
-                  <h5>4. 开始填写</h5>
-                  <p>点击"一键填写"按钮填写单个账号，或点击"批量填写"按钮填写多个账号。</p>
-                  <h5>5. 填写设置</h5>
-                  <p>可设置提交间隔，避免触发表单反爬机制。</p>
+                  <h5>{{ $t('help.manualContent.formFilling.selectAccount.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formFilling.selectAccount.content') }}</p>
+                  <h5>{{ $t('help.manualContent.formFilling.selectForm.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formFilling.selectForm.content') }}</p>
+                  <h5>{{ $t('help.manualContent.formFilling.fieldMatch.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formFilling.fieldMatch.content') }}</p>
+                  <h5>{{ $t('help.manualContent.formFilling.startFill.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formFilling.startFill.content') }}</p>
+                  <h5>{{ $t('help.manualContent.formFilling.fillSettings.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formFilling.fillSettings.content') }}</p>
                 </div>
               </div>
 
@@ -71,17 +71,17 @@
               <div class="manual-item">
                 <h4 class="manual-title">
                   <el-icon><List /></el-icon>
-                  表单列表
+                  {{ $t('help.manualContent.formList.title') }}
                 </h4>
                 <div class="manual-content">
-                  <h5>1. 新增表单</h5>
-                  <p>点击"新增表单"按钮，填写表单名称、链接、类型和归属文件夹，点击保存即可。</p>
-                  <h5>2. 文件夹管理</h5>
-                  <p>在左侧文件夹管理中，点击"新建文件夹"按钮创建文件夹，默认按日期命名。</p>
-                  <h5>3. 批量导入</h5>
-                  <p>点击"批量操作"下拉菜单，选择"批量导入"，粘贴多个表单链接，选择归属文件夹和表单类型，点击导入即可。</p>
-                  <h5>4. 批量导出</h5>
-                  <p>选择需要导出的表单，点击"批量操作"下拉菜单，选择"批量导出"即可。</p>
+                  <h5>{{ $t('help.manualContent.formList.addForm.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formList.addForm.content') }}</p>
+                  <h5>{{ $t('help.manualContent.formList.folderManage.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formList.folderManage.content') }}</p>
+                  <h5>{{ $t('help.manualContent.formList.batchImport.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formList.batchImport.content') }}</p>
+                  <h5>{{ $t('help.manualContent.formList.batchExport.title') }}</h5>
+                  <p>{{ $t('help.manualContent.formList.batchExport.content') }}</p>
                 </div>
               </div>
 
@@ -89,17 +89,17 @@
               <div class="manual-item">
                 <h4 class="manual-title">
                   <el-icon><DataAnalysis /></el-icon>
-                  数据管理
+                  {{ $t('help.manualContent.dataManage.title') }}
                 </h4>
                 <div class="manual-content">
-                  <h5>1. 手动备份</h5>
-                  <p>在备份管理标签页，点击"手动备份"按钮，系统会自动备份当前所有数据。</p>
-                  <h5>2. 定时备份</h5>
-                  <p>点击"备份设置"按钮，开启定时备份，设置备份时间和频率。</p>
-                  <h5>3. 恢复备份</h5>
-                  <p>在备份列表中，找到需要恢复的备份，点击"恢复"按钮，确认后即可恢复数据。</p>
-                  <h5>4. 日志管理</h5>
-                  <p>在日志管理标签页，可查看填写日志，支持按结果和时间范围筛选。</p>
+                  <h5>{{ $t('help.manualContent.dataManage.manualBackup.title') }}</h5>
+                  <p>{{ $t('help.manualContent.dataManage.manualBackup.content') }}</p>
+                  <h5>{{ $t('help.manualContent.dataManage.scheduleBackup.title') }}</h5>
+                  <p>{{ $t('help.manualContent.dataManage.scheduleBackup.content') }}</p>
+                  <h5>{{ $t('help.manualContent.dataManage.restoreBackup.title') }}</h5>
+                  <p>{{ $t('help.manualContent.dataManage.restoreBackup.content') }}</p>
+                  <h5>{{ $t('help.manualContent.dataManage.logManage.title') }}</h5>
+                  <p>{{ $t('help.manualContent.dataManage.logManage.content') }}</p>
                 </div>
               </div>
 
@@ -107,17 +107,17 @@
               <div class="manual-item">
                 <h4 class="manual-title">
                   <el-icon><Setting /></el-icon>
-                  基础设置
+                  {{ $t('help.manualContent.basicSettings.title') }}
                 </h4>
                 <div class="manual-content">
-                  <h5>1. 通用设置</h5>
-                  <p>可设置界面主题和字体大小。</p>
-                  <h5>2. 部署设置</h5>
-                  <p>可设置本地数据存储路径、备份路径和运行端口。</p>
-                  <h5>3. 填写设置</h5>
-                  <p>可设置批量填写时的提交间隔，避免触发表单反爬。</p>
-                  <h5>4. 账号安全</h5>
-                  <p>可设置工具登录密码和预留邮箱，用于找回密码。</p>
+                  <h5>{{ $t('help.manualContent.basicSettings.generalSettings.title') }}</h5>
+                  <p>{{ $t('help.manualContent.basicSettings.generalSettings.content') }}</p>
+                  <h5>{{ $t('help.manualContent.basicSettings.deploySettings.title') }}</h5>
+                  <p>{{ $t('help.manualContent.basicSettings.deploySettings.content') }}</p>
+                  <h5>{{ $t('help.manualContent.basicSettings.fillSettings.title') }}</h5>
+                  <p>{{ $t('help.manualContent.basicSettings.fillSettings.content') }}</p>
+                  <h5>{{ $t('help.manualContent.basicSettings.accountSecurity.title') }}</h5>
+                  <p>{{ $t('help.manualContent.basicSettings.accountSecurity.content') }}</p>
                 </div>
               </div>
             </div>
@@ -126,17 +126,17 @@
       </el-tab-pane>
 
       <!-- 常见问题标签页 -->
-      <el-tab-pane label="常见问题" name="faq">
+      <el-tab-pane :label="$t('help.faq')" name="faq">
         <div class="faq-content">
           <div class="glass-card">
             <div class="section-header">
               <h3 class="subtitle">FAQ</h3>
-              <el-select v-model="faqCategory" placeholder="按分类筛选">
-                <el-option label="全部问题" value="" />
-                <el-option label="账号管理" value="account" />
-                <el-option label="表单填写" value="form" />
-                <el-option label="表单列表" value="formList" />
-                <el-option label="数据备份" value="data" />
+              <el-select v-model="faqCategory" :placeholder="$t('help.filterByCategory')">
+                <el-option :label="$t('help.allQuestions')" value="" />
+                <el-option :label="$t('help.accountManagement')" value="account" />
+                <el-option :label="$t('help.formFilling')" value="form" />
+                <el-option :label="$t('help.formList')" value="formList" />
+                <el-option :label="$t('help.dataBackup')" value="data" />
               </el-select>
             </div>
 
@@ -159,12 +159,12 @@
       </el-tab-pane>
 
       <!-- 反馈提交标签页 -->
-      <el-tab-pane label="反馈提交" name="feedback">
+      <el-tab-pane :label="$t('help.feedback')" name="feedback">
         <div class="feedback-content">
           <div class="glass-card">
             <div class="section-header">
-              <h3 class="subtitle">问题反馈</h3>
-              <p class="feedback-tip">请详细描述您遇到的问题，我们会尽快处理</p>
+              <h3 class="subtitle">{{ $t('help.feedback') }}</h3>
+              <p class="feedback-tip">{{ $t('help.feedbackTip') }}</p>
             </div>
 
             <!-- 反馈表单 -->
@@ -175,27 +175,27 @@
               label-width="100px"
               class="feedback-form"
             >
-              <el-form-item label="反馈类型" prop="type">
-                <el-select v-model="feedbackForm.type" placeholder="请选择反馈类型">
-                  <el-option label="功能建议" value="suggestion" />
-                  <el-option label="Bug反馈" value="bug" />
-                  <el-option label="使用问题" value="question" />
-                  <el-option label="其他" value="other" />
+              <el-form-item :label="$t('help.feedbackType')" prop="type">
+                <el-select v-model="feedbackForm.type" :placeholder="$t('help.validation.typeRequired')">
+                  <el-option :label="$t('help.feedbackTypeOptions.suggestion')" value="suggestion" />
+                  <el-option :label="$t('help.feedbackTypeOptions.bug')" value="bug" />
+                  <el-option :label="$t('help.feedbackTypeOptions.question')" value="question" />
+                  <el-option :label="$t('help.feedbackTypeOptions.other')" value="other" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="联系方式" prop="contact">
-                <el-input v-model="feedbackForm.contact" placeholder="请输入邮箱或手机号" />
-                <div class="form-tip">方便我们联系您解决问题</div>
+              <el-form-item :label="$t('help.contact')" prop="contact">
+                <el-input v-model="feedbackForm.contact" :placeholder="$t('help.validation.contactRequired')" />
+                <div class="form-tip">{{ $t('help.contact') }}</div>
               </el-form-item>
-              <el-form-item label="问题描述" prop="description">
+              <el-form-item :label="$t('help.description')" prop="description">
                 <el-input
                   v-model="feedbackForm.description"
                   type="textarea"
                   rows="5"
-                  placeholder="请详细描述您遇到的问题"
+                  :placeholder="$t('help.validation.descRequired')"
                 />
               </el-form-item>
-              <el-form-item label="截图上传">
+              <el-form-item :label="$t('help.screenshot')">
                 <el-upload
                   class="avatar-uploader"
                   action="#"
@@ -205,11 +205,11 @@
                 >
                   <el-button size="small" type="primary">
                     <el-icon><Upload /></el-icon>
-                    选择文件
+                    {{ $t('help.selectFile') }}
                   </el-button>
                   <template #tip>
                     <div class="el-upload__tip">
-                      支持上传JPG、PNG格式图片，单张不超过2MB
+                      {{ $t('help.uploadTip') }}
                     </div>
                   </template>
                 </el-upload>
@@ -217,7 +217,7 @@
               <el-form-item>
                 <el-button type="primary" size="large" @click="submitFeedback">
                   <el-icon><Check /></el-icon>
-                  提交反馈
+                  {{ $t('help.submitFeedback') }}
                 </el-button>
               </el-form-item>
             </el-form>
@@ -232,6 +232,9 @@
 import { ref, computed, reactive } from 'vue'
 import { Search, User, EditPen, List, DataAnalysis, Setting, Upload, Check } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 响应式数据
 const activeTab = ref('manual')
@@ -248,57 +251,60 @@ const feedbackForm = reactive({
 })
 
 // 反馈表单验证规则
-const feedbackRules = {
-  type: [{ required: true, message: '请选择反馈类型', trigger: 'change' }],
-  contact: [{ required: true, message: '请输入联系方式', trigger: 'blur' }],
-  description: [{ required: true, message: '请描述问题', trigger: 'blur' }, { min: 10, message: '描述至少10个字符', trigger: 'blur' }]
-}
+const feedbackRules = computed(() => ({
+  type: [{ required: true, message: t('help.validation.typeRequired'), trigger: 'change' }],
+  contact: [{ required: true, message: t('help.validation.contactRequired'), trigger: 'blur' }],
+  description: [
+    { required: true, message: t('help.validation.descRequired'), trigger: 'blur' },
+    { min: 10, message: t('help.validation.descMin'), trigger: 'blur' }
+  ]
+}))
 
 // 常见问题数据
-const faqs = [
+const faqs = computed(() => [
   {
     id: '1',
     category: 'account',
-    question: '如何批量导入账号信息？',
-    answer: '点击"批量操作"下拉菜单，选择"批量导入"，然后按照模板格式填写Excel或CSV文件，上传后系统会自动导入账号信息。'
+    question: t('help.faqData.q1.question'),
+    answer: t('help.faqData.q1.answer')
   },
   {
     id: '2',
     category: 'account',
-    question: '账号状态为暂停，如何恢复？',
-    answer: '在账号列表中，找到状态为暂停的账号，点击"编辑"按钮，将账号状态修改为"正常"，然后保存即可。'
+    question: t('help.faqData.q2.question'),
+    answer: t('help.faqData.q2.answer')
   },
   {
     id: '3',
     category: 'form',
-    question: '表单填写失败怎么办？',
-    answer: '首先检查网络连接是否正常，然后检查表单链接是否有效。如果问题仍然存在，可以查看填写日志中的失败原因，根据提示进行修复。'
+    question: t('help.faqData.q3.question'),
+    answer: t('help.faqData.q3.answer')
   },
   {
     id: '4',
     category: 'form',
-    question: '如何自定义字段匹配规则？',
-    answer: '在表单填写页面，选择表单后，点击"编辑表单匹配规则"按钮，在弹出的对话框中，为每个表单字段选择对应的账号字段，然后保存即可。'
+    question: t('help.faqData.q4.question'),
+    answer: t('help.faqData.q4.answer')
   },
   {
     id: '5',
     category: 'formList',
-    question: '如何批量导入表单链接？',
-    answer: '点击"批量导入"按钮，在弹出的对话框中，粘贴多个表单链接（每行一个），选择归属文件夹和表单类型，点击导入即可。'
+    question: t('help.faqData.q5.question'),
+    answer: t('help.faqData.q5.answer')
   },
   {
     id: '6',
     category: 'data',
-    question: '备份文件保存在哪里？',
-    answer: '备份文件默认保存在"D:/backup/"目录下，您可以在基础设置中的部署设置里修改备份路径。'
+    question: t('help.faqData.q6.question'),
+    answer: t('help.faqData.q6.answer')
   },
   {
     id: '7',
     category: 'data',
-    question: '如何恢复备份数据？',
-    answer: '在数据管理页面的备份管理标签页，找到需要恢复的备份，点击"恢复"按钮，在弹出的对话框中选择恢复选项，确认后即可恢复数据。'
+    question: t('help.faqData.q7.question'),
+    answer: t('help.faqData.q7.answer')
   }
-]
+])
 
 // 表单引用
 const feedbackFormRef = ref(null)
@@ -306,7 +312,7 @@ const feedbackFormRef = ref(null)
 // 计算属性
 // 筛选后的FAQ
 const filteredFaqs = computed(() => {
-  return faqs.filter(faq => {
+  return faqs.value.filter(faq => {
     if (faqCategory.value && faq.category !== faqCategory.value) {
       return false
     }
@@ -329,7 +335,7 @@ const submitFeedback = async () => {
     await feedbackFormRef.value.validate()
     
     // 模拟提交反馈
-    ElMessage.success('反馈提交成功，我们会尽快处理')
+    ElMessage.success(t('help.feedbackMessages.success'))
     
     // 重置表单
     Object.keys(feedbackForm).forEach(key => {
@@ -340,7 +346,8 @@ const submitFeedback = async () => {
       }
     })
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('Form validation failed:', error)
+    ElMessage.error(t('help.feedbackMessages.validateError'))
   }
 }
 </script>
@@ -396,55 +403,53 @@ const submitFeedback = async () => {
     .manual-content {
       font-size: var(--font-size-sm);
       line-height: 1.6;
-
+      
       h5 {
         font-weight: 500;
-        margin-top: var(--spacing-md);
-        margin-bottom: var(--spacing-xs);
+        margin: var(--spacing-md) 0 var(--spacing-xs);
+        color: var(--text-color-primary);
       }
 
       p {
-        margin-bottom: var(--spacing-xs);
-        color: var(--text-color-regular);
+        margin: 0;
+        color: var(--text-color-secondary);
       }
     }
   }
 
-  .faq-list {
-    max-height: 600px;
-    overflow-y: auto;
+  .faq-content, .feedback-content {
+    .glass-card {
+      padding: var(--spacing-lg);
+    }
   }
 
   .faq-item {
-    margin-bottom: var(--spacing-xs);
+    ::v-deep(.el-collapse-item__header) {
+      font-size: var(--font-size-base);
+      font-weight: 500;
+    }
 
-    .el-collapse-item__content {
-      padding: var(--spacing-sm);
-      font-size: var(--font-size-sm);
+    .faq-answer {
+      color: var(--text-color-secondary);
       line-height: 1.6;
-      color: var(--text-color-regular);
-      background-color: var(--bg-color-light);
-      border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
     }
   }
 
   .feedback-tip {
-    font-size: var(--font-size-sm);
     color: var(--text-color-secondary);
+    font-size: var(--font-size-sm);
   }
 
   .feedback-form {
-    margin-top: var(--spacing-md);
+    max-width: 600px;
+    margin-top: var(--spacing-lg);
   }
-
+  
   .form-tip {
-    font-size: var(--font-size-xs);
+    font-size: 12px;
     color: var(--text-color-secondary);
-    margin-top: var(--spacing-xs);
-  }
-
-  .avatar-uploader {
-    margin-top: var(--spacing-sm);
+    line-height: 1.2;
+    margin-top: 4px;
   }
 }
 </style>

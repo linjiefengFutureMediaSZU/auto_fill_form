@@ -2,24 +2,24 @@
   <div class="form-list-page" :class="{ 'dark-theme': isDarkTheme }">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2 class="title">表单列表</h2>
+      <h2 class="title">{{ $t('formList.title') }}</h2>
       <div class="header-actions">
-        <el-tooltip content="新增表单" placement="bottom">
+        <el-tooltip :content="$t('formList.addForm')" placement="bottom">
           <el-button circle size="small" type="primary" plain @click="openAddFormDialog">
             <el-icon><Plus /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="批量导入" placement="bottom">
+        <el-tooltip :content="$t('formList.batchImport')" placement="bottom">
           <el-button circle size="small" type="primary" plain @click="handleBatchImport">
             <el-icon><Upload /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="批量导出" placement="bottom">
+        <el-tooltip :content="$t('formList.batchExport')" placement="bottom">
           <el-button circle size="small" type="success" plain @click="handleBatchExport">
             <el-icon><Download /></el-icon>
           </el-button>
         </el-tooltip>
-        <el-tooltip content="批量删除" placement="bottom">
+        <el-tooltip :content="$t('formList.batchDelete')" placement="bottom">
           <el-button circle size="small" type="danger" plain @click="handleBatchDelete">
             <el-icon><Delete /></el-icon>
           </el-button>
@@ -33,9 +33,9 @@
       <div class="folder-management">
         <div class="glass-card">
           <div class="section-header">
-            <h3 class="subtitle">文件夹管理</h3>
+            <h3 class="subtitle">{{ $t('formList.folderManagement') }}</h3>
             <div class="header-actions">
-              <el-tooltip content="新建文件夹" placement="top">
+              <el-tooltip :content="$t('formList.newFolder')" placement="top">
                 <el-button circle size="small" type="primary" plain @click="openAddFolderDialog">
                   <el-icon><Plus /></el-icon>
                 </el-button>
@@ -50,7 +50,7 @@
               class="folder-node all-forms-node" :class="{ active: !selectedFolderId }"
               @click="handleAllFormsClick"
             >
-              <span class="node-label">全部表单</span>
+              <span class="node-label">{{ $t('formList.allForms') }}</span>
               <span class="form-count">({{ forms.length }})</span>
             </div>
             <el-tree
@@ -98,12 +98,12 @@
         <div class="glass-card">
           <div class="section-header">
             <h3 class="subtitle">
-              {{ selectedFolder ? selectedFolder.folder_name : '全部表单' }}
+              {{ selectedFolder ? selectedFolder.folder_name : $t('formList.allForms') }}
             </h3>
             <div class="header-actions">
               <el-input
                 v-model="formSearchKeyword"
-                placeholder="搜索表单"
+                :placeholder="$t('formList.searchForm')"
                 clearable
                 class="form-search"
               >
@@ -111,9 +111,9 @@
                   <el-icon><Search /></el-icon>
                 </template>
               </el-input>
-              <el-select v-model="formSortBy" placeholder="排序">
-                <el-option label="创建时间" value="created_at" />
-                <el-option label="最后填写时间" value="last_fill_time" />
+              <el-select v-model="formSortBy" :placeholder="$t('formList.sortBy')">
+                <el-option :label="$t('formList.sortCreated')" value="created_at" />
+                <el-option :label="$t('formList.sortLastFilled')" value="last_fill_time" />
               </el-select>
             </div>
           </div>
@@ -128,19 +128,19 @@
               border
             >
               <el-table-column type="selection" width="55" :resizable="false" />
-              <el-table-column prop="template_name" label="表单名称" min-width="180" :resizable="false">
+              <el-table-column prop="template_name" :label="$t('formList.formName')" min-width="180" :resizable="false">
                 <template #default="scope">
                   <div class="form-name">
                     {{ scope.row.template_name }}
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="form_type" label="表单类型" width="100" :resizable="false">
+              <el-table-column prop="form_type" :label="$t('formList.formType')" width="100" :resizable="false">
                 <template #default="scope">
-                  <el-tag size="small">{{ scope.row.form_type }}</el-tag>
+                  <el-tag size="small">{{ getFormTypeLabel(scope.row.form_type) }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="form_url" label="表单链接" min-width="250" :resizable="false">
+              <el-table-column prop="form_url" :label="$t('formList.formUrl')" min-width="250" :resizable="false">
                 <template #default="scope">
                   <el-popover
                     placement="top"
@@ -152,7 +152,7 @@
                     </template>
                     <div class="form-url-popover">
                       <p>{{ scope.row.form_url }}</p>
-                      <el-tooltip content="复制链接" placement="top">
+                      <el-tooltip :content="$t('formList.copyUrl')" placement="top">
                         <el-button
                           circle
                           size="small"
@@ -167,20 +167,20 @@
                   </el-popover>
                 </template>
               </el-table-column>
-              <el-table-column prop="created_at" label="添加时间" width="160" :resizable="false">
+              <el-table-column prop="created_at" :label="$t('formList.addTime')" width="160" :resizable="false">
                 <template #default="scope">
                   {{ formatDate(scope.row.created_at) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="last_fill_time" label="最后填写时间" width="160" :resizable="false">
+              <el-table-column prop="last_fill_time" :label="$t('formList.lastFillTime')" width="160" :resizable="false">
                 <template #default="scope">
                   {{ scope.row.last_fill_time ? formatDate(scope.row.last_fill_time) : '-' }}
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="160" fixed="right" :resizable="false" align="center">
+              <el-table-column :label="$t('formList.operation')" width="160" fixed="right" :resizable="false" align="center">
                 <template #default="scope">
                   <div class="table-actions" style="display: flex; justify-content: center; gap: 8px;">
-                    <el-tooltip content="去填写" placement="top">
+                    <el-tooltip :content="$t('formList.goToFill')" placement="top">
                       <el-button
                         circle
                         size="small"
@@ -191,7 +191,7 @@
                         <el-icon><EditPen /></el-icon>
                       </el-button>
                     </el-tooltip>
-                    <el-tooltip content="编辑" placement="top">
+                    <el-tooltip :content="$t('common.edit')" placement="top">
                       <el-button
                         circle
                         size="small"
@@ -202,7 +202,7 @@
                         <el-icon><Edit /></el-icon>
                       </el-button>
                     </el-tooltip>
-                    <el-tooltip content="删除" placement="top">
+                    <el-tooltip :content="$t('common.delete')" placement="top">
                       <el-button
                         circle
                         size="small"
@@ -220,7 +220,7 @@
             
             <!-- 空状态 -->
             <div v-if="filteredAndSortedForms.length === 0" class="empty-state">
-              <el-empty description="暂无表单" />
+              <el-empty :description="$t('formList.noForms')" />
             </div>
           </div>
         </div>
@@ -230,7 +230,7 @@
     <!-- 新增/编辑文件夹弹窗 -->
     <el-dialog
       v-model="folderDialogVisible"
-      :title="isEditFolderMode ? '编辑文件夹' : '新建文件夹'"
+      :title="isEditFolderMode ? $t('formList.editFolderTitle') : $t('formList.newFolderTitle')"
       width="400px"
     >
       <el-form
@@ -239,22 +239,22 @@
         ref="folderFormRef"
         label-width="80px"
       >
-        <el-form-item label="文件夹名称" prop="folder_name">
-          <el-input v-model="folderForm.folder_name" placeholder="请输入文件夹名称" />
+        <el-form-item :label="$t('formList.folderName')" prop="folder_name">
+          <el-input v-model="folderForm.folder_name" :placeholder="$t('formList.folderNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="文件夹描述">
+        <el-form-item :label="$t('formList.folderDesc')">
           <el-input
             v-model="folderForm.description"
             type="textarea"
             rows="2"
-            placeholder="请输入文件夹描述"
+            :placeholder="$t('formList.folderDescPlaceholder')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="folderDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveFolder">保存</el-button>
+          <el-button @click="folderDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="saveFolder">{{ $t('common.save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -262,7 +262,7 @@
     <!-- 新增/编辑表单弹窗 -->
     <el-dialog
       v-model="formDialogVisible"
-      :title="isEditFormMode ? '编辑表单' : '新增表单'"
+      :title="isEditFormMode ? $t('formList.editFormTitle') : $t('formList.addFormTitle')"
       width="600px"
     >
       <el-form
@@ -271,24 +271,24 @@
         ref="formFormRef"
         label-width="100px"
       >
-        <el-form-item label="表单名称" prop="template_name">
-          <el-input v-model="formForm.template_name" placeholder="请输入表单名称" />
+        <el-form-item :label="$t('formList.formName')" prop="template_name">
+          <el-input v-model="formForm.template_name" :placeholder="$t('formList.formNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="表单链接" prop="form_url">
-          <el-input v-model="formForm.form_url" placeholder="请输入表单链接" />
+        <el-form-item :label="$t('formList.formUrl')" prop="form_url">
+          <el-input v-model="formForm.form_url" :placeholder="$t('formList.formUrlPlaceholder')" />
         </el-form-item>
-        <el-form-item label="表单类型" prop="form_type">
-          <el-select v-model="formForm.form_type" placeholder="请选择表单类型">
-            <el-option label="腾讯文档" value="腾讯文档" />
-            <el-option label="问卷星" value="问卷星" />
-            <el-option label="石墨文档" value="石墨文档" />
-            <el-option label="麦克CRM" value="麦克CRM" />
-            <el-option label="WPS表单" value="WPS表单" />
-            <el-option label="微信小程序" value="微信小程序" />
+        <el-form-item :label="$t('formList.formType')" prop="form_type">
+          <el-select v-model="formForm.form_type" :placeholder="$t('formList.formTypePlaceholder')">
+            <el-option :label="$t('formList.types.tencent')" :value="FORM_TYPES.TENCENT" />
+            <el-option :label="$t('formList.types.wenjuanxing')" :value="FORM_TYPES.WENJUANXING" />
+            <el-option :label="$t('formList.types.shimo')" :value="FORM_TYPES.SHIMO" />
+            <el-option :label="$t('formList.types.mike')" :value="FORM_TYPES.MIKE" />
+            <el-option :label="$t('formList.types.wps')" :value="FORM_TYPES.WPS" />
+            <el-option :label="$t('formList.types.miniprogram')" :value="FORM_TYPES.MINIPROGRAM" />
           </el-select>
         </el-form-item>
-        <el-form-item label="归属文件夹" prop="folder_id">
-          <el-select v-model="formForm.folder_id" placeholder="请选择文件夹">
+        <el-form-item :label="$t('formList.folderBelong')" prop="folder_id">
+          <el-select v-model="formForm.folder_id" :placeholder="$t('formList.folderSelectPlaceholder')">
               <el-option
                 v-for="folder in sortedFolders"
                 :key="folder.id"
@@ -300,8 +300,8 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="formDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveForm">保存</el-button>
+          <el-button @click="formDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="saveForm">{{ $t('common.save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -309,7 +309,7 @@
     <!-- 批量导入弹窗 -->
     <el-dialog
       v-model="batchImportDialogVisible"
-      title="批量导入表单链接"
+      :title="$t('formList.batchImportTitle')"
       width="600px"
     >
       <el-form
@@ -318,17 +318,17 @@
         ref="batchImportFormRef"
         label-width="100px"
       >
-        <el-form-item label="表单链接" prop="formUrls">
+        <el-form-item :label="$t('formList.formUrl')" prop="formUrls">
           <el-input
             v-model="batchImportForm.formUrls"
             type="textarea"
             rows="6"
-            placeholder="请输入多个表单链接，每行一个"
+            :placeholder="$t('formList.batchImportPlaceholder')"
           />
-          <div class="form-tip">请确保每个链接占据一行</div>
+          <div class="form-tip">{{ $t('formList.batchImportTip') }}</div>
         </el-form-item>
-        <el-form-item label="归属文件夹" prop="folder_id">
-          <el-select v-model="batchImportForm.folder_id" placeholder="请选择文件夹">
+        <el-form-item :label="$t('formList.folderBelong')" prop="folder_id">
+          <el-select v-model="batchImportForm.folder_id" :placeholder="$t('formList.folderSelectPlaceholder')">
             <el-option
               v-for="folder in sortedFolders"
               :key="folder.id"
@@ -337,21 +337,21 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="表单类型" prop="form_type">
-          <el-select v-model="batchImportForm.form_type" placeholder="请选择表单类型">
-            <el-option label="腾讯文档" value="腾讯文档" />
-            <el-option label="问卷星" value="问卷星" />
-            <el-option label="石墨文档" value="石墨文档" />
-            <el-option label="麦克CRM" value="麦克CRM" />
-            <el-option label="WPS表单" value="WPS表单" />
-            <el-option label="微信小程序" value="微信小程序" />
+        <el-form-item :label="$t('formList.formType')" prop="form_type">
+          <el-select v-model="batchImportForm.form_type" :placeholder="$t('formList.formTypePlaceholder')">
+            <el-option :label="$t('formList.types.tencent')" :value="FORM_TYPES.TENCENT" />
+            <el-option :label="$t('formList.types.wenjuanxing')" :value="FORM_TYPES.WENJUANXING" />
+            <el-option :label="$t('formList.types.shimo')" :value="FORM_TYPES.SHIMO" />
+            <el-option :label="$t('formList.types.mike')" :value="FORM_TYPES.MIKE" />
+            <el-option :label="$t('formList.types.wps')" :value="FORM_TYPES.WPS" />
+            <el-option :label="$t('formList.types.miniprogram')" :value="FORM_TYPES.MINIPROGRAM" />
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="batchImportDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleImport">导入</el-button>
+          <el-button @click="batchImportDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleImport">{{ $t('formList.import') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -365,6 +365,10 @@ import { useFormStore } from '../../stores'
 import { useSettingsStore } from '../../stores/settings'
 import { Plus, More, Upload, Download, Delete, ArrowDown, Search, EditPen, Edit, DocumentCopy, Folder, FolderOpened, MoreFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+import { FORM_TYPES } from '../../constants/form'
+
+const { t, locale } = useI18n()
 
 // 状态管理
 const settingsStore = useSettingsStore()
@@ -400,9 +404,9 @@ const folderForm = reactive({
 })
 
 // 文件夹表单验证规则
-const folderRules = {
-  folder_name: [{ required: true, message: '请输入文件夹名称', trigger: 'blur' }]
-}
+const folderRules = computed(() => ({
+  folder_name: [{ required: true, message: t('formList.folderNamePlaceholder'), trigger: 'blur' }]
+}))
 
 // 表单表单
 const formForm = reactive({
@@ -413,12 +417,12 @@ const formForm = reactive({
 })
 
 // 表单表单验证规则
-const formRules = {
-  template_name: [{ required: true, message: '请输入表单名称', trigger: 'blur' }],
-  form_url: [{ required: true, message: '请输入表单链接', trigger: 'blur' }],
-  form_type: [{ required: true, message: '请选择表单类型', trigger: 'change' }],
-  folder_id: [{ required: true, message: '请选择归属文件夹', trigger: 'change' }]
-}
+const formRules = computed(() => ({
+  template_name: [{ required: true, message: t('formList.formNamePlaceholder'), trigger: 'blur' }],
+  form_url: [{ required: true, message: t('formList.formUrlPlaceholder'), trigger: 'blur' }],
+  form_type: [{ required: true, message: t('formList.formTypePlaceholder'), trigger: 'change' }],
+  folder_id: [{ required: true, message: t('formList.folderSelectPlaceholder'), trigger: 'change' }]
+}))
 
 // 批量导入表单
 const batchImportForm = reactive({
@@ -428,11 +432,11 @@ const batchImportForm = reactive({
 })
 
 // 批量导入表单验证规则
-const batchImportRules = {
-  formUrls: [{ required: true, message: '请输入表单链接', trigger: 'blur' }],
-  folder_id: [{ required: true, message: '请选择归属文件夹', trigger: 'change' }],
-  form_type: [{ required: true, message: '请选择表单类型', trigger: 'change' }]
-}
+const batchImportRules = computed(() => ({
+  formUrls: [{ required: true, message: t('formList.formUrlPlaceholder'), trigger: 'blur' }],
+  folder_id: [{ required: true, message: t('formList.folderSelectPlaceholder'), trigger: 'change' }],
+  form_type: [{ required: true, message: t('formList.formTypePlaceholder'), trigger: 'change' }]
+}))
 
 // 表单引用
 const folderFormRef = ref(null)
@@ -496,13 +500,27 @@ const folderTreeProps = {
 // 格式化日期
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(locale.value, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+// 获取表单类型显示标签
+const getFormTypeLabel = (type) => {
+  const map = {
+    [FORM_TYPES.TENCENT]: 'tencent',
+    [FORM_TYPES.WENJUANXING]: 'wenjuanxing',
+    [FORM_TYPES.SHIMO]: 'shimo',
+    [FORM_TYPES.MIKE]: 'mike',
+    [FORM_TYPES.WPS]: 'wps',
+    [FORM_TYPES.MINIPROGRAM]: 'miniprogram'
+  }
+  const key = map[type]
+  return key ? t(`formList.types.${key}`) : type
 }
 
 // 获取文件夹下的表单数量
@@ -560,9 +578,9 @@ const saveFolder = async () => {
     }
     
     folderDialogVisible.value = false
-    ElMessage.success(isEditFolderMode.value ? '文件夹编辑成功' : '文件夹创建成功')
+    ElMessage.success(isEditFolderMode.value ? t('formList.folderEditSuccess') : t('formList.folderCreateSuccess'))
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('Form validation failed:', error)
   }
 }
 
@@ -571,20 +589,20 @@ const handleDeleteFolder = (id) => {
   // 检查文件夹下是否有表单
   const formCount = getFormCountByFolder(id)
   if (formCount > 0) {
-    ElMessage.warning(`该文件夹下还有 ${formCount} 个表单，无法删除`)
+    ElMessage.warning(t('formList.folderDeleteWarn', { count: formCount }))
     return
   }
   
-  ElMessageBox.confirm('确定要删除该文件夹吗？删除后不可恢复', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('formList.folderDeleteConfirm'), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(() => {
     formStore.deleteFolder(id)
     if (selectedFolderId.value === id) {
       selectedFolderId.value = null
     }
-    ElMessage.success('文件夹删除成功')
+    ElMessage.success(t('formList.folderDeleteSuccess'))
   }).catch(() => {
     // 取消删除
   })
@@ -626,21 +644,21 @@ const saveForm = async () => {
     }
     
     formDialogVisible.value = false
-    ElMessage.success(isEditFormMode.value ? '表单编辑成功' : '表单创建成功')
+    ElMessage.success(isEditFormMode.value ? t('formList.formEditSuccess') : t('formList.formCreateSuccess'))
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('Form validation failed:', error)
   }
 }
 
 // 删除表单
 const handleDeleteForm = (id) => {
-  ElMessageBox.confirm('确定要删除该表单吗？删除后不可恢复', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('formList.deleteConfirm'), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(() => {
     formStore.deleteTemplate(id)
-    ElMessage.success('表单删除成功')
+    ElMessage.success(t('formList.deleteSuccess'))
   }).catch(() => {
     // 取消删除
   })
@@ -668,7 +686,7 @@ const handleImport = async () => {
     // 批量添加表单
     urls.forEach((url, index) => {
       const formData = {
-        template_name: `表单${index + 1}`,
+        template_name: `${t('formList.formDefaultName')}${index + 1}`,
         form_url: url.trim(),
         form_type: batchImportForm.form_type,
         folder_id: batchImportForm.folder_id
@@ -677,38 +695,38 @@ const handleImport = async () => {
     })
     
     batchImportDialogVisible.value = false
-    ElMessage.success(`成功导入 ${urls.length} 个表单`)
+    ElMessage.success(t('formList.importSuccessCount', { count: urls.length }))
   } catch (error) {
-    console.error('表单验证失败:', error)
+    console.error('Form validation failed:', error)
   }
 }
 
 // 批量导出
 const handleBatchExport = () => {
   if (filteredAndSortedForms.value.length === 0) {
-    ElMessage.warning('暂无表单可导出')
+    ElMessage.warning(t('formList.noFormExport'))
     return
   }
-  ElMessage.info('批量导出功能开发中')
+  ElMessage.info(t('formList.exportDev'))
 }
 
 // 批量删除
 const handleBatchDelete = () => {
   if (selectedFormIds.value.length === 0) {
-    ElMessage.warning('请选择要删除的表单')
+    ElMessage.warning(t('formList.selectDelete'))
     return
   }
   
-  ElMessageBox.confirm(`确定要删除选中的 ${selectedFormIds.value.length} 个表单吗？删除后不可恢复`, '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('formList.batchDeleteConfirm', { count: selectedFormIds.value.length }), t('common.warning'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(() => {
     selectedFormIds.value.forEach(id => {
       formStore.deleteTemplate(id)
     })
     selectedFormIds.value = []
-    ElMessage.success('表单删除成功')
+    ElMessage.success(t('formList.deleteSuccess'))
   }).catch(() => {
     // 取消删除
   })
@@ -717,9 +735,9 @@ const handleBatchDelete = () => {
 // 复制表单链接
 const copyFormUrl = (url) => {
   navigator.clipboard.writeText(url).then(() => {
-    ElMessage.success('链接已复制')
+    ElMessage.success(t('common.copySuccess'))
   }).catch(() => {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('common.copyFailed'))
   })
 }
 
@@ -735,7 +753,7 @@ onMounted(() => {
   if (folders.value.length === 0) {
     // 默认创建今天的文件夹
     const today = new Date().toISOString().split('T')[0]
-    formStore.addFolder({ folder_name: today, description: '今天的表单' })
+    formStore.addFolder({ folder_name: today, description: t('formList.todayFolderDesc') })
   }
 })
 </script>

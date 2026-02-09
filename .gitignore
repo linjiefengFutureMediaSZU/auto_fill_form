@@ -29,3 +29,9 @@ dist-ssr
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+
+# Documents
+.trae/documents/*.xlsx
+.trae/documents/*.xls
+
