@@ -75,6 +75,7 @@
                 :data="backups"
                 style="width: 100%"
                 border
+                height="100%"
               >
                 <el-table-column prop="backup_time" :label="t('data.backupTime')" width="180">
                   <template #default="scope">
@@ -201,56 +202,73 @@
 
             <!-- 日志列表 -->
             <div class="log-list">
-              <el-table
-                v-loading="logLoading"
-                :data="filteredLogs"
-                style="width: 100%"
-                border
-              >
-                <el-table-column prop="fill_time" :label="t('data.fillTime')" width="180">
-                  <template #default="scope">
-                    {{ formatDateTime(scope.row.fill_time) }}
-                  </template>
-                </el-table-column>
-                <el-table-column :label="t('data.accountInfo')" width="150">
-                  <template #default="scope">
-                    <div class="account-info">
-                      {{ getAccountInfo(scope.row.account_id) }}
-                    </div>
-                  </template>
-                </el-table-column>
-                <el-table-column :label="t('data.formInfo')" width="200">
-                  <template #default="scope">
-                    <div class="form-info">
-                      {{ getFormInfo(scope.row.template_id) }}
-                    </div>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="fill_result" :label="t('data.fillResult')" width="100">
-                  <template #default="scope">
-                    <el-tag
-                      :type="scope.row.fill_result === '成功' ? 'success' : 'danger'"
-                      size="small"
-                    >
-                      {{ scope.row.fill_result === '成功' ? t('data.success') : t('data.fail') }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="fail_reason" :label="t('data.failReason')" min-width="200">
-                  <template #default="scope">
-                    {{ scope.row.fail_reason || '-' }}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="submit_count" :label="t('data.submitCount')" width="100">
-                  <template #default="scope">
-                    {{ scope.row.submit_count }}
-                  </template>
-                </el-table-column>
-              </el-table>
+              <div class="table-wrapper">
+                <el-table
+                  v-loading="logLoading"
+                  :data="paginatedLogs"
+                  style="width: 100%"
+                  border
+                  height="100%"
+                >
+                  <el-table-column prop="fill_time" :label="t('data.fillTime')" width="180">
+                    <template #default="scope">
+                      {{ formatDateTime(scope.row.fill_time) }}
+                    </template>
+                  </el-table-column>
+                  <el-table-column :label="t('data.accountInfo')" width="150">
+                    <template #default="scope">
+                      <div class="account-info">
+                        {{ getAccountInfo(scope.row.account_id) }}
+                      </div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column :label="t('data.formInfo')" width="200">
+                    <template #default="scope">
+                      <div class="form-info">
+                        {{ getFormInfo(scope.row.template_id) }}
+                      </div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="fill_result" :label="t('data.fillResult')" width="100">
+                    <template #default="scope">
+                      <el-tag
+                        :type="scope.row.fill_result === '成功' ? 'success' : 'danger'"
+                        size="small"
+                      >
+                        {{ scope.row.fill_result === '成功' ? t('data.success') : t('data.fail') }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="fail_reason" :label="t('data.failReason')" min-width="200">
+                    <template #default="scope">
+                      {{ scope.row.fail_reason || '-' }}
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="submit_count" :label="t('data.submitCount')" width="100">
+                    <template #default="scope">
+                      {{ scope.row.submit_count }}
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
               
               <!-- 空状态 -->
               <div v-if="filteredLogs.length === 0" class="empty-state">
                 <el-empty :description="t('data.noLog')" />
+              </div>
+
+              <!-- 分页组件 -->
+              <div v-if="filteredLogs.length > 0" class="pagination-container">
+                <el-pagination
+                  v-model:current-page="currentPage"
+                  v-model:page-size="pageSize"
+                  :page-sizes="[10, 20, 50, 100]"
+                  :background="true"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  :total="filteredLogs.length"
+                  @size-change="handleSizeChange"
+                  @current-change="handleCurrentChange"
+                />
               </div>
             </div>
 
@@ -396,6 +414,10 @@ const fillDataChartRef = ref(null)
 let fillChart = null
 let fillDataChart = null
 
+// 分页状态
+const currentPage = ref(1)
+const pageSize = ref(10)
+
 // 日志搜索表单
 const logSearchForm = reactive({
   fill_result: '',
@@ -448,6 +470,18 @@ const filteredLogs = computed(() => {
     }
     return true
   })
+})
+
+// 分页后的日志
+const paginatedLogs = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredLogs.value.slice(start, end)
+})
+
+// 监听筛选结果变化，重置分页
+watch(filteredLogs, () => {
+  currentPage.value = 1
 })
 
 // 填报数据统计
@@ -641,6 +675,17 @@ const copyBackupPath = (path) => {
 // 搜索日志
 const handleLogSearch = () => {
   // 搜索逻辑已在计算属性中处理
+  currentPage.value = 1
+}
+
+// 分页处理
+const handleSizeChange = (val) => {
+  pageSize.value = val
+  currentPage.value = 1
+}
+
+const handleCurrentChange = (val) => {
+  currentPage.value = val
 }
 
 // 重置日志搜索
@@ -715,6 +760,10 @@ const updateFillChart = () => {
     const dates = data.map(item => item.date)
     const counts = data.map(item => item.count)
     
+    const isDark = settingsStore.general.theme === 'dark'
+    const textColor = isDark ? '#f5f5f7' : '#606266'
+    const splitLineColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#eee'
+
     const option = {
       tooltip: {
         trigger: 'axis',
@@ -729,11 +778,15 @@ const updateFillChart = () => {
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: dates
+        data: dates,
+        axisLabel: { color: textColor },
+        axisLine: { lineStyle: { color: splitLineColor } }
       },
       yAxis: {
         type: 'value',
-        minInterval: 1
+        minInterval: 1,
+        axisLabel: { color: textColor },
+        splitLine: { lineStyle: { color: splitLineColor } }
       },
       series: [
         {
@@ -791,6 +844,10 @@ const updateFillDataChart = () => {
     const dates = data.map(item => item.date)
     const counts = data.map(item => item.count)
     
+    const isDark = settingsStore.general.theme === 'dark'
+    const textColor = isDark ? '#f5f5f7' : '#606266'
+    const splitLineColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#eee'
+
     const option = {
       tooltip: {
         trigger: 'axis',
@@ -805,11 +862,15 @@ const updateFillDataChart = () => {
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: dates
+        data: dates,
+        axisLabel: { color: textColor },
+        axisLine: { lineStyle: { color: splitLineColor } }
       },
       yAxis: {
         type: 'value',
-        minInterval: 1
+        minInterval: 1,
+        axisLabel: { color: textColor },
+        splitLine: { lineStyle: { color: splitLineColor } }
       },
       series: [
         {
@@ -881,7 +942,21 @@ watch(locale, () => {
   updateFillDataChart()
 })
 
-// 生命周期
+// Watch for theme changes to update charts
+watch(() => settingsStore.general.theme, () => {
+  if (fillChart) {
+    fillChart.dispose()
+    fillChart = echarts.init(fillChartRef.value)
+  }
+  if (fillDataChart) {
+    fillDataChart.dispose()
+    fillDataChart = echarts.init(fillDataChartRef.value)
+  }
+  updateFillChart()
+  updateFillDataChart()
+})
+
+// Lifecycle
 onMounted(() => {
   try {
     // 初始化数据
@@ -953,21 +1028,26 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-}
-
+  height: 0; /* Add this to allow flex shrink/grow properly */
 :deep(.el-tabs__content) {
   flex: 1;
-  padding: 20px 0;
-  overflow-y: auto;
+  padding: 20px 20px 0 20px;
+  overflow: hidden;
+  height: 100%;
+}/* Ensure content takes full height */
+}
+
+:deep(.el-tab-pane) {
+  height: 100%; /* Ensure tab pane takes full height */
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--glass-border);
 }
 
 .section-header {
@@ -981,7 +1061,20 @@ onUnmounted(() => {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
+}
+
+.fill-data-management {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.fill-data-management .glass-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
 /* 统计卡片样式 */
@@ -990,10 +1083,12 @@ onUnmounted(() => {
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 30px;
+  flex-shrink: 0;
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ed 100%);
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   padding: 20px;
   text-align: center;
@@ -1002,40 +1097,65 @@ onUnmounted(() => {
 
 .stat-card:hover {
   transform: translateY(-5px);
+  border-color: var(--accent-color);
 }
 
 .stat-value {
   font-size: 28px;
   font-weight: bold;
-  color: #409EFF;
+  color: var(--accent-color);
   margin-bottom: 8px;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 /* 图表样式 */
 .fill-chart {
   margin-top: 30px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
 }
 
 .chart-title {
   margin: 0 0 20px;
   font-size: 16px;
   font-weight: 600;
-  color: #606266;
+  color: var(--text-primary);
+  flex-shrink: 0;
 }
 
 .chart-container {
-  height: 400px;
+  flex: 1;
   width: 100%;
+  height: 100%;
 }
 
 /* 备份列表样式 */
+.backup-management {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.backup-management .glass-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.backup-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .backup-path {
-  color: #409EFF;
+  color: var(--accent-color);
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -1053,6 +1173,7 @@ onUnmounted(() => {
 .backup-path-popover p {
   margin: 0;
   word-break: break-all;
+  color: var(--text-primary);
 }
 
 .backup-data-info {
@@ -1060,15 +1181,46 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 4px;
   font-size: 12px;
-  color: #606266;
+  color: var(--text-secondary);
 }
 
 /* 日志管理样式 */
+.log-management {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.log-management .glass-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.log-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-wrapper {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
 .log-search-form {
   margin-bottom: 20px;
   padding: 20px;
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color-light);
   border-radius: 8px;
+  border: 1px solid var(--el-border-color-light);
 }
 
 .account-info, .form-info {
@@ -1084,7 +1236,7 @@ onUnmounted(() => {
 /* 弹窗样式 */
 .form-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
   line-height: 1.5;
   margin-top: 4px;
 }
@@ -1096,15 +1248,16 @@ onUnmounted(() => {
 }
 
 .backup-info {
-  background-color: #f5f7fa;
+  background-color: var(--el-fill-color-light);
   padding: 16px;
   border-radius: 4px;
+  border: 1px solid var(--el-border-color-light);
 }
 
 .backup-info h4, .restore-options h4 {
   margin: 0 0 12px;
   font-size: 16px;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .info-item {
@@ -1118,12 +1271,12 @@ onUnmounted(() => {
 }
 
 .info-item .label {
-  color: #909399;
+  color: var(--text-secondary);
   width: 80px;
 }
 
 .info-item .value {
-  color: #606266;
+  color: var(--text-primary);
   flex: 1;
 }
 

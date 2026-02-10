@@ -41,7 +41,11 @@ export const useFormStore = defineStore('form', {
       if (!window.electronAPI) return;
       try {
         const newId = await window.electronAPI.form.addFolder(folder);
-        this.folders.push({ id: newId, ...folder });
+        this.folders.push({ 
+          id: newId, 
+          ...folder,
+          created_at: new Date().toISOString()
+        });
       } catch (error) {
         console.error('Failed to add folder:', error);
         throw error;
@@ -77,7 +81,11 @@ export const useFormStore = defineStore('form', {
       if (!window.electronAPI) return;
       try {
         const newId = await window.electronAPI.form.addTemplate(template);
-        this.templates.push({ id: newId, ...template });
+        this.templates.push({ 
+          id: newId, 
+          ...template,
+          created_at: new Date().toISOString()
+        });
       } catch (error) {
         console.error('Failed to add template:', error);
         throw error;

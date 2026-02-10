@@ -573,9 +573,9 @@ const saveFolder = async () => {
     await folderFormRef.value.validate()
     
     if (isEditFolderMode.value) {
-      formStore.updateFolder(folderForm.id, folderForm)
+      await formStore.updateFolder(folderForm.id, folderForm)
     } else {
-      formStore.addFolder(folderForm)
+      await formStore.addFolder(folderForm)
     }
     
     folderDialogVisible.value = false

@@ -9,7 +9,7 @@
     <el-tabs v-model="activeTab" class="help-tabs">
       <!-- 使用手册标签页 -->
       <el-tab-pane :label="$t('help.manual')" name="manual">
-        <div class="manual-content">
+        <div class="help-tab-content">
           <div class="glass-card">
             <div class="section-header">
               <h3 class="subtitle">{{ $t('help.guide') }}</h3>
@@ -354,7 +354,12 @@ const submitFeedback = async () => {
 
 <style scoped lang="scss">
 .help-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
   .page-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -382,8 +387,19 @@ const submitFeedback = async () => {
   }
 
   .help-tabs {
-    .el-tabs__content {
-      padding-top: var(--spacing-lg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 0;
+    
+    :deep(.el-tabs__content) {
+      flex: 1;
+      padding: 20px 20px 0 20px;
+      overflow: hidden;
+    }
+
+    :deep(.el-tab-pane) {
+      height: 100%;
     }
   }
 
@@ -398,11 +414,38 @@ const submitFeedback = async () => {
     width: 200px;
   }
 
+  .help-tab-content,
+  .faq-content,
+  .feedback-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .glass-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden; /* Prevent card itself from scrolling, let children scroll */
+    }
+  }
+
   .manual-list {
-    max-height: 600px;
+    flex: 1;
     overflow-y: auto;
   }
 
+  .faq-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .feedback-form {
+    flex: 1;
+    overflow-y: auto;
+    max-width: 600px;
+    margin-top: var(--spacing-lg);
+  }
+  
   .manual-item {
     margin-bottom: var(--spacing-lg);
     padding-bottom: var(--spacing-lg);
@@ -461,11 +504,6 @@ const submitFeedback = async () => {
   .feedback-tip {
     color: var(--text-color-secondary);
     font-size: var(--font-size-sm);
-  }
-
-  .feedback-form {
-    max-width: 600px;
-    margin-top: var(--spacing-lg);
   }
   
   .form-tip {

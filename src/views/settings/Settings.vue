@@ -373,7 +373,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .settings-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
   .page-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -401,9 +406,13 @@ onMounted(() => {
   }
 
   .settings-container {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-lg);
+    padding: 20px 20px 0 20px;
   }
 
   .settings-form {
