@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Layout from '../components/Layout.vue'
 import i18n from '../i18n'
+import { useAccountStore } from '../stores/account'
 
 const routes = [
   {
@@ -90,11 +91,9 @@ router.beforeEach((to, from, next) => {
   // 检查是否需要登录
   const requiresAuth = to.meta.requiresAuth !== false
   
-  // 从 store 中获取登录状态，而不是仅依赖 localStorage
-  // 注意：在路由守卫中访问 store 需要在 app.use(pinia) 之后
-  // 这里我们保持逻辑简单，既然 store 不再持久化 isLoggedIn，
-  // 我们在 App.vue 挂载时会处理初始跳转
-  const isLoggedIn = localStorage.getItem('userInfo') !== null
+  // 从 store 中获取登录状态
+  const accountStore = useAccountStore()
+  const isLoggedIn = accountStore.isLoggedIn
   
   if (requiresAuth && !isLoggedIn) {
     // 需要登录但未登录，跳转到登录页

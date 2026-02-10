@@ -245,13 +245,26 @@ const AccountService = {
   },
   // 更新账号
   async updateAccount(id, account) {
+    console.log("AccountService.updateAccount called with:", id, account);
     const fields = Object.keys(account).filter((k) => k !== "id" && k !== "created_at");
+    if (fields.length === 0) {
+      console.warn("No fields to update for account:", id);
+      return;
+    }
     const values = fields.map((k) => {
       if (k === "is_swap") return account.is_swap ? 1 : 0;
       return account[k];
     });
     const setClause = fields.map((f) => `${f} = ?`).join(", ");
-    await queryRun(`UPDATE accounts SET ${setClause} WHERE id = ?`, [...values, id]);
+    const sql = `UPDATE accounts SET ${setClause} WHERE id = ?`;
+    console.log("Executing SQL:", sql, [...values, id]);
+    try {
+      await queryRun(sql, [...values, id]);
+      console.log("Update successful");
+    } catch (error) {
+      console.error("SQL Execution Error:", error);
+      throw error;
+    }
   },
   // 删除账号
   async deleteAccount(id) {
@@ -712,40 +725,79 @@ const ExcelService = {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX__namespace.utils.sheet_to_json(worksheet);
-    return data.map((row) => ({
-      blogger_name: row["博主姓名"] || "",
-      account_nickname: row["账号昵称"] || "",
-      account_type: row["账号类型"] || "",
-      account_id: row["平台ID"] || "",
-      homepage_url: row["主页链接"] || "",
-      fans_count: parseInt(row["粉丝数"]) || 0,
-      cooperation_type: row["合作类型"] || "",
-      contact: row["联系方式"] || "",
-      remark: row["备注"] || "",
-      status: 1,
-      // 默认正常
-      is_swap: 0,
-      extra_json: "{}"
-    }));
+    return data.map((row) => {
+      const extra = {
+        authorization: row["授权"] || "",
+        info_stream: row["信息流"] || "",
+        agency: row["机构"] || "",
+        interaction: row["互动"] || "",
+        phone: row["电话"] || "",
+        pugongying_url: row["蒲公英链接"] || "",
+        wechat: row["微信"] || ""
+      };
+      const parseNumber = (val) => {
+        if (!val) return 0;
+        const num = parseFloat(String(val).replace(/[^\d.]/g, ""));
+        return isNaN(num) ? 0 : num;
+      };
+      const parseBoolean = (val) => {
+        if (!val) return 0;
+        return String(val).includes("是") || String(val).toLowerCase() === "yes" || String(val) === "1" ? 1 : 0;
+      };
+      return {
+        blogger_name: row["博主姓名"] || row["博主昵称"] || "",
+        account_nickname: row["账号昵称"] || row["博主昵称"] || "",
+        account_type: row["账号类型"] || "",
+        account_id: row["平台ID"] || row["账号ID"] || "",
+        homepage_url: row["主页链接"] || row["账号链接"] || "",
+        fans_count: parseNumber(row["粉丝数"] || row["粉丝数量"]),
+        like_count: parseNumber(row["赞藏数量"]),
+        quote_single: parseNumber(row["报备图文报价"]),
+        quote_package: parseNumber(row["报备视频报价"]),
+        cooperation_type: row["合作类型"] || "",
+        contact: row["联系方式"] || row["微信"] || row["电话"] || "",
+        remark: row["备注"] || "",
+        status: 1,
+        // 默认正常
+        is_swap: parseBoolean(row["是否接受置换"] || row["是否需要试用"]),
+        extra_json: JSON.stringify(extra)
+      };
+    });
   },
   /**
    * 导出账号到 Excel
    * @param {Array} accounts 账号列表
    * @param {string} savePath 保存路径
+   * @param {Array} fields 导出字段配置 [{label: '列名', name: '字段名'}]
    */
-  exportAccountsToExcel(accounts, savePath) {
-    const exportData = accounts.map((a) => ({
-      "博主姓名": a.blogger_name,
-      "账号昵称": a.account_nickname,
-      "账号类型": a.account_type,
-      "平台ID": a.account_id,
-      "主页链接": a.homepage_url,
-      "粉丝数": a.fans_count,
-      "合作类型": a.cooperation_type,
-      "联系方式": a.contact,
-      "备注": a.remark,
-      "状态": a.status === 1 ? "正常" : "暂停"
-    }));
+  exportAccountsToExcel(accounts, savePath, fields) {
+    const exportData = accounts.map((a) => {
+      let extra = {};
+      try {
+        extra = a.extra_json ? JSON.parse(a.extra_json) : {};
+      } catch (e) {
+        console.error("Failed to parse extra_json", e);
+      }
+      const flatAccount = {
+        ...a,
+        ...extra,
+        // 特殊处理字段
+        // 如果是布尔值，转换为是/否；如果是字符串（已经转换过），则保留
+        is_swap: typeof a.is_swap === "boolean" ? a.is_swap ? "是" : "否" : a.is_swap
+        // 注意：Account.vue 传递过来的已经是格式化过的 formattedAccounts，
+        // 其中 is_swap 已经是 '是'/'否'，status 已经是中文。
+        // 所以我们主要需要根据 fields 来提取数据。
+      };
+      const row = {};
+      fields.forEach((field) => {
+        let value = flatAccount[field.name];
+        if (value === void 0 && extra[field.name] !== void 0) {
+          value = extra[field.name];
+        }
+        row[field.label] = value || "";
+      });
+      return row;
+    });
     const worksheet = XLSX__namespace.utils.json_to_sheet(exportData);
     const workbook = XLSX__namespace.utils.book_new();
     XLSX__namespace.utils.book_append_sheet(workbook, worksheet, "账号列表");
@@ -773,6 +825,24 @@ const UserService = {
       return { success: true, user: users[0] };
     } else {
       return { success: false, message: "账号或密码错误" };
+    }
+  },
+  /**
+   * 获取用户信息
+   */
+  async getUser(userId) {
+    try {
+      const users = await queryAll(
+        "SELECT id, username, email, phone, avatar, nickname, role, created_at FROM users WHERE id = ?",
+        [userId]
+      );
+      if (users.length > 0) {
+        return { success: true, user: users[0] };
+      } else {
+        return { success: false, message: "用户不存在" };
+      }
+    } catch (error) {
+      return { success: false, message: "获取用户信息失败: " + error.message };
     }
   },
   /**
@@ -853,7 +923,8 @@ const UserService = {
       const filePath = path.join(avatarsDir, fileName);
       const buffer = Buffer.from(matches[2], "base64");
       fs.writeFileSync(filePath, buffer);
-      const avatarUrl = `file://${filePath}`;
+      const normalizedPath = filePath.replace(/\\/g, "/");
+      const avatarUrl = `local-resource:///${normalizedPath}`;
       await this.updateProfile(userId, { avatar: avatarUrl });
       return { success: true, avatarUrl };
     } catch (error) {
@@ -1006,6 +1077,18 @@ initDatabase().then(() => UserService.initAdmin()).then(() => seedData()).catch(
 if (process.env.VITE_DEV_SERVER_URL) {
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 }
+electron.protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "local-resource",
+    privileges: {
+      secure: true,
+      standard: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true
+    }
+  }
+]);
 function createWindow() {
   const win = new electron.BrowserWindow({
     width: 1200,
@@ -1025,6 +1108,21 @@ function createWindow() {
   }
 }
 electron.app.whenReady().then(() => {
+  electron.protocol.handle("local-resource", (request) => {
+    try {
+      let urlPath = request.url.replace(/^local-resource:\/*/, "");
+      urlPath = decodeURIComponent(urlPath);
+      if (/^[a-zA-Z]\/Users\//.test(urlPath)) {
+        urlPath = urlPath.charAt(0) + ":" + urlPath.slice(1);
+      }
+      const fileUrl = "file:///" + urlPath;
+      console.log(`[LocalResource] Loading: ${request.url} -> ${fileUrl}`);
+      return electron.net.fetch(fileUrl);
+    } catch (error) {
+      console.error("[LocalResource] Failed:", error);
+      return new Response("Not Found", { status: 404 });
+    }
+  });
   createWindow();
   electron.app.on("activate", () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) {
@@ -1087,14 +1185,14 @@ electron.ipcMain.handle("excel:importAccounts", async () => {
   const accounts = ExcelService.parseAccountExcel(result.filePaths[0]);
   return AccountService.addAccountsBulk(accounts);
 });
-electron.ipcMain.handle("excel:exportAccounts", async (event, accounts) => {
+electron.ipcMain.handle("excel:exportAccounts", async (event, accounts, fields) => {
   const result = await electron.dialog.showSaveDialog({
     title: "导出账号",
     defaultPath: path.join(electron.app.getPath("downloads"), `账号列表_${Date.now()}.xlsx`),
     filters: [{ name: "Excel Files", extensions: ["xlsx"] }]
   });
   if (result.canceled) return false;
-  ExcelService.exportAccountsToExcel(accounts, result.filePath);
+  ExcelService.exportAccountsToExcel(accounts, result.filePath, fields);
   return true;
 });
 electron.ipcMain.handle("auth:login", async (event, { account, password }) => {
@@ -1102,6 +1200,9 @@ electron.ipcMain.handle("auth:login", async (event, { account, password }) => {
 });
 electron.ipcMain.handle("auth:register", async (event, userData) => {
   return await UserService.register(userData);
+});
+electron.ipcMain.handle("auth:getUser", async (event, userId) => {
+  return await UserService.getUser(userId);
 });
 electron.ipcMain.handle("auth:updateProfile", async (event, userId, data) => {
   return await UserService.updateProfile(userId, data);

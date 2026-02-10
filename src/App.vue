@@ -13,6 +13,8 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
 import { useI18n } from 'vue-i18n'
 
+import { useRouter } from 'vue-router'
+
 const { locale } = useI18n()
 const elementLocale = computed(() => locale.value === 'zh-CN' ? zhCn : en)
 
@@ -20,6 +22,7 @@ const settingsStore = useSettingsStore()
 const accountStore = useAccountStore()
 const formStore = useFormStore()
 const dataStore = useDataStore()
+const router = useRouter()
 
 const syncTheme = (theme) => {
   if (theme === 'dark') {
@@ -77,8 +80,16 @@ watch(() => settingsStore.general.theme, (newTheme) => {
 
 // 初始化
 onMounted(async () => {
-  // 确保每次重新启动应用（刷新页面）都回到登录页
-  accountStore.logout()
+  // 初始化登录状态
+  accountStore.initLoginStatus()
+  
+  // 如果已登录，跳转到首页；否则跳转到登录页（由路由守卫处理）
+  if (accountStore.isLoggedIn) {
+    // 只有在当前是根路径或登录页时才跳转，避免覆盖用户的直接访问
+    if (router.currentRoute.value.path === '/' || router.currentRoute.value.path === '/login') {
+      router.push('/account')
+    }
+  }
   
   syncTheme(settingsStore.general.theme)
   await handleMigration()

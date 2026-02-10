@@ -169,3 +169,127 @@ body.dark-theme {
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
   }
 }
+
+/* Input Fields - Glass Style */
+.el-input__wrapper, .el-textarea__inner {
+  background-color: var(--input-bg) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: var(--border-radius-sm) !important;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+  }
+  
+  &.is-focus {
+    box-shadow: var(--input-focus-shadow) !important;
+    // border-color: var(--input-focus-border) !important;
+    background-color: #fff !important;
+  }
+}
+
+.el-input__inner {
+  color: var(--text-primary) !important;
+  &::placeholder {
+    color: var(--text-secondary);
+  }
+}
+
+/* Select Dropdown - Glass Style */
+.el-select__popper.el-popper {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border) !important;
+  
+  .el-select-dropdown__item {
+    color: var(--text-primary);
+    &.hover, &:hover {
+      background-color: rgba(0, 122, 255, 0.1);
+    }
+    &.selected {
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+  }
+}
+
+/* Dark Mode Overrides for Inputs */
+body.dark-theme {
+  .el-input__wrapper, .el-textarea__inner {
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.15) !important;
+    }
+    &.is-focus {
+      background-color: rgba(0, 0, 0, 0.3) !important;
+    }
+  }
+  
+  .el-popper.is-dark {
+    background: rgba(30, 30, 30, 0.95) !important;
+    color: #f5f5f7 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    
+    .el-popper__arrow::before {
+      background: rgba(30, 30, 30, 0.95) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+
+  .el-collapse {
+    --el-collapse-header-bg-color: transparent;
+    --el-collapse-content-bg-color: transparent;
+    --el-collapse-border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Collapse - Glass Style */
+.el-collapse {
+  --el-collapse-header-bg-color: transparent;
+  --el-collapse-content-bg-color: transparent;
+  --el-collapse-border-color: var(--glass-border);
+  border-top: none !important;
+  border-bottom: none !important;
+  
+  .el-collapse-item__header {
+    background-color: transparent !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: var(--font-size-base);
+    
+    &.is-active {
+      color: var(--accent-color);
+    }
+  }
+  
+  .el-collapse-item__wrap {
+    background-color: transparent !important;
+    border-bottom: none !important;
+  }
+  
+  .el-collapse-item__content {
+    padding-bottom: 20px;
+    color: var(--text-primary);
+  }
+}
+
+/* Input Number - Glass Style */
+.el-input-number {
+  .el-input-number__decrease,
+  .el-input-number__increase {
+    background-color: var(--glass-bg) !important;
+    border-color: var(--glass-border) !important;
+    color: var(--text-primary) !important;
+    
+    &:hover {
+      color: var(--accent-color) !important;
+      background-color: rgba(255, 255, 255, 0.8) !important;
+    }
+  }
+  
+  .el-input__wrapper {
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+  }
+}

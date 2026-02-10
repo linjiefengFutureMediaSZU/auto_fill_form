@@ -914,22 +914,39 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .data-page {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
+/* 顶部标题区 */
 .page-header {
-  margin-bottom: 20px;
-}
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  padding-left: var(--spacing-sm);
 
-.title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #303133;
+  .title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 24px;
+      background: var(--primary-color);
+      border-radius: var(--border-radius-round);
+    }
+  }
 }
 
 .data-tabs {

@@ -72,6 +72,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   auth: {
     login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
     register: (userData) => ipcRenderer.invoke('auth:register', userData),
+    getUser: (userId) => ipcRenderer.invoke('auth:getUser', userId),
     updateProfile: (userId, data) => ipcRenderer.invoke('auth:updateProfile', userId, data),
     saveAvatar: (userId, base64Data) => ipcRenderer.invoke('auth:saveAvatar', userId, base64Data),
     verifyReset: (username, phone) => ipcRenderer.invoke('auth:verifyReset', username, phone),
@@ -79,7 +80,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   excel: {
     importAccounts: () => ipcRenderer.invoke('excel:importAccounts'),
-    exportAccounts: (accounts) => ipcRenderer.invoke('excel:exportAccounts', accounts),
+    exportAccounts: (accounts, fields) => ipcRenderer.invoke('excel:exportAccounts', accounts, fields),
   },
   app: {}
 });

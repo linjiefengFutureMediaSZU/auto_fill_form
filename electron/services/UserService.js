@@ -31,6 +31,25 @@ export const UserService = {
   },
 
   /**
+   * 获取用户信息
+   */
+  async getUser(userId) {
+    try {
+      const users = await queryAll(
+        'SELECT id, username, email, phone, avatar, nickname, role, created_at FROM users WHERE id = ?',
+        [userId]
+      );
+      if (users.length > 0) {
+        return { success: true, user: users[0] };
+      } else {
+        return { success: false, message: '用户不存在' };
+      }
+    } catch (error) {
+      return { success: false, message: '获取用户信息失败: ' + error.message };
+    }
+  },
+
+  /**
    * 用户注册
    */
   async register(userData) {
@@ -110,8 +129,11 @@ export const UserService = {
 
       fs.writeFileSync(filePath, buffer);
 
-      // 返回文件的协议路径，方便前端显示
-      const avatarUrl = `file://${filePath}`;
+      // 返回自定义协议路径，绕过浏览器的 file:// 限制
+      // 确保 Windows 路径的反斜杠被替换为正斜杠
+      const normalizedPath = filePath.replace(/\\/g, '/');
+      // 使用三个斜杠，符合 URL 规范（空主机名）
+      const avatarUrl = `local-resource:///${normalizedPath}`;
       await this.updateProfile(userId, { avatar: avatarUrl });
 
       return { success: true, avatarUrl };

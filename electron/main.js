@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, protocol, net } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { initDatabase } from './database.js';
@@ -26,6 +26,20 @@ if (process.env.VITE_DEV_SERVER_URL) {
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 }
 
+// 注册协议权限，确保 local-resource 协议可以正常加载资源
+protocol.registerSchemesAsPrivileged([
+  { 
+    scheme: 'local-resource', 
+    privileges: { 
+      secure: true, 
+      standard: true, 
+      supportFetchAPI: true, 
+      corsEnabled: true,
+      stream: true
+    } 
+  }
+]);
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -47,6 +61,37 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // 注册自定义协议以读取本地文件
+  protocol.handle('local-resource', (request) => {
+    try {
+      // 移除协议前缀，支持 local-resource:// 和 local-resource:///
+      let urlPath = request.url.replace(/^local-resource:\/*/, '');
+      
+      // 解码 URL
+      urlPath = decodeURIComponent(urlPath);
+      
+      // 在 Windows 上，如果路径以盘符开始（例如 c/Users/...），我们需要将其转换为 c:/Users/...
+      // 或者如果它是 /c/Users/...，我们需要保留它
+      
+      // 处理 Windows 盘符路径：如果路径以 'c/Users' 开头（没有冒号），我们需要添加冒号
+      // 这里的 urlPath 可能是 "c/Users/..." 或者 "C/Users/..."
+      if (/^[a-zA-Z]\/Users\//.test(urlPath)) {
+        urlPath = urlPath.charAt(0) + ':' + urlPath.slice(1);
+      }
+      
+      // 构造 file: 协议 URL
+      // 注意：file:/// 后紧跟盘符是标准格式
+      const fileUrl = 'file:///' + urlPath;
+      
+      console.log(`[LocalResource] Loading: ${request.url} -> ${fileUrl}`);
+      
+      return net.fetch(fileUrl);
+    } catch (error) {
+      console.error('[LocalResource] Failed:', error);
+      return new Response('Not Found', { status: 404 });
+    }
+  });
+
   createWindow();
 
   app.on('activate', () => {
@@ -133,7 +178,7 @@ ipcMain.handle('excel:importAccounts', async () => {
   return AccountService.addAccountsBulk(accounts);
 });
 
-ipcMain.handle('excel:exportAccounts', async (event, accounts) => {
+ipcMain.handle('excel:exportAccounts', async (event, accounts, fields) => {
   const result = await dialog.showSaveDialog({
     title: '导出账号',
     defaultPath: path.join(app.getPath('downloads'), `账号列表_${Date.now()}.xlsx`),
@@ -142,7 +187,7 @@ ipcMain.handle('excel:exportAccounts', async (event, accounts) => {
   
   if (result.canceled) return false;
   
-  ExcelService.exportAccountsToExcel(accounts, result.filePath);
+  ExcelService.exportAccountsToExcel(accounts, result.filePath, fields);
   return true;
 });
 
@@ -153,6 +198,10 @@ ipcMain.handle('auth:login', async (event, { account, password }) => {
 
 ipcMain.handle('auth:register', async (event, userData) => {
   return await UserService.register(userData);
+});
+
+ipcMain.handle('auth:getUser', async (event, userId) => {
+  return await UserService.getUser(userId);
 });
 
 ipcMain.handle('auth:updateProfile', async (event, userId, data) => {

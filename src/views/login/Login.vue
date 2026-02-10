@@ -185,7 +185,7 @@ const handleLogin = async () => {
         })
         
         // 保存登录状态
-        accountStore.setLoginStatus(true)
+        accountStore.setLoginStatus(true, loginForm.remember)
         
         ElMessage.success(t('login.success'))
         // 跳转到首页

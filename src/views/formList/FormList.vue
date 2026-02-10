@@ -123,7 +123,8 @@
             <el-table
               v-loading="formLoading"
               :data="filteredAndSortedForms"
-              style="width: 100%"
+              style="width: 100%; height: 100%;"
+              height="100%"
               @selection-change="handleFormSelectionChange"
               border
             >
@@ -763,31 +764,32 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  padding-bottom: 0;
+  box-sizing: border-box;
 
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 4px;
     padding-left: var(--spacing-sm);
 
     .title {
       font-size: 24px;
       font-weight: 600;
       color: var(--text-color-primary);
-      position: relative;
-      padding-left: 16px;
-      
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
       &::before {
         content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4px;
-        height: 20px;
+        display: block;
+        width: 6px;
+        height: 24px;
         background: var(--primary-color);
-        border-radius: var(--border-radius-sm);
+        border-radius: var(--border-radius-round);
       }
     }
 
@@ -808,6 +810,12 @@ onMounted(() => {
       min-width: 360px;
       display: flex;
       flex-direction: column;
+
+      .glass-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
     }
 
     .form-link-list {
@@ -815,6 +823,12 @@ onMounted(() => {
       min-width: 0; // 防止 flex 子项溢出
       display: flex;
       flex-direction: column;
+
+      .glass-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
     }
   }
 

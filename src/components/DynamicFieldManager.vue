@@ -1,8 +1,8 @@
 <template>
-  <div class="dynamic-field-manager">
+  <div class="dynamic-field-manager" :class="{ 'is-embedded': embedded }">
     <!-- 字段管理标题 -->
     <div class="manager-header">
-      <h3>{{ $t('fieldManager.title') }}</h3>
+      <h3 v-if="!embedded">{{ $t('fieldManager.title') }}</h3>
       <el-button type="primary" size="small" @click="openAddFieldDialog">{{ $t('fieldManager.addField') }}</el-button>
     </div>
 
@@ -16,7 +16,15 @@
         </div>
         <div class="field-actions">
           <el-button type="primary" size="small" @click="openEditFieldDialog(field)" style="margin-right: 8px;">{{ $t('common.edit') }}</el-button>
-          <el-button type="danger" size="small" @click="removeField(index)">{{ $t('common.delete') }}</el-button>
+          <el-button 
+            type="danger" 
+            size="small" 
+            @click="removeField(index)"
+            :disabled="field.unremovable"
+            :title="field.unremovable ? $t('fieldManager.messages.cannotDeleteCore') : ''"
+          >
+            {{ $t('common.delete') }}
+          </el-button>
         </div>
       </div>
       <div v-if="fields.length === 0" class="empty-fields">
@@ -89,6 +97,10 @@ const props = defineProps({
   modelValue: {
     type: Array,
     default: () => []
+  },
+  embedded: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -141,42 +153,79 @@ const openAddFieldDialog = () => {
 }
 
 const openEditFieldDialog = (field) => {
-  isEditFieldMode.value = true
-  editingFieldIndex.value = fields.value.findIndex(f => f.id === field.id)
-  // 复制字段数据到表单
-  Object.assign(fieldForm, field)
-  fieldDialogVisible.value = true
-}
-
-const saveField = () => {
-  // 验证必填字段
-  if (!fieldForm.label || !fieldForm.name) {
-    ElMessage.warning(t('fieldManager.messages.labelNameRequired'))
-    return
+    isEditFieldMode.value = true
+    editingFieldIndex.value = fields.value.findIndex(f => f.id === field.id)
+    // 复制字段数据到表单
+    Object.assign(fieldForm, field)
+    
+    // 特殊处理 options，将其转换为字符串以供编辑
+    if (Array.isArray(field.options)) {
+      if (field.options.length > 0 && typeof field.options[0] === 'object') {
+        // 对象数组 -> "Label:Value, Label:Value"
+        fieldForm.options = field.options.map(opt => `${opt.label}:${opt.value}`).join(', ')
+      } else {
+        // 字符串数组 -> "Option1, Option2"
+        fieldForm.options = field.options.join(', ')
+      }
+    }
+    
+    fieldDialogVisible.value = true
   }
-
-  // 生成唯一ID
-  const fieldId = isEditFieldMode.value ? fieldForm.id : Date.now().toString()
-
-  // 构建字段对象
-  const newField = {
-    id: fieldId,
-    label: fieldForm.label,
-    name: fieldForm.name,
-    type: fieldForm.type,
-    group: fieldForm.group,
-    placeholder: fieldForm.placeholder,
-    defaultValue: fieldForm.defaultValue,
-    options: fieldForm.options,
-    required: fieldForm.required
-  }
-
-  // 保存字段
-  if (isEditFieldMode.value) {
-    fields.value[editingFieldIndex.value] = newField
-  } else {
-    fields.value.push(newField)
-  }
+  
+  const saveField = () => {
+    // 验证必填字段
+    if (!fieldForm.label || !fieldForm.name) {
+      ElMessage.warning(t('fieldManager.messages.labelNameRequired'))
+      return
+    }
+  
+    // 生成唯一ID
+    const fieldId = isEditFieldMode.value ? fieldForm.id : Date.now().toString()
+  
+    // 处理 options
+    let processedOptions = []
+    if (fieldForm.options && typeof fieldForm.options === 'string') {
+      const opts = fieldForm.options.split(/[,，]/).map(opt => opt.trim()).filter(opt => opt)
+      
+      // 检查是否包含冒号（Label:Value 格式）
+      const isObjectOption = opts.some(opt => opt.includes(':') || opt.includes('：'))
+      
+      if (isObjectOption) {
+        processedOptions = opts.map(opt => {
+          const [label, value] = opt.split(/[:：]/).map(s => s.trim())
+          // 尝试转换 value 为数字
+          const numValue = Number(value)
+          return {
+            label: label || value, // 如果没有 label，用 value
+            value: !isNaN(numValue) && value !== '' ? numValue : value
+          }
+        })
+      } else {
+        processedOptions = opts
+      }
+    } else if (Array.isArray(fieldForm.options)) {
+        processedOptions = fieldForm.options
+    }
+  
+    // 构建字段对象
+    const newField = {
+      id: fieldId,
+      label: fieldForm.label,
+      name: fieldForm.name,
+      type: fieldForm.type,
+      group: fieldForm.group,
+      placeholder: fieldForm.placeholder,
+      defaultValue: fieldForm.defaultValue,
+      options: processedOptions.length > 0 ? processedOptions : [],
+      required: fieldForm.required
+    }
+  
+    // 保存字段
+    if (isEditFieldMode.value) {
+      fields.value[editingFieldIndex.value] = newField
+    } else {
+      fields.value.push(newField)
+    }
 
   // 更新父组件
   emit('update:modelValue', [...fields.value])
@@ -200,6 +249,17 @@ const removeField = (index) => {
   padding: 16px;
   background-color: var(--bg-color-light);
   transition: all 0.3s ease;
+
+  &.is-embedded {
+    border: none;
+    padding: 0;
+    background: transparent;
+
+    .manager-header {
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+  }
 
   .manager-header {
     display: flex;

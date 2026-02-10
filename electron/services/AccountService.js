@@ -49,14 +49,30 @@ export const AccountService = {
 
   // 更新账号
   async updateAccount(id, account) {
+    console.log('AccountService.updateAccount called with:', id, account);
     const fields = Object.keys(account).filter(k => k !== 'id' && k !== 'created_at');
+    
+    if (fields.length === 0) {
+      console.warn('No fields to update for account:', id);
+      return;
+    }
+
     const values = fields.map(k => {
       if (k === 'is_swap') return account.is_swap ? 1 : 0;
       return account[k];
     });
     
     const setClause = fields.map(f => `${f} = ?`).join(', ');
-    await queryRun(`UPDATE accounts SET ${setClause} WHERE id = ?`, [...values, id]);
+    const sql = `UPDATE accounts SET ${setClause} WHERE id = ?`;
+    console.log('Executing SQL:', sql, [...values, id]);
+    
+    try {
+      await queryRun(sql, [...values, id]);
+      console.log('Update successful');
+    } catch (error) {
+      console.error('SQL Execution Error:', error);
+      throw error;
+    }
   },
 
   // 删除账号

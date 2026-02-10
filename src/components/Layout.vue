@@ -34,13 +34,13 @@
           <el-icon><UserFilled /></el-icon>
           <template #title>{{ $t('menu.account') }}</template>
         </el-menu-item>
-        <el-menu-item index="/form">
-          <el-icon><Document /></el-icon>
-          <template #title>{{ $t('menu.fillForm') }}</template>
-        </el-menu-item>
         <el-menu-item index="/formList">
           <el-icon><List /></el-icon>
           <template #title>{{ $t('menu.formList') }}</template>
+        </el-menu-item>
+        <el-menu-item index="/form">
+          <el-icon><Document /></el-icon>
+          <template #title>{{ $t('menu.fillForm') }}</template>
         </el-menu-item>
         <el-menu-item index="/data">
           <el-icon><DataAnalysis /></el-icon>
@@ -177,8 +177,8 @@ onMounted(() => {
   // 初始化主题
   settingsStore.initTheme()
   
-  // 初始化登录状态
-  accountStore.initLoginStatus()
+  // 初始化登录状态 - 移除此行，因为 Layout 只在登录后加载，调用 initLoginStatus 会重置登录状态
+  // accountStore.initLoginStatus()
   
   // 检查登录状态
   if (!accountStore.isLoggedIn) {

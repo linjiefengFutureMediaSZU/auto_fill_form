@@ -860,67 +860,104 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .form-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  box-sizing: border-box;
+
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 4px;
     padding-left: var(--spacing-sm);
+    flex-shrink: 0;
+
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-color-primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      &::before {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 24px;
+        background: var(--primary-color);
+        border-radius: var(--border-radius-round);
+      }
+    }
   }
 
-  .card {
+  .glass-card {
     height: 100%;
     display: flex;
     flex-direction: column;
-  }
 
-  .card > .section-header {
-    flex-shrink: 0;
-  }
+    > .section-header {
+      flex-shrink: 0;
+    }
 
-  .card > .account-search {
-    flex-shrink: 0;
-  }
+    > .account-search {
+      flex-shrink: 0;
+    }
 
-  .card > .account-list {
-    flex: 1;
-    overflow-y: auto;
-  }
+    > .account-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
 
-  .card > .form-list {
-    flex: 1;
-    overflow-y: auto;
-  }
+    > .form-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
 
-  .card > .form-preview {
-    flex: 1;
-    overflow-y: auto;
-  }
+    > .form-preview {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
 
-  .card > .selection-footer {
-    flex-shrink: 0;
+    > .selection-footer {
+      flex-shrink: 0;
+    }
   }
 
   .form-fill-container {
     display: flex;
     gap: var(--spacing-lg);
-    height: calc(100vh - 200px);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 
     .account-selection {
       flex: 0.7;
       min-width: 260px;
       max-width: 350px;
+      display: flex;
+      flex-direction: column;
     }
 
     .form-link-selection {
       flex: 0.7;
       min-width: 260px;
       max-width: 350px;
+      display: flex;
+      flex-direction: column;
     }
 
     .form-preview-fill {
       flex: 1.6;
       min-width: 300px;
+      display: flex;
+      flex-direction: column;
     }
   }
 
@@ -936,7 +973,6 @@ onMounted(() => {
   }
 
   .account-list {
-    max-height: 400px;
     overflow-y: auto;
     margin-bottom: var(--spacing-md);
   }
@@ -988,7 +1024,6 @@ onMounted(() => {
   }
 
   .form-list {
-    max-height: 500px;
     overflow-y: auto;
   }
 

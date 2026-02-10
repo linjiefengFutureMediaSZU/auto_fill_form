@@ -2,30 +2,6 @@
   <div class="dynamic-form">
     <el-collapse v-model="activeNames">
     <el-collapse-item :title="$t('dynamicForm.basicInfo')" name="basic">
-      <!-- 固定字段 -->
-      <el-form-item :label="$t('dynamicForm.bloggerName')" prop="blogger_name">
-        <el-input v-model="formData.blogger_name" :placeholder="$t('dynamicForm.bloggerNamePlaceholder')" />
-      </el-form-item>
-      <el-form-item :label="$t('dynamicForm.accountNickname')" prop="account_nickname">
-        <el-input v-model="formData.account_nickname" :placeholder="$t('dynamicForm.accountNicknamePlaceholder')" />
-      </el-form-item>
-      <el-form-item :label="$t('dynamicForm.accountType')" prop="account_type">
-        <el-select v-model="formData.account_type" :placeholder="$t('dynamicForm.accountTypePlaceholder')">
-          <el-option :label="$t('dynamicForm.types.weibo')" value="weibo" />
-          <el-option :label="$t('dynamicForm.types.wechat')" value="wechat" />
-          <el-option :label="$t('dynamicForm.types.douyin')" value="douyin" />
-          <el-option :label="$t('dynamicForm.types.kuaishou')" value="kuaishou" />
-          <el-option :label="$t('dynamicForm.types.bilibili')" value="bilibili" />
-          <el-option :label="$t('dynamicForm.types.xiaohongshu')" value="xiaohongshu" />
-          <el-option :label="$t('dynamicForm.types.other')" value="other" />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="$t('dynamicForm.accountId')">
-        <el-input v-model="formData.account_id" :placeholder="$t('dynamicForm.accountIdPlaceholder')" />
-      </el-form-item>
-      <el-form-item :label="$t('dynamicForm.homepageUrl')" prop="homepage_url">
-        <el-input v-model="formData.homepage_url" :placeholder="$t('dynamicForm.homepageUrlPlaceholder')" />
-      </el-form-item>
       <!-- 动态字段 -->
       <template v-for="field in getFieldsByGroup('basic')" :key="field.id">
         <el-form-item :label="field.label" :prop="field.name">
@@ -33,9 +9,9 @@
             <template v-if="field.type === 'select' || field.type === 'multiple_select'">
               <el-option
                 v-for="opt in getFieldOptions(field)"
-                :key="opt"
-                :label="opt"
-                :value="opt"
+                :key="opt.value || opt"
+                :label="opt.label || opt"
+                :value="opt.value || opt"
               />
             </template>
           </component>
@@ -51,9 +27,9 @@
             <template v-if="field.type === 'select' || field.type === 'multiple_select'">
               <el-option
                 v-for="opt in getFieldOptions(field)"
-                :key="opt"
-                :label="opt"
-                :value="opt"
+                :key="opt.value || opt"
+                :label="opt.label || opt"
+                :value="opt.value || opt"
               />
             </template>
           </component>
@@ -77,9 +53,9 @@
             <template v-if="field.type === 'select' || field.type === 'multiple_select'">
               <el-option
                 v-for="opt in getFieldOptions(field)"
-                :key="opt"
-                :label="opt"
-                :value="opt"
+                :key="opt.value || opt"
+                :label="opt.label || opt"
+                :value="opt.value || opt"
               />
             </template>
           </component>
@@ -95,9 +71,9 @@
             <template v-if="field.type === 'select' || field.type === 'multiple_select'">
               <el-option
                 v-for="opt in getFieldOptions(field)"
-                :key="opt"
-                :label="opt"
-                :value="opt"
+                :key="opt.value || opt"
+                :label="opt.label || opt"
+                :value="opt.value || opt"
               />
             </template>
           </component>
@@ -132,6 +108,20 @@ const emit = defineEmits(['update:modelValue'])
 // 响应式数据
 const formData = ref({ ...props.modelValue })
 const activeNames = ref(['basic', 'data', 'cooperation', 'remark'])
+
+// 监听 props.modelValue 变化，同步到 formData
+// 注意：移除了对 props.modelValue 的深层监听，避免父组件更新导致的回环
+watch(() => props.modelValue, (newVal) => {
+  // 只在 id 变化（切换账号）或者明确重置时才重新赋值，防止编辑时的回环
+  if (newVal.id !== formData.value.id) {
+     formData.value = { ...newVal }
+  }
+}, { deep: true })
+
+// 监听 formData 变化，同步到父组件
+watch(formData, (newVal) => {
+  emit('update:modelValue', newVal)
+}, { deep: true })
 
 // 计算属性
 const getFieldsByGroup = (group) => {
@@ -199,7 +189,24 @@ const getFieldOptions = (field) => {
   if (!field.options) return []
   if (Array.isArray(field.options)) return field.options
   if (typeof field.options === 'string') {
-    return field.options.split(',').map(opt => opt.trim()).filter(opt => opt)
+    const parts = field.options.split(/[,，]/).map(opt => opt.trim()).filter(opt => opt)
+    
+    // Check if any part contains a colon (Label:Value format)
+    const hasKeyValue = parts.some(part => part.includes(':') || part.includes('：'))
+    
+    if (hasKeyValue) {
+      return parts.map(part => {
+        const [label, value] = part.split(/[:：]/).map(s => s.trim())
+        // Try to convert value to number if it looks like one
+        const numValue = Number(value)
+        return {
+          label: label || value,
+          value: !isNaN(numValue) && value !== '' ? numValue : value
+        }
+      })
+    }
+    
+    return parts
   }
   return []
 }

@@ -123,6 +123,8 @@
     "loading": "Loading...",
     "noData": "No Data",
     "unitTenThousand": "w",
+    "selectAll": "Select All",
+    "unselectAll": "Deselect All",
     "desktopOnly": "Please use this feature on desktop",
     "copySuccess": "Link copied",
     "copyFailed": "Copy failed"
@@ -168,6 +170,7 @@
     "editAccount": "Edit Account",
     "fieldManager": "Field Manager",
     "columnDisplay": "Columns",
+    "tableEdit": "Edit Table",
     "batchImport": "Import",
     "batchExport": "Export",
     "batchModify": "Batch Edit",
@@ -213,7 +216,13 @@
     "operationStrategy": "Operation Strategy",
     "cooperationOptions": "Image-Text,Video,Live",
     "enter": "Enter ",
-    "select": "Select "
+    "select": "Select ",
+    "authorization": "Authorization",
+    "infoStream": "Info Stream",
+    "agency": "Agency",
+    "interaction": "Interaction",
+    "phone": "Phone",
+    "pugongyingUrl": "Pugongying URL"
   },
   "form": {
     "title": "Form Filling",
@@ -487,10 +496,11 @@
       "remark": "Remarks"
     },
     "messages": {
-      "labelNameRequired": "Field label and name cannot be empty",
-      "editSuccess": "Field edited successfully",
+      "labelNameRequired": "Field label and name are required",
+      "editSuccess": "Field updated successfully",
       "addSuccess": "Field added successfully",
-      "deleteSuccess": "Field deleted successfully"
+      "deleteSuccess": "Field deleted successfully",
+      "cannotDeleteCore": "Cannot delete core fields"
     }
   },
   "data": {

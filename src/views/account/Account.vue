@@ -6,7 +6,7 @@
     </div>
 
     <!-- 搜索筛选区 -->
-    <div class="search-filter glass-card" style="margin-bottom: 20px;">
+    <div class="search-filter glass-card">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item :label="$t('account.searchKeyword')">
           <el-input
@@ -35,9 +35,12 @@
         </el-form-item>
         <el-form-item :label="$t('account.accountStatus')">
           <el-select v-model="searchForm.status" :placeholder="$t('account.selectStatus')" clearable style="width: 150px;">
-            <el-option :label="$t('account.statusNormal')" value="1" />
-            <el-option :label="$t('account.statusPaused')" value="2" />
-            <el-option :label="$t('account.statusExpired')" value="0" />
+            <el-option
+              v-for="opt in statusOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="String(opt.value)"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -56,7 +59,7 @@
     </div>
 
     <!-- 账号管理功能 -->
-    <div class="account-management glass-card" style="margin-bottom: 20px;">
+    <div class="account-management glass-card">
       <h3 class="subtitle">{{ $t('account.title') }}</h3>
       <div class="header-actions" style="margin-top: 10px; display: flex; gap: 16px; align-items: center;">
         <el-tooltip :content="$t('account.addAccount')" placement="top">
@@ -70,32 +73,18 @@
           </el-button>
         </el-tooltip>
         <el-tooltip :content="$t('account.columnDisplay')" placement="top">
-          <el-popover placement="bottom" :title="$t('account.columnDisplay')" :width="200" trigger="click">
-            <template #reference>
-              <el-button circle size="small" type="info" plain>
-                <el-icon><Setting /></el-icon>
-              </el-button>
-            </template>
-            <el-checkbox-group v-model="visibleColumns">
-              <div v-for="col in availableColumns" :key="col.prop" style="margin-bottom: 5px;">
-                <el-checkbox :label="col.prop">{{ col.label }}</el-checkbox>
-              </div>
-            </el-checkbox-group>
-          </el-popover>
+          <el-button circle size="small" type="info" plain @click="columnDisplayVisible = true">
+            <el-icon><Setting /></el-icon>
+          </el-button>
         </el-tooltip>
         <el-tooltip :content="$t('account.batchImport')" placement="top">
           <el-button circle size="small" type="primary" plain @click="handleBatchImport">
-            <el-icon><Upload /></el-icon>
+            <el-icon><Download /></el-icon>
           </el-button>
         </el-tooltip>
         <el-tooltip :content="$t('account.batchExport')" placement="top">
           <el-button circle size="small" type="success" plain @click="handleBatchExport">
-            <el-icon><Download /></el-icon>
-          </el-button>
-        </el-tooltip>
-        <el-tooltip :content="$t('account.batchModify')" placement="top">
-          <el-button circle size="small" type="warning" plain @click="handleBatchModify">
-            <el-icon><Edit /></el-icon>
+            <el-icon><Upload /></el-icon>
           </el-button>
         </el-tooltip>
         <el-tooltip :content="$t('account.batchDelete')" placement="top">
@@ -106,59 +95,95 @@
       </div>
     </div>
 
-    <!-- 字段管理面板 -->
-    <div v-if="fieldManagerVisible" class="field-manager-panel glass-card" style="margin-bottom: 20px; padding: 20px;">
-      <dynamic-field-manager v-model="customFields" />
-    </div>
 
     <!-- 账号列表 -->
-    <div class="account-list-area glass-card" style="margin-bottom: 20px;">
+    <div class="account-list-area glass-card">
       <!-- 账号表格 -->
       <el-table
         v-loading="loading"
-        :data="pagedAccounts"
-        style="width: 100%"
+        :data="filteredAccounts"
+        style="width: 100%; height: 100%;"
+        height="100%"
         @selection-change="handleSelectionChange"
         border
       >
         <el-table-column type="selection" width="55" :resizable="false" />
-        <el-table-column v-if="visibleColumns.includes('id')" prop="id" :label="$t('common.id')" width="80" :resizable="false" />
-        <el-table-column v-if="visibleColumns.includes('account_nickname')" prop="account_nickname" :label="$t('account.nickname')" min-width="180" :resizable="false">
-          <template #default="scope">
-            <div class="account-info">
-              <span class="nickname">{{ scope.row.account_nickname }}</span>
-              <span class="type-tag">{{ getAccountTypeLabel(scope.row.account_type) }}</span>
-            </div>
-          </template>
-        </el-table-column>
-        <el-table-column v-if="visibleColumns.includes('blogger_name')" prop="blogger_name" :label="$t('account.bloggerName')" width="120" :resizable="false" />
-        <el-table-column v-if="visibleColumns.includes('fans_count')" prop="fans_count" :label="$t('account.fansCount')" width="120" :resizable="false">
-          <template #default="scope">
-            {{ formatNumber(scope.row.fans_count) }}
-          </template>
-        </el-table-column>
-        <el-table-column v-if="visibleColumns.includes('quote_single')" prop="quote_single" :label="$t('account.quoteSingle')" width="120" :resizable="false">
-          <template #default="scope">
-            ¥{{ scope.row.quote_single.toFixed(2) }}
-          </template>
-        </el-table-column>
-        <el-table-column v-if="visibleColumns.includes('status')" prop="status" :label="$t('common.status')" width="100" :resizable="false">
-          <template #default="scope">
-            <el-tag
-              :type="getTagType(scope.row.status)"
-              size="small"
-            >
-              {{ getStatusText(scope.row.status) }}
-            </el-tag>
-          </template>
-        </el-table-column>
+        
+        <template v-for="col in displayColumns" :key="col.prop">
+          <!-- ID -->
+          <el-table-column 
+            v-if="col.prop === 'id'" 
+            prop="id" 
+            :label="col.label" 
+            width="80" 
+            :resizable="false" 
+          />
 
-        <!-- 自定义字段 -->
-        <template v-for="field in customFields" :key="field.id">
+          <!-- Nickname -->
+          <el-table-column 
+            v-else-if="col.prop === 'account_nickname'" 
+            prop="account_nickname" 
+            :label="col.label" 
+            min-width="180" 
+            :resizable="false"
+          >
+            <template #default="scope">
+              <div class="account-info">
+                <span class="nickname">{{ scope.row.account_nickname }}</span>
+                <span class="type-tag">{{ getAccountTypeLabel(scope.row.account_type) }}</span>
+              </div>
+            </template>
+          </el-table-column>
+
+          <!-- Fans Count -->
+          <el-table-column 
+            v-else-if="col.prop === 'fans_count'" 
+            prop="fans_count" 
+            :label="col.label" 
+            width="120" 
+            :resizable="false"
+          >
+            <template #default="scope">
+              {{ formatNumber(scope.row.fans_count) }}
+            </template>
+          </el-table-column>
+
+          <!-- Quote Single -->
+          <el-table-column 
+            v-else-if="col.prop === 'quote_single'" 
+            prop="quote_single" 
+            :label="col.label" 
+            width="120" 
+            :resizable="false"
+          >
+            <template #default="scope">
+              ¥{{ scope.row.quote_single ? Number(scope.row.quote_single).toFixed(2) : '0.00' }}
+            </template>
+          </el-table-column>
+
+          <!-- Status -->
+          <el-table-column 
+            v-else-if="col.prop === 'status'" 
+            prop="status" 
+            :label="col.label" 
+            width="100" 
+            :resizable="false"
+          >
+            <template #default="scope">
+              <el-tag
+                :type="getTagType(scope.row.status)"
+                size="small"
+              >
+                {{ getStatusText(scope.row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <!-- Default for others -->
           <el-table-column
-            v-if="visibleColumns.includes(field.name)"
-            :prop="field.name"
-            :label="field.label"
+            v-else
+            :prop="col.prop"
+            :label="col.label"
             min-width="120"
             :resizable="false"
             show-overflow-tooltip
@@ -210,7 +235,12 @@
         class="account-form"
       >
         <!-- 动态表单 -->
-        <dynamic-form v-model="accountForm" :fields="customFields" />
+        <dynamic-form 
+          :model-value="accountForm" 
+          @update:model-value="(val) => Object.assign(accountForm, val)"
+          :fields="customFields" 
+          :key="dynamicFormKey" 
+        />
 
 
         <!-- 分组和状态 -->
@@ -222,13 +252,6 @@
               :label="group.group_name"
               :value="group.id"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="$t('account.accountStatus')">
-          <el-select v-model="accountForm.status" :placeholder="$t('account.selectStatus')">
-            <el-option :label="$t('account.statusNormal')" value="1" />
-            <el-option :label="$t('account.statusPaused')" value="2" />
-            <el-option :label="$t('account.statusExpired')" value="0" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -271,17 +294,65 @@
         </span>
       </template>
     </el-dialog>
+
+    <!-- 字段管理弹窗 -->
+    <el-dialog
+      v-model="fieldManagerVisible"
+      :title="$t('account.fieldManager')"
+      width="800px"
+    >
+      <dynamic-field-manager v-model="tempCustomFields" embedded />
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="fieldManagerVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="saveFieldManagerConfig">{{ $t('common.save') }}</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 表格编辑弹窗 -->
+    <el-dialog
+      v-model="columnDisplayVisible"
+      :title="$t('account.tableEdit')"
+      width="800px"
+    >
+      <div style="margin-bottom: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+        <el-button size="small" type="primary" link @click="handleCheckAll">{{ $t('common.selectAll') }}</el-button>
+        <el-button size="small" type="primary" link @click="handleUncheckAll">{{ $t('common.unselectAll') }}</el-button>
+      </div>
+
+      <VueDraggable
+        v-model="columnsConfig"
+        item-key="prop"
+        handle=".drag-handle"
+        class="column-list"
+        :animation="200"
+      >
+        <template #item="{ element }">
+           <div class="column-item">
+             <el-icon class="drag-handle"><Rank /></el-icon>
+             <el-checkbox v-model="element.visible">{{ element.label }}</el-checkbox>
+           </div>
+        </template>
+      </VueDraggable>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="columnDisplayVisible = false">{{ $t('common.confirm') }}</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted, watch } from 'vue'
+import { ref, computed, reactive, onMounted, watch, nextTick } from 'vue'
 import { useAccountStore } from '../../stores'
-import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown, Setting } from '@element-plus/icons-vue'
+import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown, Setting, Rank } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DynamicFieldManager from '../../components/DynamicFieldManager.vue'
 import DynamicForm from '../../components/DynamicForm.vue'
 import { useI18n } from 'vue-i18n'
+import VueDraggable from 'vuedraggable'
 
 const { t } = useI18n()
 
@@ -298,7 +369,51 @@ const isEditGroupMode = ref(false)
 const selectedAccountIds = ref([])
 const activeCollapseNames = ref(['basic'])
 const fieldManagerVisible = ref(false)
-const customFields = computed(() => [
+const columnDisplayVisible = ref(false)
+const customFields = ref([
+  {
+    id: 'account_nickname',
+    label: t('account.nickname'),
+    name: 'account_nickname',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.nickname'),
+    defaultValue: '',
+    required: true,
+    unremovable: true
+  },
+  {
+    id: 'homepage_url',
+    label: t('form.homepageUrl'),
+    name: 'homepage_url',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('form.homepageUrl'),
+    defaultValue: '',
+    required: true,
+    unremovable: true
+  },
+  {
+    id: 'account_type',
+    label: t('account.accountType'),
+    name: 'account_type',
+    type: 'select',
+    group: 'basic',
+    placeholder: t('account.select') + t('account.accountType'),
+    defaultValue: '',
+    options: [
+      { label: t('dynamicForm.types.douyin'), value: 'douyin' },
+      { label: t('dynamicForm.types.xiaohongshu'), value: 'xiaohongshu' },
+      { label: t('dynamicForm.types.shipinhao'), value: 'shipinhao' },
+      { label: t('dynamicForm.types.weibo'), value: 'weibo' },
+      { label: t('dynamicForm.types.bilibili'), value: 'bilibili' },
+      { label: t('dynamicForm.types.kuaishou'), value: 'kuaishou' },
+      { label: t('dynamicForm.types.wechat'), value: 'wechat' },
+      { label: t('dynamicForm.types.other'), value: 'other' }
+    ],
+    required: true,
+    unremovable: true
+  },
   {
     id: '1',
     label: t('account.wechat'),
@@ -327,7 +442,8 @@ const customFields = computed(() => [
     group: 'data',
     placeholder: t('account.enter') + t('account.fansCount'),
     defaultValue: 0,
-    required: false
+    required: false,
+    unremovable: true
   },
   {
     id: '4',
@@ -469,6 +585,81 @@ const customFields = computed(() => [
     placeholder: t('account.enter') + t('account.operationStrategy'),
     defaultValue: '',
     required: false
+  },
+  {
+    id: '18',
+    label: t('account.authorization'),
+    name: 'authorization',
+    type: 'text',
+    group: 'cooperation',
+    placeholder: t('account.enter') + t('account.authorization'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '19',
+    label: t('account.infoStream'),
+    name: 'info_stream',
+    type: 'text',
+    group: 'cooperation',
+    placeholder: t('account.enter') + t('account.infoStream'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '20',
+    label: t('account.agency'),
+    name: 'agency',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.agency'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '21',
+    label: t('account.interaction'),
+    name: 'interaction',
+    type: 'text',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.interaction'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '22',
+    label: t('account.phone'),
+    name: 'phone',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.phone'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '23',
+    label: t('account.pugongyingUrl'),
+    name: 'pugongying_url',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.pugongyingUrl'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '24',
+    label: t('account.accountStatus'),
+    name: 'status',
+    type: 'select',
+    group: 'basic',
+    placeholder: t('account.select') + t('account.accountStatus'),
+    defaultValue: 1,
+    options: [
+      { label: t('account.statusNormal'), value: 1 },
+      { label: t('account.statusPaused'), value: 2 },
+      { label: t('account.statusExpired'), value: 0 }
+    ],
+    required: false
   }
 ])
 
@@ -476,19 +667,96 @@ const customFields = computed(() => [
 const standardColumns = computed(() => [
   { label: t('common.id'), prop: 'id' },
   { label: t('account.nickname'), prop: 'account_nickname' },
-  { label: t('account.bloggerName'), prop: 'blogger_name' },
-  { label: t('account.quoteSingle'), prop: 'quote_single' },
-  { label: t('common.status'), prop: 'status' }
+  { label: t('account.quoteSingle'), prop: 'quote_single' }
 ])
 
-// 可见列设置
-const visibleColumns = ref(['id', 'account_nickname', 'blogger_name', 'fans_count', 'quote_single', 'status', 'wechat', 'email'])
+// 列配置（包含顺序和可见性）
+const columnsConfig = ref([])
 
 // 所有可用列
 const availableColumns = computed(() => {
   const customCols = customFields.value.map(f => ({ label: f.label, prop: f.name }))
   return [...standardColumns.value, ...customCols]
 })
+
+// 表格显示的列（根据配置排序和过滤）
+const displayColumns = computed(() => columnsConfig.value.filter(c => c.visible))
+
+// 兼容旧代码的 visibleColumns
+const visibleColumns = computed({
+  get: () => displayColumns.value.map(c => c.prop),
+  set: (val) => {
+    columnsConfig.value.forEach(c => {
+      c.visible = val.includes(c.prop)
+    })
+  }
+})
+
+// 初始化列配置
+const initColumnsConfig = () => {
+  const savedConfig = localStorage.getItem('accountColumnsConfig_v1')
+  const available = availableColumns.value
+
+  if (savedConfig) {
+    try {
+      const parsed = JSON.parse(savedConfig)
+      const parsedProps = parsed.map(c => c.prop)
+      // 新增的列
+      const newColumns = available.filter(c => !parsedProps.includes(c.prop))
+                              .map(c => ({ ...c, visible: true }))
+      
+      // 验证已保存的列是否还存在，并更新 label
+      const validParsed = parsed.filter(c => available.some(a => a.prop === c.prop))
+                              .map(c => {
+                                const current = available.find(a => a.prop === c.prop)
+                                return { ...c, label: current ? current.label : c.label }
+                              })
+      
+      columnsConfig.value = [...validParsed, ...newColumns]
+    } catch (e) {
+      console.error('Failed to parse columns config', e)
+      columnsConfig.value = available.map(c => ({ ...c, visible: true }))
+    }
+  } else {
+    // 迁移逻辑
+    const oldVisibleStr = localStorage.getItem('accountVisibleColumns_v5')
+    let oldVisible = []
+    if (oldVisibleStr) {
+      try {
+        oldVisible = JSON.parse(oldVisibleStr)
+      } catch (e) {}
+    }
+    
+    if (oldVisible.length > 0) {
+       columnsConfig.value = available.map(c => ({
+         ...c,
+         visible: oldVisible.includes(c.prop)
+       }))
+    } else {
+       const defaults = ['id', 'account_nickname', 'fans_count', 'quote_single', 'is_swap', 'status', 'authorization', 'info_stream', 'agency', 'interaction', 'phone', 'pugongying_url', 'wechat', 'email']
+       columnsConfig.value = available.map(c => ({
+         ...c,
+         visible: defaults.includes(c.prop)
+       }))
+    }
+  }
+}
+
+// 全选列
+const handleCheckAll = () => {
+  columnsConfig.value.forEach(col => col.visible = true)
+}
+
+// 取消全选列
+const handleUncheckAll = () => {
+  columnsConfig.value.forEach(col => col.visible = false)
+}
+
+// 监听 columnsConfig 变化并保存
+watch(columnsConfig, () => {
+  localStorage.setItem('accountColumnsConfig_v1', JSON.stringify(columnsConfig.value))
+}, { deep: true })
+
 
 // 搜索表单
 const searchForm = reactive({
@@ -497,18 +765,12 @@ const searchForm = reactive({
   status: ''
 })
 
-// 分页
-const pagination = reactive({
-  currentPage: 1,
-  pageSize: 10
-})
+
 
 // 账号表单
 const accountForm = reactive({
-  blogger_name: '',
   account_nickname: '',
   account_type: '',
-  account_id: '',
   homepage_url: '',
   fans_count: 0,
   avg_read_count: 0,
@@ -518,6 +780,12 @@ const accountForm = reactive({
   quote_package: 0,
   cooperation_type: [],
   is_swap: false,
+  authorization: '',
+  info_stream: '',
+  agency: '',
+  interaction: '',
+  phone: '',
+  pugongying_url: '',
   wechat: '',
   email: '',
   contact: '',
@@ -528,13 +796,41 @@ const accountForm = reactive({
 
 // 账号表单验证规则
 const accountRules = computed(() => ({
-  blogger_name: [{ required: true, message: t('account.enter') + t('account.bloggerName'), trigger: 'blur' }],
   account_nickname: [{ required: true, message: t('account.enter') + t('account.nickname'), trigger: 'blur' }],
   account_type: [{ required: true, message: t('account.select') + t('account.accountType'), trigger: 'change' }],
   homepage_url: [{ required: true, message: t('account.enter') + t('form.homepageUrl'), trigger: 'blur' }],
   fans_count: [{ required: true, message: t('account.enter') + t('account.fansCount'), trigger: 'blur' }],
   quote_single: [{ required: true, message: t('account.enter') + t('account.quoteSingle'), trigger: 'blur' }]
 }))
+
+// 状态选项
+const statusOptions = computed(() => {
+  const statusField = customFields.value.find(f => f.name === 'status')
+  if (statusField && statusField.options) {
+    if (Array.isArray(statusField.options)) return statusField.options
+    if (typeof statusField.options === 'string') {
+      const parts = statusField.options.split(/[,，]/).map(opt => opt.trim()).filter(opt => opt)
+      const hasKeyValue = parts.some(part => part.includes(':') || part.includes('：'))
+      
+      if (hasKeyValue) {
+        return parts.map(part => {
+          const [label, value] = part.split(/[:：]/).map(s => s.trim())
+          const numValue = Number(value)
+          return {
+            label: label || value,
+            value: !isNaN(numValue) && value !== '' ? numValue : value
+          }
+        })
+      }
+      return parts.map(p => ({ label: p, value: p }))
+    }
+  }
+  return [
+    { label: t('account.statusNormal'), value: 1 },
+    { label: t('account.statusPaused'), value: 2 },
+    { label: t('account.statusExpired'), value: 0 }
+  ]
+})
 
 // 分组表单
 const groupForm = reactive({
@@ -561,8 +857,7 @@ const filteredAccounts = computed(() => {
     // 关键词搜索
     if (searchForm.keyword) {
       const keyword = searchForm.keyword.toLowerCase()
-      if (!account.account_nickname.toLowerCase().includes(keyword) && 
-          !account.blogger_name.toLowerCase().includes(keyword)) {
+      if (!account.account_nickname.toLowerCase().includes(keyword)) {
         return false
       }
     }
@@ -578,12 +873,7 @@ const filteredAccounts = computed(() => {
   })
 })
 
-// 分页后的账号
-const pagedAccounts = computed(() => {
-  const start = (pagination.currentPage - 1) * pagination.pageSize
-  const end = start + pagination.pageSize
-  return filteredAccounts.value.slice(start, end)
-})
+
 
 // 分组树属性
 const groupTreeProps = {
@@ -602,6 +892,10 @@ const formatNumber = (num) => {
 
 // 获取状态文本
 const getStatusText = (status) => {
+  const option = statusOptions.value.find(opt => String(opt.value) === String(status))
+  if (option) return option.label
+
+  // 后备默认映射（以防 statusOptions 为空或未匹配到）
   const statusMap = {
     0: t('account.statusExpired'),
     1: t('account.statusNormal'),
@@ -613,7 +907,13 @@ const getStatusText = (status) => {
 // 获取账号类型显示文本
 const getAccountTypeLabel = (type) => {
   if (!type) return ''
-  return t(`dynamicForm.types.${type}`)
+  // 检查是否为已知的类型 key，如果是则翻译
+  const knownTypes = ['weibo', 'wechat', 'douyin', 'kuaishou', 'bilibili', 'xiaohongshu', 'shipinhao', 'other']
+  if (knownTypes.includes(type)) {
+    return t(`dynamicForm.types.${type}`)
+  }
+  // 如果不是已知 key（例如已经是中文 "微信公众号"），直接返回
+  return type
 }
 
 // 获取标签类型
@@ -640,7 +940,7 @@ const getAccountCountByGroup = (groupId) => {
 
 // 搜索
 const handleSearch = () => {
-  pagination.currentPage = 1
+  // pagination.currentPage = 1
 }
 
 // 重置搜索
@@ -648,16 +948,7 @@ const resetSearch = () => {
   Object.keys(searchForm).forEach(key => {
     searchForm[key] = ''
   })
-  pagination.currentPage = 1
-}
-
-// 分页处理
-const handlePageSizeChange = (size) => {
-  pagination.pageSize = size
-}
-
-const handleCurrentPageChange = (current) => {
-  pagination.currentPage = current
+  // pagination.currentPage = 1
 }
 
 // 选择处理
@@ -683,22 +974,63 @@ const handleGroupClick = (data) => {
   console.log('Group clicked:', data)
 }
 
+const tempCustomFields = ref([])
+const dynamicFormKey = ref(0)
+
 // 切换字段管理面板
 const toggleFieldManager = () => {
-  fieldManagerVisible.value = !fieldManagerVisible.value
+  // Deep copy current fields to temp
+  tempCustomFields.value = JSON.parse(JSON.stringify(customFields.value))
+  fieldManagerVisible.value = true
+}
+
+// 保存字段管理配置
+const saveFieldManagerConfig = () => {
+  customFields.value = JSON.parse(JSON.stringify(tempCustomFields.value))
+  fieldManagerVisible.value = false
+  // customFields watcher will trigger saveFieldConfig
 }
 
 // 保存字段配置到本地存储
 const saveFieldConfig = () => {
-  localStorage.setItem('customFields_v3', JSON.stringify(customFields.value))
+  localStorage.setItem('customFields_v7', JSON.stringify(customFields.value))
 }
 
-// 从本地存储加载字段配置
-const loadFieldConfig = () => {
-  const savedFields = localStorage.getItem('customFields_v3')
+// 获取字段配置
+const loadFieldConfig = async () => {
+  const savedFields = localStorage.getItem('customFields_v7')
   if (savedFields) {
     try {
-      customFields.value = JSON.parse(savedFields)
+      const saved = JSON.parse(savedFields)
+      
+      // 找出所有不可删除的核心字段
+      const coreFields = customFields.value.filter(f => f.unremovable)
+      const coreFieldNames = coreFields.map(f => f.name)
+      
+      // 确保保存的配置中包含所有核心字段
+      // 如果缺少，从初始配置中补充回来
+      const savedNames = saved.map(f => f.name)
+      const missingCoreFields = coreFields.filter(f => !savedNames.includes(f.name))
+      
+      // 最终字段列表 = 保存的字段(包含用户自定义顺序/属性) + 缺失的核心字段
+      // 注意：这里我们保留用户的排序，但强制把缺失的核心字段加到最后（或者最前，视情况而定，加到最后比较安全）
+      // 为了更好的体验，也许应该把核心字段插回原来的位置？但那样太复杂，先加回来再说。
+      // 实际上，如果用户之前删除了核心字段，现在加回来，放在最后是可以接受的。
+      // 但更好的做法是：如果核心字段在 saved 里存在，用 saved 里的（可能有修改过 label 等）；
+      // 如果不存在，用 default 里的。
+      
+      // 过滤掉 saved 里可能存在的旧的核心字段（如果名字一样但属性缺了），其实直接用 saved 就行。
+      // 关键是补全缺失的。
+      
+      customFields.value = [...saved, ...missingCoreFields]
+      
+      // 再次确保 saved 里的核心字段也有 unremovable 属性（防止用户之前的保存里没有这个属性）
+      customFields.value.forEach(f => {
+        if (coreFieldNames.includes(f.name)) {
+          f.unremovable = true
+        }
+      })
+      
     } catch (e) {
       console.error('Failed to load field config:', e)
     }
@@ -717,6 +1049,7 @@ const removeQuoteItem = (index) => {
 
 // 打开新增账号弹窗
 const openAddAccountDialog = () => {
+  console.log('Opening Add Account Dialog')
   isEditMode.value = false
   // 重置表单
   Object.keys(accountForm).forEach(key => {
@@ -734,19 +1067,37 @@ const openAddAccountDialog = () => {
   accountForm.quote_package = 0
   accountForm.is_swap = false
   accountForm.status = 1
+  
+  console.log('Reset accountForm:', JSON.parse(JSON.stringify(accountForm)))
   accountDialogVisible.value = true
 }
 
 // 打开编辑账号弹窗
 const openEditAccountDialog = (account) => {
+  console.log('Opening Edit Account Dialog', account)
   isEditMode.value = true
+  
   // 复制账号数据到表单
+  // 先重置表单以防残留
+  Object.keys(accountForm).forEach(key => {
+    if (Array.isArray(accountForm[key])) {
+      accountForm[key] = []
+    } else {
+      accountForm[key] = ''
+    }
+  })
+  
+  // 使用 Object.assign 复制基本字段
   Object.assign(accountForm, account)
   
   // 解析 extra_json 并合并到表单数据中
   if (account.extra_json) {
     try {
-      const extra = JSON.parse(account.extra_json)
+      const extra = typeof account.extra_json === 'string' 
+        ? JSON.parse(account.extra_json) 
+        : account.extra_json
+      
+      console.log('Parsed extra_json:', extra)
       Object.assign(accountForm, extra)
     } catch (e) {
       console.error('Failed to parse extra_json:', e)
@@ -755,12 +1106,17 @@ const openEditAccountDialog = (account) => {
 
   // 处理合作形式数组
   if (typeof accountForm.cooperation_type === 'string') {
-    accountForm.cooperation_type = accountForm.cooperation_type.split(',')
+    accountForm.cooperation_type = accountForm.cooperation_type.split(',').filter(Boolean)
   }
+  
   // 处理单条报价数组
   if (!Array.isArray(accountForm.quote_single)) {
-    accountForm.quote_single = [accountForm.quote_single || 0]
+    // 如果是数字，转为数组
+    const val = Number(accountForm.quote_single)
+    accountForm.quote_single = !isNaN(val) ? [val] : [0]
   }
+  
+  console.log('Final accountForm for edit:', JSON.parse(JSON.stringify(accountForm)))
   accountDialogVisible.value = true
 }
 
@@ -768,60 +1124,69 @@ const openEditAccountDialog = (account) => {
 const saveAccount = async () => {
   if (!accountFormRef.value) return
   
+  console.log('Saving account, form data:', JSON.parse(JSON.stringify(accountForm)))
+  
   try {
     await accountFormRef.value.validate()
     
-    // 处理合作形式
-    if (Array.isArray(accountForm.cooperation_type)) {
-      accountForm.cooperation_type = accountForm.cooperation_type.join(',')
+    // 准备提交的数据 - 创建深拷贝，避免直接修改 accountForm 触发 UI 更新/死循环
+    let submitData = JSON.parse(JSON.stringify(accountForm))
+    
+    // 处理合作形式 (仅修改 submitData)
+    if (Array.isArray(submitData.cooperation_type)) {
+      submitData.cooperation_type = submitData.cooperation_type.join(',')
     }
     
-    // 处理单条报价（取第一个值用于存储）
-    const originalQuoteSingle = [...accountForm.quote_single]
-    if (Array.isArray(accountForm.quote_single)) {
-      accountForm.quote_single = accountForm.quote_single[0] || 0
+    // 处理单条报价（仅修改 submitData）
+    if (Array.isArray(submitData.quote_single)) {
+      submitData.quote_single = submitData.quote_single[0] || 0
     }
-    
-    // 准备提交的数据
-    const submitData = { ...accountForm }
     
     // 数据库原生字段列表
     const nativeFields = [
-      'id', 'group_id', 'blogger_name', 'account_nickname', 'account_type', 'account_id',
+      'id', 'group_id', 'blogger_name', 'account_nickname', 'account_type',
       'homepage_url', 'fans_count', 'avg_read_count', 'like_count', 'comment_count',
       'quote_single', 'quote_package', 'cooperation_type', 'is_swap', 'contact',
       'remark', 'status', 'created_at'
     ]
     
-    // 打包自定义字段到 extra_json
+    // 打包自定义字段到 extra_json (仅修改 submitData)
     const extraData = {}
     customFields.value.forEach(field => {
+      // 从 accountForm 读取原始值
       if (!nativeFields.includes(field.name) && accountForm[field.name] !== undefined) {
         extraData[field.name] = accountForm[field.name]
       }
     })
     submitData.extra_json = JSON.stringify(extraData)
     
-    // 移除不在数据库字段列表中的属性，避免 SQL 更新错误
+    // 移除不在数据库字段列表中的属性，避免 SQL 更新错误 (仅修改 submitData)
     Object.keys(submitData).forEach(key => {
       if (!nativeFields.includes(key) && key !== 'extra_json') {
         delete submitData[key]
       }
     })
     
-    if (isEditMode.value) {
-      await accountStore.updateAccount(submitData.id, submitData)
-    } else {
-      await accountStore.addAccount(submitData)
-    }
+    console.log('Submit Data:', submitData)
     
-    // 恢复原始的报价数组
-    accountForm.quote_single = originalQuoteSingle
+    if (isEditMode.value) {
+      console.log('Calling updateAccount with id:', submitData.id, 'data:', submitData)
+      await accountStore.updateAccount(submitData.id, submitData)
+      console.log('Update account successful')
+    } else {
+      // 新增时移除 id
+      if (submitData.id === '') delete submitData.id
+      console.log('Calling addAccount with data:', submitData)
+      await accountStore.addAccount(submitData)
+      console.log('Add account successful')
+    }
     
     accountDialogVisible.value = false
     ElMessage.success(isEditMode.value ? t('account.editSuccess') : t('account.addSuccess'))
+    
   } catch (error) {
     console.error(t('account.validateErrorConsole'), error)
+    // 移除 catch 块中对 accountForm 的恢复逻辑，因为不再修改它
   }
 }
 
@@ -901,7 +1266,21 @@ const handleBatchExport = async () => {
       return
     }
 
-    const success = await window.electronAPI.excel.exportAccounts(JSON.parse(JSON.stringify(accountsToExport)))
+    // 构建导出字段配置
+    const exportFields = [
+      { label: t('common.id'), name: 'id' },
+      ...customFields.value.map(f => ({ label: f.label, name: f.name }))
+    ]
+
+    // 格式化导出数据
+    const formattedAccounts = accountsToExport.map(account => {
+      const formatted = { ...account }
+      formatted.is_swap = account.is_swap ? '是' : '否'
+      formatted.status = getStatusText(account.status)
+      return formatted
+    })
+
+    const success = await window.electronAPI.excel.exportAccounts(JSON.parse(JSON.stringify(formattedAccounts)), JSON.parse(JSON.stringify(exportFields)))
     if (success) {
       ElMessage.success(t('account.exportSuccess'))
     }
@@ -911,14 +1290,7 @@ const handleBatchExport = async () => {
   }
 }
 
-// 批量修改
-const handleBatchModify = () => {
-  if (selectedAccountIds.value.length === 0) {
-    ElMessage.warning(t('account.selectAccount'))
-    return
-  }
-  ElMessage.info(t('account.batchModifyDev'))
-}
+
 
 // 打开新增分组弹窗
 const openAddGroupDialog = () => {
@@ -984,25 +1356,30 @@ onMounted(async () => {
   // 加载字段配置
   loadFieldConfig()
 
-  // 初始化可见列
-  const savedCols = localStorage.getItem('accountVisibleColumns_v3')
-  if (savedCols) {
-    visibleColumns.value = JSON.parse(savedCols)
-  } else {
-    // 默认显示所有标准列和自定义列
-    const allProps = availableColumns.value.map(c => c.prop)
-    visibleColumns.value = allProps
-  }
+  // 初始化列配置
+  initColumnsConfig()
 })
 
-// 监听可见列变化，自动保存
-watch(visibleColumns, () => {
-  localStorage.setItem('accountVisibleColumns_v3', JSON.stringify(visibleColumns.value))
-}, { deep: true })
-
-// 监听字段配置变化，自动保存
+// 监听字段配置变化，自动保存并同步列配置
 watch(customFields, () => {
   saveFieldConfig()
+  
+  // 同步 columnsConfig
+  const currentConfig = [...columnsConfig.value]
+  const available = availableColumns.value
+  const availableProps = available.map(c => c.prop)
+  
+  // 移除已删除的字段
+  const validConfig = currentConfig.filter(c => availableProps.includes(c.prop))
+  const validConfigProps = validConfig.map(c => c.prop)
+  
+  // 添加新字段
+  const newColumns = available.filter(c => !validConfigProps.includes(c.prop))
+                          .map(c => ({ ...c, visible: true }))
+  
+  if (validConfig.length !== currentConfig.length || newColumns.length > 0) {
+      columnsConfig.value = [...validConfig, ...newColumns]
+  }
 }, { deep: true })
 </script>
 
@@ -1013,7 +1390,8 @@ watch(customFields, () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 0; /* 移除可能的默认内边距 */
+  padding: 0; /* 移除内边距，完全由 Layout 控制 */
+  box-sizing: border-box;
 }
 
 /* 顶部标题区 */
@@ -1023,6 +1401,7 @@ watch(customFields, () => {
   align-items: center;
   margin-bottom: 4px;
   padding-left: var(--spacing-sm);
+  flex-shrink: 0; /* 防止压缩 */
 
   .title {
     font-size: 24px;
@@ -1050,6 +1429,23 @@ watch(customFields, () => {
 /* 搜索筛选区 */
 .search-filter {
   padding: 24px 24px 0; /* 底部padding由margin-bottom撑开 */
+  flex-shrink: 0; /* 防止压缩 */
+}
+
+/* 账号管理功能区 */
+.account-management {
+  flex-shrink: 0; /* 防止压缩 */
+}
+
+/* 账号列表区域 */
+.account-list-area {
+  flex: 1; /* 自动占据剩余空间 */
+  min-height: 0; /* 关键：允许flex子项收缩到内容以下，配合height:100%实现滚动 */
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow: hidden; /* 防止内容溢出容器 */
+}
   
   .search-form {
     display: flex;
@@ -1061,7 +1457,7 @@ watch(customFields, () => {
       margin-right: 0;
     }
   }
-}
+
 
 /* 账号管理功能区 */
 .account-management {
@@ -1208,7 +1604,7 @@ watch(customFields, () => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 400px; /* 最小高度 */
+  min-height: 0;
 
   /* 表格样式覆盖 */
   :deep(.el-table) {
@@ -1274,5 +1670,35 @@ watch(customFields, () => {
       width: 100%;
     }
   }
+}
+
+/* 表格列排序样式 */
+.column-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.column-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--bg-color-overlay);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: default;
+  min-width: 150px;
+  transition: all 0.3s;
+}
+.column-item:hover {
+  background-color: var(--bg-color-hover);
+  border-color: var(--primary-color);
+}
+.drag-handle {
+  margin-right: 8px;
+  cursor: move;
+  color: var(--text-color-secondary);
+}
+.drag-handle:hover {
+  color: var(--primary-color);
 }
 </style>

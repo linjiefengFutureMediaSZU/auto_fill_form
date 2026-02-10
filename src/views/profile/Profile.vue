@@ -1,9 +1,8 @@
 <template>
   <div class="profile-container">
     <!-- 页面标题 -->
-    <div class="page-header glass-card">
-      <h1 class="page-title">{{ t('profile.title') }}</h1>
-      <p class="page-description">{{ t('profile.description') }}</p>
+    <div class="page-header">
+      <h2 class="title">{{ t('profile.title') }}</h2>
     </div>
     
     <!-- 内容区域 -->
@@ -48,99 +47,165 @@
               <div class="info-label">{{ t('profile.registrationTime') }}</div>
               <div class="info-value">{{ registrationTime }}</div>
             </div>
+            
+            <div class="info-actions" style="margin-top: 24px;">
+              <el-button type="primary" plain @click="securityDialogVisible = true">
+                <el-icon style="margin-right: 4px;"><Lock /></el-icon>
+                {{ t('profile.securitySettings') }}
+              </el-button>
+            </div>
           </div>
         </div>
       </div>
       
-      
-      
-      <!-- 账号安全设置卡片 -->
-      <div class="security-card glass-card">
-        <div class="section-header">
-          <h3 class="subtitle">{{ t('profile.securitySettings') }}</h3>
-        </div>
-        
+      <!-- 账号安全设置弹窗 -->
+      <el-dialog
+        v-model="securityDialogVisible"
+        :title="t('profile.securitySettings')"
+        width="500px"
+        destroy-on-close
+      >
         <el-form
           ref="securityFormRef"
           :model="securitySettings"
           :rules="securitySettingsRules"
           class="security-form"
+          label-width="100px"
         >
           <el-form-item :label="t('profile.enablePassword')">
             <el-switch v-model="securitySettings.passwordEnabled" />
           </el-form-item>
           
-          <el-form-item prop="currentPassword" v-if="securitySettings.passwordEnabled">
-            <el-input
-              v-model="securitySettings.currentPassword"
-              type="password"
-              :placeholder="t('profile.enterCurrentPassword')"
-              show-password
-            >
-              <template #prefix>
-                <el-icon><Lock /></el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
+          <template v-if="securitySettings.passwordEnabled">
+            <el-form-item prop="currentPassword" :label="t('login.password')">
+              <el-input
+                v-model="securitySettings.currentPassword"
+                type="password"
+                :placeholder="t('profile.enterCurrentPassword')"
+                show-password
+              />
+            </el-form-item>
+            
+            <el-form-item prop="newPassword" :label="t('profile.enterNewPassword')">
+              <el-input
+                v-model="securitySettings.newPassword"
+                type="password"
+                :placeholder="t('profile.enterNewPassword')"
+                show-password
+              />
+              <div class="form-tip">{{ t('profile.passwordTip') }}</div>
+            </el-form-item>
+            
+            <el-form-item prop="confirmPassword" :label="t('profile.confirmNewPassword')">
+              <el-input
+                v-model="securitySettings.confirmPassword"
+                type="password"
+                :placeholder="t('profile.confirmNewPassword')"
+                show-password
+              />
+            </el-form-item>
+          </template>
           
-          <el-form-item prop="newPassword" v-if="securitySettings.passwordEnabled">
-            <el-input
-              v-model="securitySettings.newPassword"
-              type="password"
-              :placeholder="t('profile.enterNewPassword')"
-              show-password
-            >
-              <template #prefix>
-                <el-icon><Lock /></el-icon>
-              </template>
-            </el-input>
-            <div class="form-tip">{{ t('profile.passwordTip') }}</div>
-          </el-form-item>
-          
-          <el-form-item prop="confirmPassword" v-if="securitySettings.passwordEnabled">
-            <el-input
-              v-model="securitySettings.confirmPassword"
-              type="password"
-              :placeholder="t('profile.confirmNewPassword')"
-              show-password
-            >
-              <template #prefix>
-                <el-icon><Lock /></el-icon>
-              </template>
-            </el-input>
-          </el-form-item>
-          
-          <el-form-item prop="email">
+          <el-form-item prop="email" :label="t('profile.email')">
             <el-input
               v-model="securitySettings.email"
               :placeholder="t('profile.enterEmail')"
-            >
-              <template #prefix>
-                <el-icon><Message /></el-icon>
-              </template>
-            </el-input>
+            />
             <div class="form-tip">{{ t('profile.emailTip') }}</div>
           </el-form-item>
-          
-          <el-form-item>
+        </el-form>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="securityDialogVisible = false">{{ t('common.cancel') || '取消' }}</el-button>
             <el-button
               type="primary"
               :loading="securityLoading"
               @click="handleSecuritySave"
             >
-              {{ t('profile.saveSecuritySettings') }}
+              {{ t('common.save') || '保存' }}
             </el-button>
-          </el-form-item>
-        </el-form>
+          </span>
+        </template>
+      </el-dialog>
+      
+      <!-- 日历/日程卡片 -->
+      <div class="calendar-card glass-card">
+        <div class="section-header">
+          <h3 class="subtitle">日程安排</h3>
+          <el-button type="primary" link size="small" @click="openScheduleDialog(new Date())">
+            <el-icon><Plus /></el-icon> 新增日程
+          </el-button>
+        </div>
+        <el-calendar v-model="currentDate">
+          <template #date-cell="{ data }">
+            <div class="calendar-cell" @click.stop="openScheduleDialog(data.date)">
+              <div class="cell-date" :class="{ 'is-today': data.isSelected }">
+                {{ data.date.getDate() }}
+              </div>
+              <div class="cell-content">
+                <div 
+                  v-for="(schedule, index) in getSchedules(data.date)" 
+                  :key="index"
+                  class="schedule-item"
+                  :title="schedule.content"
+                >
+                  <span class="schedule-dot"></span>
+                  <span class="schedule-text">{{ schedule.content }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </el-calendar>
       </div>
+      
+      <!-- 日程编辑弹窗 -->
+      <el-dialog
+        v-model="scheduleDialogVisible"
+        title="编辑日程"
+        width="400px"
+      >
+        <div class="schedule-date-display">{{ formatDate(selectedDate) }}</div>
+        <el-input
+          v-model="newScheduleContent"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入日程内容..."
+          maxlength="50"
+          show-word-limit
+        />
+        <div class="schedule-list-edit" v-if="selectedDateSchedules.length > 0">
+          <div class="schedule-list-title">当日日程：</div>
+          <div 
+            v-for="(item, index) in selectedDateSchedules" 
+            :key="index"
+            class="schedule-edit-item"
+          >
+            <span>{{ item.content }}</span>
+            <el-button 
+              type="danger" 
+              link 
+              size="small" 
+              @click="deleteSchedule(selectedDate, index)"
+            >
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </div>
+        </div>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="scheduleDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="saveSchedule">添加</el-button>
+          </span>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useAccountStore } from '../../stores/account'
-import { Lock, Message } from '@element-plus/icons-vue'
+import { Lock, Message, Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 
@@ -159,10 +224,24 @@ const securitySettings = ref({
   email: ''
 })
 
+const securityDialogVisible = ref(false)
 const securityLoading = ref(false)
 const avatarLoading = ref(false)
 const securityFormRef = ref(null)
 const fileInput = ref(null)
+
+// 日程相关状态
+const currentDate = ref(new Date())
+const scheduleDialogVisible = ref(false)
+const selectedDate = ref(new Date())
+const newScheduleContent = ref('')
+// 存储日程数据：key为日期字符串(YYYY-MM-DD)，value为日程数组
+const schedules = reactive(JSON.parse(localStorage.getItem('user_schedules') || '{}'))
+
+// 监听日程数据变化，保存到本地存储
+watch(schedules, (newVal) => {
+  localStorage.setItem('user_schedules', JSON.stringify(newVal))
+}, { deep: true })
 
 // 计算属性
 const userInfo = computed(() => accountStore.userInfo)
@@ -291,6 +370,9 @@ const handleSecuritySave = async () => {
     securitySettings.value.newPassword = ''
     securitySettings.value.confirmPassword = ''
     
+    // 关闭弹窗
+    securityDialogVisible.value = false
+    
   } catch (error) {
     console.error('Failed to save security settings:', error)
     ElMessage.error(error.message || t('profile.saveFail'))
@@ -299,13 +381,96 @@ const handleSecuritySave = async () => {
   }
 }
 
+// 日程相关计算属性和方法
+const formatDateKey = (date) => {
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const formatDate = (date) => {
+  const d = new Date(date)
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
+}
+
+const getSchedules = (date) => {
+  const key = formatDateKey(date)
+  return schedules[key] || []
+}
+
+const selectedDateSchedules = computed(() => {
+  return getSchedules(selectedDate.value)
+})
+
+const openScheduleDialog = (date) => {
+  selectedDate.value = date
+  newScheduleContent.value = ''
+  scheduleDialogVisible.value = true
+}
+
+const saveSchedule = () => {
+  if (!newScheduleContent.value.trim()) {
+    ElMessage.warning('请输入日程内容')
+    return
+  }
+  
+  const key = formatDateKey(selectedDate.value)
+  if (!schedules[key]) {
+    schedules[key] = []
+  }
+  
+  schedules[key].push({
+    content: newScheduleContent.value,
+    createdAt: new Date().toISOString()
+  })
+  
+  newScheduleContent.value = ''
+  ElMessage.success('添加成功')
+}
+
+const deleteSchedule = (date, index) => {
+  const key = formatDateKey(date)
+  if (schedules[key]) {
+    schedules[key].splice(index, 1)
+    if (schedules[key].length === 0) {
+      delete schedules[key]
+    }
+  }
+}
+
+// 监听用户信息变化，同步到安全设置表单
+watch(() => userInfo.value.email, (newVal) => {
+  if (newVal) {
+    securitySettings.value.email = newVal
+  }
+}, { immediate: true })
+
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   // 组件挂载时的初始化操作
   console.log('Profile page mounted')
-  // 从用户信息中设置邮箱
-  if (userInfo.value.email) {
-    securitySettings.value.email = userInfo.value.email
+  
+  // 检查用户信息完整性
+  if (!accountStore.userInfo || !accountStore.userInfo.id) {
+    ElMessageBox.alert(t('profile.sessionExpired') || '登录状态已失效，请重新登录', t('common.warning'), {
+      confirmButtonText: t('login.loginBtn'),
+      type: 'warning',
+      callback: () => {
+        accountStore.logout()
+        router.push('/login')
+      }
+    })
+    return
+  }
+
+  // 尝试从数据库获取最新用户信息，确保显示的数据是最新的
+  const result = await accountStore.fetchUserInfo()
+  
+  // 如果需要重启，提示用户
+  if (result && result.code === 'RESTART_REQUIRED') {
+    ElMessage.warning(t('profile.restartRequired') || '系统更新：请重启应用以同步最新数据')
   }
 })
 </script>
@@ -322,20 +487,29 @@ onMounted(() => {
 }
 
 .page-header {
-  margin-bottom: 32px;
-  padding: 24px;
-  border-radius: var(--border-radius-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  padding-left: var(--spacing-sm);
 
-  .page-title {
+  .title {
     font-size: 24px;
     font-weight: 600;
     color: var(--text-color-primary);
-    margin-bottom: 8px;
-  }
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 
-  .page-description {
-    font-size: 14px;
-    color: var(--text-color-secondary);
+    &::before {
+      content: '';
+      display: block;
+      width: 6px;
+      height: 24px;
+      background: var(--primary-color);
+      border-radius: var(--border-radius-round);
+    }
   }
 }
 
@@ -347,13 +521,158 @@ onMounted(() => {
 }
 
 .info-card {
-  max-width: 800px;
+  flex: 4;
+  min-width: 350px;
   padding: 24px;
 }
 
-.security-card {
-  max-width: 600px;
+.calendar-card {
+  flex: 7;
+  min-width: 400px;
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Calendar Styles */
+:deep(.el-calendar) {
+  --el-calendar-border: none;
+  background: transparent;
+}
+
+:deep(.el-calendar__header) {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+:deep(.el-calendar__body) {
+  padding: 12px 0 0;
+  flex: 1;
+}
+
+:deep(.el-calendar-table) {
+  height: 100%;
+}
+
+:deep(.el-calendar-table td) {
+  border: none;
+  border-radius: var(--border-radius-base);
+  transition: all 0.3s;
+}
+
+:deep(.el-calendar-table td.is-selected) {
+  background-color: var(--primary-color-light-9);
+}
+
+:deep(.el-calendar-table td:hover) {
+  background-color: var(--fill-color-light);
+}
+
+:deep(.el-calendar-table .el-calendar-day) {
+  height: 85px;
+  padding: 4px;
+  
+  &:hover {
+    background-color: transparent;
+  }
+}
+
+.calendar-cell {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  
+  &:hover .cell-date {
+    color: var(--primary-color);
+  }
+}
+
+.cell-date {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  
+  &.is-today {
+    background-color: var(--primary-color);
+    color: white;
+  }
+}
+
+.cell-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background-color: var(--bg-color-page);
+  padding: 2px 4px;
+  border-radius: 2px;
+  
+  .schedule-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    flex-shrink: 0;
+  }
+  
+  .schedule-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+}
+
+.schedule-date-display {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.schedule-list-edit {
+  margin-top: 20px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+.schedule-list-title {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.schedule-edit-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--bg-color-page);
+  border-radius: var(--border-radius-base);
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--text-primary);
+  
+  &:hover {
+    background-color: var(--fill-color-light);
+  }
 }
 
 .section-header {
@@ -381,6 +700,7 @@ onMounted(() => {
   display: flex;
   gap: 48px;
   padding: 16px 0;
+  flex-wrap: wrap;
 
   .avatar-section {
     display: flex;
@@ -388,6 +708,7 @@ onMounted(() => {
     align-items: center;
     gap: 16px;
     min-width: 150px;
+    flex: 1 0 auto;
 
     .user-name {
       font-size: 18px;
@@ -402,7 +723,7 @@ onMounted(() => {
   }
 
   .info-section {
-    flex: 1;
+    flex: 999 1 300px;
     min-width: 300px;
 
     .info-item {
@@ -455,9 +776,7 @@ onMounted(() => {
   }
 }
 
-.security-card {
-  max-width: 600px;
-}
+
 
 .security-form {
   padding: 16px 0;

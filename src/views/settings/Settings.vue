@@ -374,8 +374,30 @@ onMounted(() => {
 <style scoped lang="scss">
 .settings-page {
   .page-header {
-    margin-bottom: var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
     padding-left: var(--spacing-sm);
+
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-color-primary);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      &::before {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 24px;
+        background: var(--primary-color);
+        border-radius: var(--border-radius-round);
+      }
+    }
   }
 
   .settings-container {
