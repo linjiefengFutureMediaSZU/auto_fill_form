@@ -19,11 +19,48 @@ export const ExcelService = {
       const extra = {
         authorization: row['授权'] || '',
         info_stream: row['信息流'] || '',
-        agency: row['机构'] || '',
+        agency: row['机构'] || row['所属MCN机构'] || '',
         interaction: row['互动'] || '',
-        phone: row['电话'] || '',
+        phone: row['电话'] || row['联系手机号'] || '',
         pugongying_url: row['蒲公英链接'] || '',
-        wechat: row['微信'] || ''
+        wechat: row['微信'] || row['联系微信号'] || '',
+        
+        // 新增字段
+        total_like_collect: parseNumber(row['总赞藏数'] || row['总赞藏数(填写具体数字)']),
+        avg_interaction_count: parseNumber(row['图文平均互动量'] || row['平均互动量'] || row['平时平均互动数']),
+        max_interaction_count: parseNumber(row['最高互动量']), // Excel可能无此字段
+        fans_gender_ratio: row['粉丝男女比例'] || '', // Excel可能无此字段
+        fans_age_distribution: row['粉丝年龄分布'] || row['粉丝年龄画像'] || row['粉丝年龄画像/粉丝画像年龄范围'] || '',
+        fans_region_distribution: row['粉丝地域分布'] || '', // Excel可能无此字段
+        content_tags: row['内容标签'] || row['账号类目'] || row['账号类型/领域'] || '',
+        cooperation_experience: row['合作品牌'] || row['过往合作案例'] || '', // Excel可能无此字段
+        note_price_video: parseNumber(row['视频笔记报价'] || row['报备视频报价'] || row['报备视频价格(裸价)']),
+        live_price: parseNumber(row['直播报价']), // Excel可能无此字段
+        shipping_address: row['收货地址'] || row['寄样地址'] || row['收件地址+邮编'] || '',
+        id_card: row['身份证号'] || '', // Excel可能无此字段
+        bank_card: row['银行卡号'] || '', // Excel可能无此字段
+        open_bank: row['开户行'] || '', // Excel可能无此字段
+        alipay_name: row['支付宝姓名'] || '', // Excel可能无此字段
+
+        city: row['所在城市'] || row['达人所在城市'] || '',
+        estimated_play_count: parseNumber(row['预估播放量']),
+        estimated_interaction_count: parseNumber(row['预估互动量']),
+        blogger_level: row['达人级别'] || row['达人级别(kol/koc/素人)'] || '',
+        private_price: parseNumber(row['水下价格'] || row['水下报备价格'] || row['水下报备价格(KOC/KOL)']),
+        promotion_type: row['推广形式'] || row['推广形式(单品/合集/CP搭配)'] || '',
+        earliest_schedule: row['最早档期'] || row['最快可执行档期'] || row['最快可执行档期/具体发布时间'] || '',
+        price_protection: parseBoolean(row['是否保价'] || row['是否可保价'] || row['是否可保价至指定月份执行']),
+        auth_free_6m: parseBoolean(row['免费授权6个月'] || row['是否免费授权品牌全渠道使用素材6个月']),
+        auth_free_1y: parseBoolean(row['免费授权1年'] || row['是否免费授权品牌全渠道使用素材1年(含肖像权)']),
+        content_retention: parseBoolean(row['内容保留'] || row['内容是否保留指定时长(12个月/1年)']),
+        accept_second_edit: parseBoolean(row['接受二剪'] || row['是否接受素材二次剪辑']),
+        accept_competitor_exclusion: parseBoolean(row['接受排竞'] || row['是否接受排竞(前后指定天数)']),
+        can_buy_product: parseBoolean(row['自费购买'] || row['是否可自费购买推广产品']),
+        free_component: parseBoolean(row['免费组件'] || row['是否可免费带组件']),
+        product_return: parseBoolean(row['产品回收'] || row['是否接受产品寄拍且回收']),
+        provide_raw_face: parseBoolean(row['提供素颜'] || row['是否可提供脸部素颜图/对比图']),
+        accept_face_show: parseBoolean(row['接受露脸'] || row['是否接受露脸拍摄']),
+        receiver_name: row['收件人'] || row['收件人姓名'] || ''
       };
 
       // 解析数值

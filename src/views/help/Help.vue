@@ -303,6 +303,12 @@ const faqs = computed(() => [
     category: 'data',
     question: t('help.faqData.q7.question'),
     answer: t('help.faqData.q7.answer')
+  },
+  {
+    id: '8',
+    category: 'form',
+    question: t('help.faqData.q8.question'),
+    answer: t('help.faqData.q8.answer')
   }
 ])
 

@@ -729,11 +729,55 @@ const ExcelService = {
       const extra = {
         authorization: row["授权"] || "",
         info_stream: row["信息流"] || "",
-        agency: row["机构"] || "",
+        agency: row["机构"] || row["所属MCN机构"] || "",
         interaction: row["互动"] || "",
-        phone: row["电话"] || "",
+        phone: row["电话"] || row["联系手机号"] || "",
         pugongying_url: row["蒲公英链接"] || "",
-        wechat: row["微信"] || ""
+        wechat: row["微信"] || row["联系微信号"] || "",
+        // 新增字段
+        total_like_collect: parseNumber(row["总赞藏数"] || row["总赞藏数(填写具体数字)"]),
+        avg_interaction_count: parseNumber(row["图文平均互动量"] || row["平均互动量"] || row["平时平均互动数"]),
+        max_interaction_count: parseNumber(row["最高互动量"]),
+        // Excel可能无此字段
+        fans_gender_ratio: row["粉丝男女比例"] || "",
+        // Excel可能无此字段
+        fans_age_distribution: row["粉丝年龄分布"] || row["粉丝年龄画像"] || row["粉丝年龄画像/粉丝画像年龄范围"] || "",
+        fans_region_distribution: row["粉丝地域分布"] || "",
+        // Excel可能无此字段
+        content_tags: row["内容标签"] || row["账号类目"] || row["账号类型/领域"] || "",
+        cooperation_experience: row["合作品牌"] || row["过往合作案例"] || "",
+        // Excel可能无此字段
+        note_price_video: parseNumber(row["视频笔记报价"] || row["报备视频报价"] || row["报备视频价格(裸价)"]),
+        live_price: parseNumber(row["直播报价"]),
+        // Excel可能无此字段
+        shipping_address: row["收货地址"] || row["寄样地址"] || row["收件地址+邮编"] || "",
+        id_card: row["身份证号"] || "",
+        // Excel可能无此字段
+        bank_card: row["银行卡号"] || "",
+        // Excel可能无此字段
+        open_bank: row["开户行"] || "",
+        // Excel可能无此字段
+        alipay_name: row["支付宝姓名"] || "",
+        // Excel可能无此字段
+        city: row["所在城市"] || row["达人所在城市"] || "",
+        estimated_play_count: parseNumber(row["预估播放量"]),
+        estimated_interaction_count: parseNumber(row["预估互动量"]),
+        blogger_level: row["达人级别"] || row["达人级别(kol/koc/素人)"] || "",
+        private_price: parseNumber(row["水下价格"] || row["水下报备价格"] || row["水下报备价格(KOC/KOL)"]),
+        promotion_type: row["推广形式"] || row["推广形式(单品/合集/CP搭配)"] || "",
+        earliest_schedule: row["最早档期"] || row["最快可执行档期"] || row["最快可执行档期/具体发布时间"] || "",
+        price_protection: parseBoolean(row["是否保价"] || row["是否可保价"] || row["是否可保价至指定月份执行"]),
+        auth_free_6m: parseBoolean(row["免费授权6个月"] || row["是否免费授权品牌全渠道使用素材6个月"]),
+        auth_free_1y: parseBoolean(row["免费授权1年"] || row["是否免费授权品牌全渠道使用素材1年(含肖像权)"]),
+        content_retention: parseBoolean(row["内容保留"] || row["内容是否保留指定时长(12个月/1年)"]),
+        accept_second_edit: parseBoolean(row["接受二剪"] || row["是否接受素材二次剪辑"]),
+        accept_competitor_exclusion: parseBoolean(row["接受排竞"] || row["是否接受排竞(前后指定天数)"]),
+        can_buy_product: parseBoolean(row["自费购买"] || row["是否可自费购买推广产品"]),
+        free_component: parseBoolean(row["免费组件"] || row["是否可免费带组件"]),
+        product_return: parseBoolean(row["产品回收"] || row["是否接受产品寄拍且回收"]),
+        provide_raw_face: parseBoolean(row["提供素颜"] || row["是否可提供脸部素颜图/对比图"]),
+        accept_face_show: parseBoolean(row["接受露脸"] || row["是否接受露脸拍摄"]),
+        receiver_name: row["收件人"] || row["收件人姓名"] || ""
       };
       const parseNumber = (val) => {
         if (!val) return 0;
@@ -976,104 +1020,9 @@ const UserService = {
     }
   }
 };
-async function seedData() {
-  console.log("Checking if data seeding is needed...");
-  try {
-    const accounts = await AccountService.getAllAccounts();
-    if (accounts.length > 5) {
-      console.log("Data already exists, skipping seed.");
-      return;
-    }
-    console.log("Seeding data...");
-    const groups = ["美食", "美妆", "科技", "生活", "旅行"];
-    const groupIds = [];
-    const existingGroups = await AccountService.getAllGroups();
-    if (existingGroups.length === 0) {
-      for (const g of groups) {
-        const id = await AccountService.addGroup({ group_name: g, description: "Mock Group" });
-        groupIds.push({ id, name: g });
-      }
-    } else {
-      existingGroups.forEach((g) => groupIds.push({ id: g.id, name: g.group_name }));
-    }
-    const platforms = ["小红书", "抖音", "B站", "微博", "微信公众号"];
-    for (let i = 1; i <= 15; i++) {
-      const platform = platforms[Math.floor(Math.random() * platforms.length)];
-      const group = groupIds[Math.floor(Math.random() * groupIds.length)];
-      const extraData = {
-        wechat: `wx_id_${i}`,
-        email: `user${i}@example.com`,
-        interaction_rate: (Math.random() * 5).toFixed(2),
-        content_type: "图文",
-        commission_rate: Math.floor(Math.random() * 20),
-        account_features: "优质, 活跃",
-        operation_strategy: "日更"
-      };
-      const account = {
-        group_id: group ? group.id : null,
-        blogger_name: `博主_${i}_${platform}`,
-        account_nickname: `昵称_${i}`,
-        account_type: platform,
-        account_id: `id_${Date.now()}_${i}`,
-        homepage_url: `https://example.com/user/${i}`,
-        fans_count: Math.floor(Math.random() * 1e6),
-        avg_read_count: Math.floor(Math.random() * 5e4),
-        like_count: Math.floor(Math.random() * 2e4),
-        comment_count: Math.floor(Math.random() * 5e3),
-        quote_single: Math.floor(Math.random() * 5e4),
-        quote_package: Math.floor(Math.random() * 1e5),
-        cooperation_type: "图文,视频",
-        is_swap: Math.random() > 0.5 ? 1 : 0,
-        contact: `138001380${i < 10 ? "0" + i : i}`,
-        remark: `这是第 ${i} 个模拟账号`,
-        status: 1,
-        extra_json: JSON.stringify(extraData)
-      };
-      await AccountService.addAccount(account);
-    }
-    let folderId;
-    const folders = await FormService.getAllFolders();
-    if (folders.length === 0) {
-      folderId = await FormService.addFolder({ folder_name: "默认文件夹", description: "自动生成" });
-    } else {
-      folderId = folders[0].id;
-    }
-    const templates = [];
-    for (let i = 1; i <= 15; i++) {
-      const template = {
-        folder_id: folderId,
-        template_name: `模拟表单_${i}`,
-        form_url: `https://example.com/form/${i}`,
-        form_type: "问卷星",
-        is_default: 0
-      };
-      const id = await FormService.addTemplate(template);
-      templates.push({ id, ...template });
-    }
-    const allAccounts = await AccountService.getAllAccounts();
-    if (allAccounts.length > 0 && templates.length > 0) {
-      for (let i = 1; i <= 50; i++) {
-        const isSuccess = Math.random() > 0.2;
-        const acc = allAccounts[Math.floor(Math.random() * allAccounts.length)];
-        const tmpl = templates[Math.floor(Math.random() * templates.length)];
-        const log = {
-          account_id: acc.id,
-          template_id: tmpl.id,
-          fill_result: isSuccess ? "success" : "fail",
-          fail_reason: isSuccess ? "" : "选择器未找到",
-          submit_count: 1
-        };
-        await DataService.addLog(log);
-      }
-    }
-    console.log("Seeding completed.");
-  } catch (err) {
-    console.error("Seeding failed:", err);
-  }
-}
 const __filename$1 = url.fileURLToPath(typeof document === "undefined" ? require("url").pathToFileURL(__filename).href : _documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === "SCRIPT" && _documentCurrentScript.src || new URL("main.js", document.baseURI).href);
 const __dirname$1 = path.dirname(__filename$1);
-initDatabase().then(() => UserService.initAdmin()).then(() => seedData()).catch(console.error);
+initDatabase().then(() => UserService.initAdmin()).catch(console.error);
 if (process.env.VITE_DEV_SERVER_URL) {
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
 }

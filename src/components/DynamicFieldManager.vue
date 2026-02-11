@@ -2,13 +2,25 @@
   <div class="dynamic-field-manager" :class="{ 'is-embedded': embedded }">
     <!-- 字段管理标题 -->
     <div class="manager-header">
-      <h3 v-if="!embedded">{{ $t('fieldManager.title') }}</h3>
+      <div class="header-left" style="display: flex; align-items: center; gap: 10px; flex: 1;">
+        <h3 v-if="!embedded">{{ $t('fieldManager.title') }}</h3>
+        <el-input
+          v-model="searchKeyword"
+          :placeholder="$t('common.search')"
+          clearable
+          style="width: 200px;"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+      </div>
       <el-button type="primary" size="small" @click="openAddFieldDialog">{{ $t('fieldManager.addField') }}</el-button>
     </div>
 
     <!-- 字段列表 -->
     <div class="field-list">
-      <div v-for="(field, index) in fields" :key="field.id" class="field-item">
+      <div v-for="field in filteredFields" :key="field.id" class="field-item">
         <div class="field-info">
           <el-tag size="small" :type="getFieldTypeTagType(field.type)">{{ $t(`fieldManager.types.${field.type}`) }}</el-tag>
           <span class="field-label">{{ field.label }}</span>
@@ -19,7 +31,7 @@
           <el-button 
             type="danger" 
             size="small" 
-            @click="removeField(index)"
+            @click="removeField(field)"
             :disabled="field.unremovable"
             :title="field.unremovable ? $t('fieldManager.messages.cannotDeleteCore') : ''"
           >
@@ -27,8 +39,8 @@
           </el-button>
         </div>
       </div>
-      <div v-if="fields.length === 0" class="empty-fields">
-        <el-empty :description="$t('fieldManager.noFields')" />
+      <div v-if="filteredFields.length === 0" class="empty-fields">
+        <el-empty :description="searchKeyword ? $t('common.noData') : $t('fieldManager.noFields')" />
       </div>
     </div>
 
@@ -89,6 +101,7 @@
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import { Search } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
 
@@ -112,6 +125,28 @@ const fields = ref([...props.modelValue])
 const fieldDialogVisible = ref(false)
 const isEditFieldMode = ref(false)
 const editingFieldIndex = ref(-1)
+const searchKeyword = ref('')
+
+// 计算属性
+const filteredFields = computed(() => {
+  if (!searchKeyword.value) return fields.value
+  const keyword = searchKeyword.value.toLowerCase()
+  return fields.value.filter(field => 
+    (field.label && field.label.toLowerCase().includes(keyword)) || 
+    (field.name && field.name.toLowerCase().includes(keyword))
+  )
+})
+
+const getFieldTypeTagType = (type) => {
+  const typeMap = {
+    text: 'info',
+    number: 'success',
+    select: 'warning',
+    multiple_select: 'warning',
+    switch: 'danger'
+  }
+  return typeMap[type] || 'info'
+}
 
 // 字段表单
 const fieldForm = reactive({
@@ -124,18 +159,6 @@ const fieldForm = reactive({
   options: '',
   required: false
 })
-
-// 计算属性
-const getFieldTypeTagType = (type) => {
-  const typeMap = {
-    text: 'info',
-    number: 'success',
-    select: 'warning',
-    multiple_select: 'warning',
-    switch: 'danger'
-  }
-  return typeMap[type] || 'info'
-}
 
 // 方法
 const openAddFieldDialog = () => {
@@ -235,10 +258,13 @@ const openEditFieldDialog = (field) => {
   ElMessage.success(isEditFieldMode.value ? t('fieldManager.messages.editSuccess') : t('fieldManager.messages.addSuccess'))
 }
 
-const removeField = (index) => {
-  fields.value.splice(index, 1)
-  emit('update:modelValue', [...fields.value])
-  ElMessage.success(t('fieldManager.messages.deleteSuccess'))
+const removeField = (field) => {
+  const index = fields.value.findIndex(f => f.id === field.id)
+  if (index !== -1) {
+    fields.value.splice(index, 1)
+    emit('update:modelValue', [...fields.value])
+    ElMessage.success(t('fieldManager.messages.deleteSuccess'))
+  }
 }
 </script>
 

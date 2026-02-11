@@ -3,28 +3,6 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h2 class="title">{{ $t('formList.title') }}</h2>
-      <div class="header-actions">
-        <el-tooltip :content="$t('formList.addForm')" placement="bottom">
-          <el-button circle size="small" type="primary" plain @click="openAddFormDialog">
-            <el-icon><Plus /></el-icon>
-          </el-button>
-        </el-tooltip>
-        <el-tooltip :content="$t('formList.batchImport')" placement="bottom">
-          <el-button circle size="small" type="primary" plain @click="handleBatchImport">
-            <el-icon><Upload /></el-icon>
-          </el-button>
-        </el-tooltip>
-        <el-tooltip :content="$t('formList.batchExport')" placement="bottom">
-          <el-button circle size="small" type="success" plain @click="handleBatchExport">
-            <el-icon><Download /></el-icon>
-          </el-button>
-        </el-tooltip>
-        <el-tooltip :content="$t('formList.batchDelete')" placement="bottom">
-          <el-button circle size="small" type="danger" plain @click="handleBatchDelete">
-            <el-icon><Delete /></el-icon>
-          </el-button>
-        </el-tooltip>
-      </div>
     </div>
 
     <!-- 两列布局 -->
@@ -97,9 +75,33 @@
       <div class="form-link-list">
         <div class="glass-card">
           <div class="section-header">
-            <h3 class="subtitle">
-              {{ selectedFolder ? selectedFolder.folder_name : $t('formList.allForms') }}
-            </h3>
+            <div class="header-left">
+              <h3 class="subtitle">
+                {{ selectedFolder ? selectedFolder.folder_name : $t('formList.allForms') }}
+              </h3>
+              <div class="header-buttons">
+                <el-tooltip :content="$t('formList.addForm')" placement="bottom">
+                  <el-button circle size="default" type="primary" plain @click="openAddFormDialog">
+                    <el-icon><Plus /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip :content="$t('formList.batchImport')" placement="bottom">
+                  <el-button circle size="default" type="primary" plain @click="handleBatchImport">
+                    <el-icon><Download /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip :content="$t('formList.batchExport')" placement="bottom">
+                  <el-button circle size="default" type="success" plain @click="handleBatchExport">
+                    <el-icon><Upload /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip :content="$t('formList.batchDelete')" placement="bottom">
+                  <el-button circle size="default" type="danger" plain @click="handleBatchDelete">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </el-tooltip>
+              </div>
+            </div>
             <div class="header-actions">
               <el-input
                 v-model="formSearchKeyword"
@@ -138,7 +140,7 @@
               </el-table-column>
               <el-table-column prop="form_type" :label="$t('formList.formType')" width="100" :resizable="false">
                 <template #default="scope">
-                  <el-tag size="small">{{ getFormTypeLabel(scope.row.form_type) }}</el-tag>
+                  <el-tag size="small" :type="getFormTypeTagType(scope.row.form_type)">{{ getFormTypeLabel(scope.row.form_type) }}</el-tag>
                 </template>
               </el-table-column>
               <el-table-column prop="form_url" :label="$t('formList.formUrl')" min-width="250" :resizable="false">
@@ -338,16 +340,6 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('formList.formType')" prop="form_type">
-          <el-select v-model="batchImportForm.form_type" :placeholder="$t('formList.formTypePlaceholder')">
-            <el-option :label="$t('formList.types.tencent')" :value="FORM_TYPES.TENCENT" />
-            <el-option :label="$t('formList.types.wenjuanxing')" :value="FORM_TYPES.WENJUANXING" />
-            <el-option :label="$t('formList.types.shimo')" :value="FORM_TYPES.SHIMO" />
-            <el-option :label="$t('formList.types.mike')" :value="FORM_TYPES.MIKE" />
-            <el-option :label="$t('formList.types.wps')" :value="FORM_TYPES.WPS" />
-            <el-option :label="$t('formList.types.miniprogram')" :value="FORM_TYPES.MINIPROGRAM" />
-          </el-select>
-        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -428,15 +420,13 @@ const formRules = computed(() => ({
 // 批量导入表单
 const batchImportForm = reactive({
   formUrls: '',
-  folder_id: '',
-  form_type: ''
+  folder_id: ''
 })
 
 // 批量导入表单验证规则
 const batchImportRules = computed(() => ({
   formUrls: [{ required: true, message: t('formList.formUrlPlaceholder'), trigger: 'blur' }],
-  folder_id: [{ required: true, message: t('formList.folderSelectPlaceholder'), trigger: 'change' }],
-  form_type: [{ required: true, message: t('formList.formTypePlaceholder'), trigger: 'change' }]
+  folder_id: [{ required: true, message: t('formList.folderSelectPlaceholder'), trigger: 'change' }]
 }))
 
 // 表单引用
@@ -510,6 +500,20 @@ const formatDate = (dateString) => {
   })
 }
 
+// 获取表单类型标签样式
+const getFormTypeTagType = (type) => {
+  const map = {
+    [FORM_TYPES.TENCENT]: '', // 默认蓝色
+    [FORM_TYPES.WENJUANXING]: 'warning', // 橙色
+    [FORM_TYPES.SHIMO]: 'info', // 灰色
+    [FORM_TYPES.MIKE]: 'success', // 绿色
+    [FORM_TYPES.WPS]: 'danger', // 红色
+    [FORM_TYPES.MINIPROGRAM]: 'success', // 绿色
+    [FORM_TYPES.OTHER]: 'info' // 灰色
+  }
+  return map[type] || ''
+}
+
 // 获取表单类型显示标签
 const getFormTypeLabel = (type) => {
   const map = {
@@ -518,7 +522,8 @@ const getFormTypeLabel = (type) => {
     [FORM_TYPES.SHIMO]: 'shimo',
     [FORM_TYPES.MIKE]: 'mike',
     [FORM_TYPES.WPS]: 'wps',
-    [FORM_TYPES.MINIPROGRAM]: 'miniprogram'
+    [FORM_TYPES.MINIPROGRAM]: 'miniprogram',
+    [FORM_TYPES.OTHER]: 'other'
   }
   const key = map[type]
   return key ? t(`formList.types.${key}`) : type
@@ -547,10 +552,15 @@ const handleFormSelectionChange = (selection) => {
 // 打开新增文件夹弹窗
 const openAddFolderDialog = () => {
   isEditFolderMode.value = false
-  // 重置表单
+  // 重置表单，清理可能存在的额外属性（如id、children等）
   Object.keys(folderForm).forEach(key => {
-    folderForm[key] = ''
+    if (key !== 'folder_name' && key !== 'description') {
+      delete folderForm[key]
+    }
   })
+  folderForm.folder_name = ''
+  folderForm.description = ''
+  
   // 默认填充当前日期
   const today = new Date().toISOString().split('T')[0]
   folderForm.folder_name = today
@@ -560,8 +570,17 @@ const openAddFolderDialog = () => {
 // 打开编辑文件夹弹窗
 const openEditFolderDialog = (folder) => {
   isEditFolderMode.value = true
-  // 复制文件夹数据到表单
-  Object.assign(folderForm, folder)
+  // 复制文件夹数据到表单，清理多余属性
+  Object.keys(folderForm).forEach(key => {
+    if (key !== 'folder_name' && key !== 'description') {
+      delete folderForm[key]
+    }
+  })
+  // 显式赋值，避免污染
+  folderForm.id = folder.id
+  folderForm.folder_name = folder.folder_name
+  folderForm.description = folder.description || ''
+  
   folderDialogVisible.value = true
 }
 
@@ -572,16 +591,23 @@ const saveFolder = async () => {
   try {
     await folderFormRef.value.validate()
     
+    // 构造纯净的数据对象
+    const folderData = {
+      folder_name: folderForm.folder_name,
+      description: folderForm.description
+    }
+    
     if (isEditFolderMode.value) {
-      await formStore.updateFolder(folderForm.id, folderForm)
+      await formStore.updateFolder(folderForm.id, folderData)
     } else {
-      await formStore.addFolder(folderForm)
+      await formStore.addFolder(folderData)
     }
     
     folderDialogVisible.value = false
     ElMessage.success(isEditFolderMode.value ? t('formList.folderEditSuccess') : t('formList.folderCreateSuccess'))
   } catch (error) {
     console.error('Form validation failed:', error)
+    ElMessage.error(t('common.operationFailed'))
   }
 }
 
@@ -670,8 +696,20 @@ const handleBatchImport = () => {
   // 重置批量导入表单
   batchImportForm.formUrls = ''
   batchImportForm.folder_id = selectedFolderId.value || (sortedFolders.value.length > 0 ? sortedFolders.value[0].id : '')
-  batchImportForm.form_type = ''
   batchImportDialogVisible.value = true
+}
+
+// 自动识别表单类型
+const detectFormType = (url) => {
+  if (!url) return FORM_TYPES.OTHER // 默认
+  const lowerUrl = url.toLowerCase()
+  if (lowerUrl.includes('docs.qq.com')) return FORM_TYPES.TENCENT
+  if (lowerUrl.includes('wjx.cn')) return FORM_TYPES.WENJUANXING
+  if (lowerUrl.includes('shimo.im')) return FORM_TYPES.SHIMO
+  if (lowerUrl.includes('mikecrm.com')) return FORM_TYPES.MIKE
+  if (lowerUrl.includes('kdocs.cn') || lowerUrl.includes('wps.cn')) return FORM_TYPES.WPS
+  // 默认为其他
+  return FORM_TYPES.OTHER
 }
 
 // 处理导入
@@ -686,10 +724,13 @@ const handleImport = async () => {
     
     // 批量添加表单
     urls.forEach((url, index) => {
+      const cleanUrl = url.trim()
+      const formType = detectFormType(cleanUrl)
+      
       const formData = {
         template_name: `${t('formList.formDefaultName')}${index + 1}`,
-        form_url: url.trim(),
-        form_type: batchImportForm.form_type,
+        form_url: cleanUrl,
+        form_type: formType,
         folder_id: batchImportForm.folder_id
       }
       formStore.addTemplate(formData)
@@ -828,6 +869,19 @@ onMounted(() => {
         height: 100%;
         display: flex;
         flex-direction: column;
+      }
+
+      .section-header {
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+
+          .header-buttons {
+            display: flex;
+            gap: 8px;
+          }
+        }
       }
     }
   }

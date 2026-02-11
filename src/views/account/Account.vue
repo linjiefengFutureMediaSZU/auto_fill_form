@@ -67,6 +67,11 @@
             <el-icon><Plus /></el-icon>
           </el-button>
         </el-tooltip>
+        <el-tooltip :content="$t('account.groupManager')" placement="top">
+          <el-button circle size="small" type="primary" plain @click="groupManagerVisible = true">
+            <el-icon><Folder /></el-icon>
+          </el-button>
+        </el-tooltip>
         <el-tooltip :content="$t('account.fieldManager')" placement="top">
           <el-button circle size="small" type="warning" plain @click="toggleFieldManager">
             <el-icon><Edit /></el-icon>
@@ -221,6 +226,40 @@
       </el-table>
     </div>
 
+    <!-- 分组管理弹窗 -->
+    <el-dialog
+      v-model="groupManagerVisible"
+      :title="$t('account.groupManager')"
+      width="600px"
+    >
+      <div style="margin-bottom: 16px;">
+        <el-button type="primary" size="small" @click="openAddGroupDialog">
+          <el-icon><Plus /></el-icon> {{ $t('account.addGroup') }}
+        </el-button>
+      </div>
+      <el-table :data="groups" border style="width: 100%" height="400">
+        <el-table-column prop="group_name" :label="$t('account.groupName')" />
+        <el-table-column prop="description" :label="$t('account.groupDesc')" show-overflow-tooltip />
+        <el-table-column :label="$t('common.operation')" width="150" align="center">
+          <template #default="scope">
+            <div style="display: flex; justify-content: center; gap: 8px;">
+              <el-button size="small" type="primary" link @click="openEditGroupDialog(scope.row)">
+                {{ $t('common.edit') }}
+              </el-button>
+              <el-button size="small" type="danger" link @click="handleDeleteGroup(scope.row.id)">
+                {{ $t('common.delete') }}
+              </el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="groupManagerVisible = false">{{ $t('common.close') }}</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
     <!-- 新增/编辑账号弹窗 -->
     <el-dialog
       v-model="accountDialogVisible"
@@ -268,6 +307,7 @@
       v-model="groupDialogVisible"
       :title="isEditGroupMode ? $t('account.editGroup') : $t('account.addGroup')"
       width="400px"
+      append-to-body
     >
       <el-form
         :model="groupForm"
@@ -347,7 +387,7 @@
 <script setup>
 import { ref, computed, reactive, onMounted, watch, nextTick } from 'vue'
 import { useAccountStore } from '../../stores'
-import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown, Setting, Rank } from '@element-plus/icons-vue'
+import { Plus, More, Upload, Download, Edit, Delete, Search, Refresh, ArrowDown, Setting, Rank, Folder } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DynamicFieldManager from '../../components/DynamicFieldManager.vue'
 import DynamicForm from '../../components/DynamicForm.vue'
@@ -363,6 +403,7 @@ const accountStore = useAccountStore()
 const loading = ref(false)
 const groupLoading = ref(false)
 const accountDialogVisible = ref(false)
+const groupManagerVisible = ref(false)
 const groupDialogVisible = ref(false)
 const isEditMode = ref(false)
 const isEditGroupMode = ref(false)
@@ -647,6 +688,336 @@ const customFields = ref([
     required: false
   },
   {
+    id: '25',
+    label: t('account.totalLikeCollect'),
+    name: 'total_like_collect',
+    type: 'number',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.totalLikeCollect'),
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '26',
+    label: t('account.avgInteraction'),
+    name: 'avg_interaction_count',
+    type: 'number',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.avgInteraction'),
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '27',
+    label: t('account.maxInteraction'),
+    name: 'max_interaction_count',
+    type: 'number',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.maxInteraction'),
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '28',
+    label: t('account.fansGender'),
+    name: 'fans_gender_ratio',
+    type: 'text',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.fansGender'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '29',
+    label: t('account.fansAge'),
+    name: 'fans_age_distribution',
+    type: 'text',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.fansAge'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '30',
+    label: t('account.fansRegion'),
+    name: 'fans_region_distribution',
+    type: 'text',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.fansRegion'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '31',
+    label: t('account.contentTags'),
+    name: 'content_tags',
+    type: 'text',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.contentTags'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '32',
+    label: t('account.cooperationExperience'),
+    name: 'cooperation_experience',
+    type: 'text',
+    group: 'cooperation',
+    placeholder: t('account.enter') + t('account.cooperationExperience'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '33',
+    label: t('account.videoPrice'),
+    name: 'note_price_video',
+    type: 'number',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.videoPrice'),
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '34',
+    label: t('account.livePrice'),
+    name: 'live_price',
+    type: 'number',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.livePrice'),
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '35',
+    label: t('account.shippingAddress'),
+    name: 'shipping_address',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.shippingAddress'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '36',
+    label: t('account.idCard'),
+    name: 'id_card',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.idCard'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '37',
+    label: t('account.bankCard'),
+    name: 'bank_card',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.bankCard'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '38',
+    label: t('account.openBank'),
+    name: 'open_bank',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.openBank'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '39',
+    label: t('account.alipayName'),
+    name: 'alipay_name',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.alipayName'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '40',
+    label: t('account.city'),
+    name: 'city',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.city'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '41',
+    label: t('account.estimatedPlayCount'),
+    name: 'estimated_play_count',
+    type: 'number',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.estimatedPlayCount'),
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '42',
+    label: t('account.estimatedInteractionCount'),
+    name: 'estimated_interaction_count',
+    type: 'number',
+    group: 'data',
+    placeholder: t('account.enter') + t('account.estimatedInteractionCount'),
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '43',
+    label: t('account.bloggerLevel'),
+    name: 'blogger_level',
+    type: 'select',
+    group: 'basic',
+    placeholder: t('account.select') + t('account.bloggerLevel'),
+    defaultValue: '',
+    options: 'KOL, KOC, 素人',
+    required: false
+  },
+  {
+    id: '44',
+    label: t('account.privatePrice'),
+    name: 'private_price',
+    type: 'number',
+    group: 'cooperation',
+    placeholder: t('account.enter') + t('account.privatePrice'),
+    defaultValue: 0,
+    required: false
+  },
+  {
+    id: '45',
+    label: t('account.promotionType'),
+    name: 'promotion_type',
+    type: 'text',
+    group: 'cooperation',
+    placeholder: t('account.enter') + t('account.promotionType'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '46',
+    label: t('account.earliestSchedule'),
+    name: 'earliest_schedule',
+    type: 'text',
+    group: 'cooperation',
+    placeholder: t('account.enter') + t('account.earliestSchedule'),
+    defaultValue: '',
+    required: false
+  },
+  {
+    id: '47',
+    label: t('account.priceProtection'),
+    name: 'price_protection',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '48',
+    label: t('account.authFree6m'),
+    name: 'auth_free_6m',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '49',
+    label: t('account.authFree1y'),
+    name: 'auth_free_1y',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '50',
+    label: t('account.contentRetention'),
+    name: 'content_retention',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '51',
+    label: t('account.acceptSecondEdit'),
+    name: 'accept_second_edit',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '52',
+    label: t('account.acceptCompetitorExclusion'),
+    name: 'accept_competitor_exclusion',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '53',
+    label: t('account.canBuyProduct'),
+    name: 'can_buy_product',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '54',
+    label: t('account.freeComponent'),
+    name: 'free_component',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '55',
+    label: t('account.productReturn'),
+    name: 'product_return',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '56',
+    label: t('account.provideRawFace'),
+    name: 'provide_raw_face',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '57',
+    label: t('account.acceptFaceShow'),
+    name: 'accept_face_show',
+    type: 'switch',
+    group: 'cooperation',
+    defaultValue: false,
+    required: false
+  },
+  {
+    id: '58',
+    label: t('account.receiverName'),
+    name: 'receiver_name',
+    type: 'text',
+    group: 'basic',
+    placeholder: t('account.enter') + t('account.receiverName'),
+    defaultValue: '',
+    required: false
+  },
+  {
     id: '24',
     label: t('account.accountStatus'),
     name: 'status',
@@ -834,6 +1205,7 @@ const statusOptions = computed(() => {
 
 // 分组表单
 const groupForm = reactive({
+  id: null,
   group_name: '',
   description: ''
 })
@@ -993,12 +1365,12 @@ const saveFieldManagerConfig = () => {
 
 // 保存字段配置到本地存储
 const saveFieldConfig = () => {
-  localStorage.setItem('customFields_v7', JSON.stringify(customFields.value))
+  localStorage.setItem('customFields_v8', JSON.stringify(customFields.value))
 }
 
 // 获取字段配置
 const loadFieldConfig = async () => {
-  const savedFields = localStorage.getItem('customFields_v7')
+  const savedFields = localStorage.getItem('customFields_v8')
   if (savedFields) {
     try {
       const saved = JSON.parse(savedFields)
@@ -1296,9 +1668,9 @@ const handleBatchExport = async () => {
 const openAddGroupDialog = () => {
   isEditGroupMode.value = false
   // 重置表单
-  Object.keys(groupForm).forEach(key => {
-    groupForm[key] = ''
-  })
+  groupForm.id = null
+  groupForm.group_name = ''
+  groupForm.description = ''
   groupDialogVisible.value = true
 }
 
@@ -1306,7 +1678,9 @@ const openAddGroupDialog = () => {
 const openEditGroupDialog = (group) => {
   isEditGroupMode.value = true
   // 复制分组数据到表单
-  Object.assign(groupForm, group)
+  groupForm.id = group.id
+  groupForm.group_name = group.group_name
+  groupForm.description = group.description || ''
   groupDialogVisible.value = true
 }
 
@@ -1317,10 +1691,15 @@ const saveGroup = async () => {
   try {
     await groupFormRef.value.validate()
     
+    const groupData = {
+      group_name: groupForm.group_name,
+      description: groupForm.description
+    }
+    
     if (isEditGroupMode.value) {
-      await accountStore.updateGroup(groupForm.id, groupForm)
+      await accountStore.updateGroup(groupForm.id, { ...groupData, id: groupForm.id })
     } else {
-      await accountStore.addGroup(groupForm)
+      await accountStore.addGroup(groupData)
     }
     
     groupDialogVisible.value = false

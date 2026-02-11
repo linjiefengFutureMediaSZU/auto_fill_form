@@ -711,19 +711,19 @@ const handleCleanLogs = () => {
   }
   
   ElMessageBox.confirm(t('data.restoreWarningContent'), t('data.restoreWarning'), { // Reuse warning
-    confirmButtonText: t('data.cleanLog'),
-    cancelButtonText: t('data.cancel'),
-    type: 'warning'
-  }).then(() => {
-    // 模拟清理过程
-    dataStore.cleanExpiredLogs(0) // 清理所有日志
-    ElMessage.success(t('data.cleanLog') + t('data.success'))
-    // 更新图表
-    updateFillChart()
-    updateFillDataChart()
-  }).catch(() => {
-    // 取消清理
-  })
+      confirmButtonText: t('data.cleanLog'),
+      cancelButtonText: t('data.cancel'),
+      type: 'warning'
+    }).then(async () => {
+      // 执行清理过程
+      await dataStore.cleanExpiredLogs(0) // 清理所有日志
+      ElMessage.success(t('data.cleanLog') + t('data.success'))
+      // 更新图表
+      updateFillChart()
+      updateFillDataChart()
+    }).catch(() => {
+      // 取消清理
+    })
 }
 
 // 导出填报数据

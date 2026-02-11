@@ -106,6 +106,7 @@
     "id": "ID",
     "confirm": "确定",
     "cancel": "取消",
+    "close": "关闭",
     "save": "保存",
     "delete": "删除",
     "edit": "编辑",
@@ -174,6 +175,7 @@
     "batchExport": "批量导出",
     "batchModify": "批量修改",
     "batchDelete": "批量删除",
+    "groupManager": "分组管理",
     "nickname": "账号昵称",
     "bloggerName": "博主姓名",
     "fansCount": "粉丝量",
@@ -221,7 +223,41 @@
     "agency": "机构",
     "interaction": "互动",
     "phone": "电话",
-    "pugongyingUrl": "蒲公英链接"
+    "pugongyingUrl": "蒲公英链接",
+    "totalLikeCollect": "总赞藏数",
+    "avgInteraction": "平均互动量",
+    "maxInteraction": "最高互动量",
+    "fansGender": "粉丝性别比例",
+    "fansAge": "粉丝年龄分布",
+    "fansRegion": "粉丝地域分布",
+    "contentTags": "内容标签",
+    "cooperationExperience": "过往合作案例",
+    "videoPrice": "视频笔记报价",
+    "livePrice": "直播报价",
+    "shippingAddress": "收货地址",
+    "idCard": "身份证号",
+    "bankCard": "银行卡号",
+    "openBank": "开户行",
+    "alipayName": "支付宝姓名",
+    "city": "所在城市",
+    "estimatedPlayCount": "预估播放量",
+    "estimatedInteractionCount": "预估互动量",
+    "bloggerLevel": "达人级别",
+    "privatePrice": "水下价格",
+    "promotionType": "推广形式",
+    "earliestSchedule": "最早档期",
+    "priceProtection": "是否保价",
+    "authFree6m": "免费授权6个月",
+    "authFree1y": "免费授权1年",
+    "contentRetention": "内容保留",
+    "acceptSecondEdit": "接受二剪",
+    "acceptCompetitorExclusion": "接受排竞",
+    "canBuyProduct": "自费购买",
+    "freeComponent": "免费组件",
+    "productReturn": "产品回收",
+    "provideRawFace": "提供素颜",
+    "acceptFaceShow": "接受露脸",
+    "receiverName": "收件人"
   },
   "form": {
     "title": "表单填写",
@@ -424,7 +460,8 @@
       "shimo": "石墨文档",
       "mike": "麦克CRM",
       "wps": "WPS表单",
-      "miniprogram": "微信小程序"
+      "miniprogram": "微信小程序",
+      "other": "其他"
     }
   },
   "dynamicForm": {
@@ -633,7 +670,7 @@
         "editAccount": { "title": "2. 编辑账号", "content": "在账号列表中，点击对应账号的\"编辑\"按钮，修改信息后点击保存。" },
         "deleteAccount": { "title": "3. 删除账号", "content": "在账号列表中，点击对应账号的\"删除\"按钮，确认后即可删除。" },
         "accountGroup": { "title": "4. 账号分组", "content": "在右侧分组管理中，点击\"新增分组\"按钮创建分组，然后在编辑账号时选择对应分组。" },
-        "batchOperation": { "title": "5. 批量操作", "content": "勾选多个账号后，点击\"批量操作\"下拉菜单，可进行批量导入、导出、修改和删除操作。注意：批量导入时请确保Excel文件包含正确的表头（如：博主姓名/昵称、平台ID、主页链接、粉丝数、报价、联系方式等），具体格式可参考导出文件的结构；导出时将生成包含所有可见列信息的Excel文件。" }
+        "batchOperation": { "title": "5. 批量操作", "content": "勾选多个账号后，点击\"批量操作\"下拉菜单，可进行批量导入、导出、修改和删除操作。注意：批量导入时请确保Excel文件包含正确的表头（如：博主姓名/昵称、平台ID、主页链接、粉丝数、报价、联系方式等），强烈建议先手动新增一个账号并导出，将导出的Excel文件作为模板进行填写和导入；导出时将生成包含所有可见列信息的Excel文件。" }
       },
       "formFilling": {
         "title": "表单填写",
@@ -641,7 +678,7 @@
         "selectForm": { "title": "2. 选择表单", "content": "在中间表单链接区，选择目标表单模板。" },
         "fieldMatch": { "title": "3. 字段匹配", "content": "在右侧表单预览区，点击\"自动匹配\"按钮，系统会自动匹配表单字段与账号信息字段。" },
         "startFill": { "title": "4. 开始填写", "content": "点击\"一键填写\"按钮填写单个账号，或点击\"批量填写\"按钮填写多个账号。" },
-        "fillSettings": { "title": "5. 填写设置", "content": "可设置提交间隔，避免触发表单反爬机制。" }
+        "fillSettings": { "title": "5. 填写设置", "content": "可设置提交间隔（避免触发表单反爬机制）以及是否显示浏览器界面（开启后可直观看到填写过程，便于调试；关闭则在后台静默运行）。" }
       },
       "formList": {
         "title": "表单列表",
@@ -655,7 +692,7 @@
         "manualBackup": { "title": "1. 手动备份", "content": "在备份管理标签页，点击\"手动备份\"按钮，系统会自动备份当前所有数据。" },
         "scheduleBackup": { "title": "2. 定时备份", "content": "点击\"备份设置\"按钮，开启定时备份，设置备份时间和频率。" },
         "restoreBackup": { "title": "3. 恢复备份", "content": "在备份列表中，找到需要恢复的备份，点击\"恢复\"按钮，确认后即可恢复数据。" },
-        "logManage": { "title": "4. 日志管理", "content": "在日志管理标签页，可查看填写日志，支持按结果和时间范围筛选。" }
+        "logManage": { "title": "4. 日志管理", "content": "在日志管理标签页，可查看详细的填写日志，支持按结果和时间范围筛选，并提供日志导出和一键清理功能。" }
       },
       "basicSettings": {
         "title": "基础设置",
@@ -666,13 +703,14 @@
       }
     },
     "faqData": {
-      "q1": { "question": "如何批量导入账号信息？", "answer": "点击\"批量操作\"下拉菜单，选择\"批量导入\"，然后按照模板格式填写Excel或CSV文件，上传后系统会自动导入账号信息。" },
+      "q1": { "question": "如何批量导入账号信息？", "answer": "点击\"批量操作\"下拉菜单，选择\"批量导入\"。建议先手动新增一个账号并执行导出操作，直接使用导出的Excel文件作为导入模板，以确保表头格式正确。然后按照模板格式填写Excel文件，上传后系统会自动导入账号信息。" },
       "q2": { "question": "账号状态为暂停，如何恢复？", "answer": "在账号列表中，找到状态为暂停的账号，点击\"编辑\"按钮，将账号状态修改为\"正常\"，然后保存即可。" },
       "q3": { "question": "表单填写失败怎么办？", "answer": "首先检查网络连接是否正常，然后检查表单链接是否有效。如果问题仍然存在，可以查看填写日志中的失败原因，根据提示进行修复。" },
       "q4": { "question": "如何自定义字段匹配规则？", "answer": "在表单填写页面，选择表单后，点击\"编辑表单匹配规则\"按钮，在弹出的对话框中，为每个表单字段选择对应的账号字段，然后保存即可。" },
       "q5": { "question": "如何批量导入表单链接？", "answer": "点击\"批量导入\"按钮，在弹出的对话框中，粘贴多个表单链接（每行一个），选择归属文件夹和表单类型，点击导入即可。" },
-      "q6": { "question": "备份文件保存在哪里？", "answer": "备份文件默认保存在\"D:/backup/\"目录下，您可以在基础设置中的部署设置里修改备份路径。" },
-      "q7": { "question": "如何恢复备份数据？", "answer": "在数据管理页面的备份管理标签页，找到需要恢复的备份，点击\"恢复\"按钮，在弹出的对话框中选择恢复选项，确认后即可恢复数据。" }
+      "q6": { "question": "备份文件保存在哪里？", "answer": "备份文件默认保存在用户数据目录下（UserData/backups），您可以在基础设置 > 部署设置中自定义备份文件的存储路径。" },
+      "q7": { "question": "如何恢复备份数据？", "answer": "在数据管理页面的备份管理标签页，找到需要恢复的备份，点击\"恢复\"按钮，在弹出的对话框中选择恢复选项，确认后即可恢复数据。" },
+      "q8": { "question": "为什么填写时看不到浏览器窗口？", "answer": "请检查填写设置中是否勾选了'显示浏览器'。如果未勾选，浏览器将以'无头模式'（Headless Mode）在后台静默运行，这通常速度更快但不直观。建议在调试或需要人工干预时开启显示。" }
     },
     "feedbackTypeOptions": {
       "suggestion": "功能建议",

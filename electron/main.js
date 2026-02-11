@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
 // 初始化数据库
 initDatabase()
   .then(() => UserService.initAdmin())
-  .then(() => seedData())
+  // .then(() => seedData()) // 禁用自动填充模拟数据，防止用户删除数据后自动恢复
   .catch(console.error);
 
 // 屏蔽安全警告（仅在开发环境，因为 Vite 需要 unsafe-eval）
