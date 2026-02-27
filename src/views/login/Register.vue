@@ -35,6 +35,7 @@
         :model="registerForm"
         :rules="rules"
         class="login-form"
+        @submit.prevent
       >
         <el-form-item prop="username">
           <el-input

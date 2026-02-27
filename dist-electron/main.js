@@ -128,6 +128,14 @@ async function createSchema() {
       value TEXT
     );
 
+    -- 全局字段映射规则表
+    CREATE TABLE IF NOT EXISTS global_field_mappings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      keyword TEXT NOT NULL UNIQUE,
+      account_field_name TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- 用户表
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -150,6 +158,15 @@ async function createSchema() {
       template_count INTEGER,
       log_count INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS schedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      content TEXT NOT NULL,
+      schedule_date DATE NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
   `;
   return new Promise((resolve, reject) => {
     db.exec(schema, (err) => {
@@ -171,6 +188,14 @@ function queryRun(sql, params = []) {
     db.run(sql, params, function(err) {
       if (err) reject(err);
       else resolve(this);
+    });
+  });
+}
+function queryGet(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
     });
   });
 }
@@ -346,6 +371,13 @@ const FormService = {
     await queryRun("DELETE FROM form_field_mappings WHERE template_id = ?", [id]);
     await queryRun("DELETE FROM form_templates WHERE id = ?", [id]);
   },
+  // 批量删除模板
+  async deleteTemplates(ids) {
+    if (!ids || ids.length === 0) return;
+    const placeholders = ids.map(() => "?").join(",");
+    await queryRun(`DELETE FROM form_field_mappings WHERE template_id IN (${placeholders})`, ids);
+    await queryRun(`DELETE FROM form_templates WHERE id IN (${placeholders})`, ids);
+  },
   // 添加映射规则
   async addMapping(mapping) {
     const { template_id, form_field_name, form_field_type, is_required, account_field_name, is_auto_mapping } = mapping;
@@ -370,6 +402,38 @@ const FormService = {
   // 删除映射规则
   async deleteMapping(id) {
     await queryRun("DELETE FROM form_field_mappings WHERE id = ?", [id]);
+  },
+  // --- 全局映射规则 ---
+  // 获取所有全局规则
+  async getAllGlobalMappings() {
+    return await queryAll("SELECT * FROM global_field_mappings ORDER BY created_at DESC");
+  },
+  // 添加全局规则
+  async addGlobalMapping(keyword, accountFieldName) {
+    try {
+      const result = await queryRun("INSERT INTO global_field_mappings (keyword, account_field_name) VALUES (?, ?)", [keyword, accountFieldName]);
+      return result.lastID;
+    } catch (e) {
+      if (e.message.includes("UNIQUE constraint failed")) {
+        throw new Error(`关键词 "${keyword}" 已存在`);
+      }
+      throw e;
+    }
+  },
+  // 更新全局规则
+  async updateGlobalMapping(id, keyword, accountFieldName) {
+    try {
+      await queryRun("UPDATE global_field_mappings SET keyword = ?, account_field_name = ? WHERE id = ?", [keyword, accountFieldName, id]);
+    } catch (e) {
+      if (e.message.includes("UNIQUE constraint failed")) {
+        throw new Error(`关键词 "${keyword}" 已存在`);
+      }
+      throw e;
+    }
+  },
+  // 删除全局规则
+  async deleteGlobalMapping(id) {
+    await queryRun("DELETE FROM global_field_mappings WHERE id = ?", [id]);
   }
 };
 const DataService = {
@@ -493,121 +557,289 @@ const MigrationService = {
   }
 };
 playwrightExtra.chromium.use(stealth());
+const FIELD_MATCH_DICT = {
+  "blogger_name": ["博主姓名", "姓名", "Name", "Blogger", "博主", "达人"],
+  "account_nickname": ["账号昵称", "昵称", "Nickname", "博主昵称", "达人昵称"],
+  "account_type": ["账号类型", "平台", "Type", "达人类型", "博主类型"],
+  "account_id": ["账号ID", "ID", "平台ID", "小红书ID", "抖音ID", "B站ID"],
+  "homepage_url": ["主页链接", "主页", "Homepage", "Link", "URL", "链接", "个人主页"],
+  "fans_count": ["粉丝量", "粉丝数", "Fans", "粉丝", "关注数"],
+  "avg_read_count": ["平均阅读量", "阅读量", "Read Count", "阅读"],
+  "like_count": ["平均点赞量", "点赞量", "Like Count", "点赞", "赞藏量", "点藏量"],
+  "comment_count": ["平均评论量", "评论量", "Comment Count", "评论"],
+  "quote_single": ["单条报价", "报价", "Quote", "Price", "图文报价", "报备图文价", "图文价", "直发价"],
+  "quote_package": ["套餐报价", "Package Price", "打包价"],
+  "cooperation_type": ["合作形式", "Cooperation Type", "合作类型"],
+  "contact": ["联系方式", "联系人", "Contact", "Phone", "Mobile", "WeChat", "Email", "电话", "手机", "微信", "邮箱"],
+  "total_like_collect": ["总赞藏数", "Total Likes", "赞藏总数", "获赞与收藏"],
+  "avg_interaction_count": ["平均互动量", "Interaction", "互动量", "互动"],
+  "content_tags": ["内容标签", "Tags", "标签", "擅长领域", "垂类"],
+  "note_price_video": ["视频报价", "Video Price", "视频价", "报备视频价"],
+  "shipping_address": ["收货地址", "地址", "Address", "寄送地址", "收件地址"],
+  "id_card": ["身份证号", "身份证", "ID Card", "证件号"],
+  "bank_card": ["银行卡号", "银行卡", "Bank Card", "卡号"],
+  "alipay_name": ["支付宝姓名", "Alipay Name", "支付宝"],
+  "city": ["所在城市", "城市", "City", "Location", "居住地", "常驻地"],
+  "promotion_type": ["推广形式", "Promotion Type", "推广类型"]
+};
 const AutoFillService = {
-  // 运行中的浏览器实例
+  // 运行中的浏览器实例 (key: taskId or 'global')
   activeBrowsers: /* @__PURE__ */ new Map(),
+  /**
+   * 获取或创建浏览器实例
+   * @param {string} id 实例标识
+   * @param {boolean} headless 是否无头
+   * @returns {Promise<import('playwright').Browser>}
+   */
+  async getOrCreateBrowser(id = "global", headless = false) {
+    if (this.activeBrowsers.has(id)) {
+      const browser2 = this.activeBrowsers.get(id);
+      if (browser2.isConnected()) return browser2;
+      this.activeBrowsers.delete(id);
+    }
+    const browser = await playwrightExtra.chromium.launch({ headless });
+    this.activeBrowsers.set(id, browser);
+    browser.on("disconnected", () => {
+      if (this.activeBrowsers.get(id) === browser) {
+        this.activeBrowsers.delete(id);
+      }
+    });
+    return browser;
+  },
+  /**
+   * 关闭浏览器实例
+   */
+  async closeBrowser(id = "global") {
+    if (this.activeBrowsers.has(id)) {
+      const browser = this.activeBrowsers.get(id);
+      await browser.close().catch(() => {
+      });
+      this.activeBrowsers.delete(id);
+    }
+  },
   /**
    * 开始填表任务
    * @param {Object} options 
    * @param {number[]} options.accountIds 账号 ID 列表
    * @param {number} options.templateId 模板 ID
+   * @param {Array} options.fieldDefinitions 字段定义（可选）
    * @param {Object} options.settings 填表设置
    * @param {Function} onProgress 进度回调
    */
   async startTask(options, onProgress) {
-    const { accountIds, templateId, settings } = options;
-    const { showBrowser = true, submitInterval = 2 } = settings;
+    const { accountIds, templateId, fieldDefinitions, settings } = options;
+    const { showBrowser = true, submitInterval = 2, autoSubmit = false } = settings;
     const template = (await FormService.getAllTemplates()).find((t) => t.id === templateId);
     if (!template) throw new Error("模板不存在");
-    const mappings = await FormService.getMappingsByTemplate(templateId);
-    if (!mappings || mappings.length === 0) throw new Error("未配置字段映射规则");
+    const globalRules = await FormService.getAllGlobalMappings();
+    let mappings = await FormService.getMappingsByTemplate(templateId);
     const accounts = (await AccountService.getAllAccounts()).filter((a) => accountIds.includes(a.id));
+    const browser = await this.getOrCreateBrowser("task_runner", !showBrowser);
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1280, height: 800 }
+    });
+    const page = await context.newPage();
     let successCount = 0;
     let failCount = 0;
-    for (let i = 0; i < accounts.length; i++) {
-      const account = accounts[i];
-      `task_${Date.now()}_${account.id}`;
-      onProgress({
-        type: "start",
-        accountName: account.account_nickname,
-        index: i,
-        total: accounts.length
-      });
-      try {
-        await this.fillSingle(account, template, mappings, { showBrowser }, (log) => {
-          onProgress({ type: "log", log, accountId: account.id });
+    try {
+      for (let i = 0; i < accounts.length; i++) {
+        const account = accounts[i];
+        onProgress({
+          type: "start",
+          accountName: account.account_nickname,
+          index: i,
+          total: accounts.length
         });
-        successCount++;
-        await DataService.addLog({
-          account_id: account.id,
-          template_id: templateId,
-          fill_result: "成功",
-          submit_count: 1
-        });
-      } catch (error) {
-        failCount++;
-        console.error(`Fill failed for account ${account.account_nickname}:`, error);
-        let screenshotPath = "";
         try {
-          const screenshotsDir = path.join(electron.app.getPath("userData"), "screenshots");
-          if (!fs.existsSync(screenshotsDir)) fs.mkdirSync(screenshotsDir);
-          screenshotPath = path.join(screenshotsDir, `error_${Date.now()}_${account.id}.png`);
-        } catch (e) {
-          console.error("Failed to create screenshot dir:", e);
+          await context.clearCookies();
+          await page.evaluate(() => {
+            try {
+              localStorage.clear();
+              sessionStorage.clear();
+            } catch (e) {
+            }
+          });
+          const sessionsDir = path.join(electron.app.getPath("userData"), "sessions");
+          if (!fs.existsSync(sessionsDir)) fs.mkdirSync(sessionsDir);
+          const sessionPath = path.join(sessionsDir, `session_${account.id}.json`);
+          if (fs.existsSync(sessionPath)) {
+            try {
+              const storageState = JSON.parse(fs.readFileSync(sessionPath, "utf8"));
+              await context.addCookies(storageState.cookies || []);
+            } catch (e) {
+              console.warn("Failed to load session:", e);
+            }
+          }
+          await this.fillPage(page, account, template, mappings, {
+            fieldDefinitions,
+            globalRules,
+            autoSubmit
+          }, async (newMappings) => {
+            mappings = newMappings;
+          });
+          try {
+            const storageState = await context.storageState();
+            fs.writeFileSync(sessionPath, JSON.stringify(storageState));
+          } catch (e) {
+          }
+          successCount++;
+          await DataService.addLog({
+            account_id: account.id,
+            template_id: templateId,
+            fill_result: "成功",
+            submit_count: 1
+          });
+        } catch (error) {
+          failCount++;
+          console.error(`Fill failed for account ${account.account_nickname}:`, error);
+          onProgress({
+            type: "error",
+            message: error.message,
+            accountId: account.id
+          });
+          await DataService.addLog({
+            account_id: account.id,
+            template_id: templateId,
+            fill_result: "失败",
+            fail_reason: error.message,
+            submit_count: 1
+          });
         }
         onProgress({
-          type: "error",
-          message: error.message,
-          accountId: account.id,
-          screenshotPath
+          type: "progress",
+          percentage: Math.round((i + 1) / accounts.length * 100),
+          successCount,
+          failCount
         });
-        await DataService.addLog({
-          account_id: account.id,
-          template_id: templateId,
-          fill_result: "失败",
-          fail_reason: error.message,
-          submit_count: 1
-        });
+        if (i < accounts.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, submitInterval * 1e3));
+        }
       }
-      onProgress({
-        type: "progress",
-        percentage: Math.round((i + 1) / accounts.length * 100),
-        successCount,
-        failCount
+    } finally {
+      await context.close().catch(() => {
       });
-      if (i < accounts.length - 1) {
-        await new Promise((resolve) => setTimeout(resolve, submitInterval * 1e3));
+      if (!showBrowser) {
+        await this.closeBrowser("task_runner");
       }
     }
     return { successCount, failCount };
   },
   /**
-   * 填写单个账号
+   * 在指定页面执行填表逻辑 (无浏览器启动逻辑)
    */
-  async fillSingle(account, template, mappings, options, logCallback) {
-    const { showBrowser } = options;
-    const browser = await playwrightExtra.chromium.launch({ headless: !showBrowser });
+  async fillPage(page, account, template, mappings, options, updateMappingsCallback) {
+    const { fieldDefinitions, globalRules, autoSubmit } = options;
+    await page.goto(template.form_url, { waitUntil: "domcontentloaded" });
+    if (!mappings || mappings.length === 0) {
+      try {
+        const scannedFields = await this.scanPage(page);
+        const normalize = (s) => {
+          if (!s) return "";
+          return s.toLowerCase().normalize("NFKC").replace(/[\\s\\-_.:：、，]/g, "");
+        };
+        const findMatch = (formFieldName) => {
+          const formLabel = normalize(formFieldName);
+          if (formLabel.length <= 1) return "";
+          if (globalRules && Array.isArray(globalRules)) {
+            for (const rule of globalRules) {
+              const k = normalize(rule.keyword);
+              if (!k) continue;
+              if (formLabel.includes(k)) return rule.account_field_name;
+            }
+          }
+          for (const [accField, keywords] of Object.entries(FIELD_MATCH_DICT)) {
+            if (keywords.some((k) => {
+              const nk = normalize(k);
+              return nk && formLabel.includes(nk);
+            })) return accField;
+          }
+          if (fieldDefinitions && Array.isArray(fieldDefinitions)) {
+            const potentialMatches = fieldDefinitions.filter((field) => {
+              const fieldLabel = normalize(field.label || "");
+              if (fieldLabel.length <= 1) return false;
+              if (formLabel.includes(fieldLabel)) return true;
+              if (fieldLabel.includes(formLabel)) return true;
+              return false;
+            });
+            if (potentialMatches.length > 0) {
+              potentialMatches.sort((a, b) => (a.label || "").length > (b.label || "").length ? -1 : 1);
+              return potentialMatches[0].name;
+            }
+          }
+          return "";
+        };
+        for (const field of scannedFields) {
+          const matchedAccountField = findMatch(field.form_field_name);
+          await FormService.addMapping({
+            template_id: template.id,
+            form_field_name: field.form_field_name,
+            form_field_type: field.form_field_type,
+            is_required: field.is_required,
+            account_field_name: matchedAccountField,
+            is_auto_mapping: !!matchedAccountField
+          });
+        }
+        mappings = await FormService.getMappingsByTemplate(template.id);
+        if (updateMappingsCallback) await updateMappingsCallback(mappings);
+      } catch (e) {
+        console.error("Lazy Scan failed:", e);
+      }
+    }
+    for (const mapping of mappings) {
+      let value = account[mapping.account_field_name];
+      if ((value === void 0 || value === null) && account.extra_json) {
+        try {
+          const extra = typeof account.extra_json === "string" ? JSON.parse(account.extra_json) : account.extra_json;
+          value = extra[mapping.account_field_name];
+        } catch (e) {
+        }
+      }
+      if (value === void 0 || value === null) continue;
+      try {
+        await this.smartFill(page, mapping, value);
+      } catch (e) {
+        if (mapping.is_required) throw e;
+      }
+    }
+    if (autoSubmit) {
+      const submitSelector = 'button[type="submit"], input[type="submit"], .submit-btn, .btn-submit, button:has-text("提交"), button:has-text("Submit"), div[role="button"]:has-text("提交")';
+      try {
+        const submitBtn = await page.waitForSelector(submitSelector, { timeout: 3e3 });
+        if (submitBtn) {
+          await submitBtn.click();
+          await page.waitForTimeout(2e3);
+        }
+      } catch (e) {
+        console.log("Auto submit failed or not found");
+      }
+    }
+  },
+  // 兼容旧接口 fillSingle (重定向到 fillPage)
+  async fillSingle(account, template, mappings, options, logCallback, updateMappingsCallback) {
+    const browser = await this.getOrCreateBrowser("single_runner", !options.showBrowser);
     const context = await browser.newContext();
     const page = await context.newPage();
     try {
-      logCallback(`正在跳转至表单: ${template.form_url}`);
-      await page.goto(template.form_url, { waitUntil: "networkidle", timeout: 6e4 });
-      for (const mapping of mappings) {
-        const value = account[mapping.account_field_name];
-        if (value === void 0 || value === null) continue;
-        logCallback(`正在填写字段: ${mapping.form_field_name} -> ${value}`);
+      const sessionsDir = path.join(electron.app.getPath("userData"), "sessions");
+      const sessionPath = path.join(sessionsDir, `session_${account.id}.json`);
+      if (fs.existsSync(sessionPath)) {
         try {
-          await this.smartFill(page, mapping, value);
+          const storageState = JSON.parse(fs.readFileSync(sessionPath, "utf8"));
+          await context.addCookies(storageState.cookies || []);
         } catch (e) {
-          logCallback(`填写字段 ${mapping.form_field_name} 失败: ${e.message}`);
-          if (mapping.is_required) throw e;
         }
       }
-      logCallback(`账号 ${account.account_nickname} 填写完成`);
-      await new Promise((resolve) => setTimeout(resolve, 2e3));
-    } catch (error) {
+      await this.fillPage(page, account, template, mappings, options, updateMappingsCallback);
       try {
-        const screenshotsDir = path.join(electron.app.getPath("userData"), "screenshots");
-        if (!fs.existsSync(screenshotsDir)) fs.mkdirSync(screenshotsDir);
-        const screenshotPath = path.join(screenshotsDir, `error_${Date.now()}_${account.id}.png`);
-        await page.screenshot({ path: screenshotPath });
-        error.screenshotPath = screenshotPath;
+        const storageState = await context.storageState();
+        if (!fs.existsSync(sessionsDir)) fs.mkdirSync(sessionsDir);
+        fs.writeFileSync(sessionPath, JSON.stringify(storageState));
       } catch (e) {
-        console.error("Failed to capture screenshot:", e);
       }
-      throw error;
-    } finally {
-      await browser.close();
+      return browser;
+    } catch (e) {
+      throw e;
     }
   },
   /**
@@ -655,8 +887,72 @@ const AutoFillService = {
         }
       }
     } else if (form_field_type === "单选框") {
-      await page.click(`text="${form_field_name}" >> xpath=..//text="${value}"`);
-      elementFound = true;
+      let radioFound = false;
+      try {
+        const label = page.locator(`label:has-text("${value}")`).first();
+        if (await label.count() > 0) {
+          await label.click();
+          radioFound = true;
+        }
+      } catch (e) {
+      }
+      if (!radioFound) {
+        try {
+          const container = page.locator(`:text("${form_field_name}") >> xpath=..`);
+          const option = container.locator(`:text("${value}")`).first();
+          if (await option.count() > 0) {
+            await option.click();
+            radioFound = true;
+          }
+        } catch (e) {
+        }
+      }
+      if (radioFound) elementFound = true;
+    } else if (form_field_type === "复选框") {
+      const values = String(value).split(/[,，;；]/).map((v) => v.trim());
+      let checkboxFound = false;
+      for (const val of values) {
+        try {
+          const label = page.locator(`label:has-text("${val}")`).first();
+          if (await label.count() > 0) {
+            const input = label.locator('input[type="checkbox"]');
+            if (await input.count() > 0) {
+              if (!await input.isChecked()) await label.click();
+            } else {
+              await label.click();
+            }
+            checkboxFound = true;
+            continue;
+          }
+          const container = page.locator(`:text("${form_field_name}") >> xpath=..`);
+          const option = container.locator(`:text("${val}")`).first();
+          if (await option.count() > 0) {
+            await option.click();
+            checkboxFound = true;
+          }
+        } catch (e) {
+          console.warn(`无法勾选复选框选项: ${val}`, e);
+        }
+      }
+      if (checkboxFound) elementFound = true;
+    } else if (form_field_type === "文件上传") {
+      const filePath = String(value);
+      if (fs.existsSync(filePath)) {
+        for (const selector of selectors) {
+          try {
+            const input = page.locator(`${selector} >> xpath=..//input[type="file"] | ${selector}`);
+            if (await input.count() > 0) {
+              await input.first().setInputFiles(filePath);
+              elementFound = true;
+              break;
+            }
+          } catch (e) {
+          }
+        }
+      } else {
+        console.warn(`文件不存在: ${filePath}`);
+        throw new Error(`文件不存在: ${filePath}`);
+      }
     }
     if (!elementFound) {
       throw new Error(`无法定位字段: ${form_field_name}`);
@@ -709,6 +1005,186 @@ const AutoFillService = {
         });
       });
       return selector;
+    } finally {
+      await browser.close();
+    }
+  },
+  /**
+   * 扫描表单页面逻辑 (重构为独立方法)
+   * @param {import('playwright').Page} page Playwright page object
+   * @returns {Promise<Array<{name: string, type: string}>>} 字段列表
+   */
+  async scanPage(page) {
+    try {
+      const frames = page.frames();
+      console.log(`Scanning page, found ${frames.length} frames`);
+      let allFields = [];
+      const seenGlobalNames = /* @__PURE__ */ new Set();
+      for (const frame of frames) {
+        try {
+          const fields = await frame.evaluate(() => {
+            const results = [];
+            const inferType = (el) => {
+              const tag = el.tagName.toLowerCase();
+              const type = el.type ? el.type.toLowerCase() : "";
+              if (tag === "select") return "下拉框";
+              if (tag === "textarea") return "输入框";
+              if (tag === "input") {
+                if (["radio"].includes(type)) return "单选框";
+                if (["checkbox"].includes(type)) return "复选框";
+                if (["file"].includes(type)) return "文件上传";
+                if (["button", "submit", "reset", "image", "hidden"].includes(type)) return null;
+                return "输入框";
+              }
+              return null;
+            };
+            const getLabel = (el) => {
+              let labelText = "";
+              const mikeItem = el.closest(".f-item");
+              if (mikeItem) {
+                const mikeLabel = mikeItem.querySelector(".f-label");
+                if (mikeLabel) return mikeLabel.innerText;
+                const mikeReactSpan = mikeItem.querySelector('span[data-reactid*="$bodyMain"]');
+                if (mikeReactSpan) return mikeReactSpan.innerText;
+                const mikeTitle = mikeItem.querySelector(".title");
+                if (mikeTitle) return mikeTitle.innerText;
+              }
+              if (el.id) {
+                const label = document.querySelector(`label[for="${el.id}"]`);
+                if (label) labelText = label.innerText;
+              }
+              if (!labelText && el.getAttribute("aria-label")) {
+                labelText = el.getAttribute("aria-label");
+              }
+              if (!labelText && el.placeholder) {
+                labelText = el.placeholder;
+              }
+              if (!labelText) {
+                const parentLabel = el.closest("label");
+                if (parentLabel) labelText = parentLabel.innerText;
+              }
+              if (!labelText) {
+                const container = el.closest('.f-item, .form-group, .field-container, .question-item, div[class*="item"], div[class*="field"], div[class*="block"], .ksapc-question-item, .question-container, .ant-form-item, .obj_item, .pd-list-item');
+                if (container) {
+                  const wpsTitle = container.querySelector(".ksapc-question-title-title");
+                  if (wpsTitle) {
+                    labelText = wpsTitle.innerText;
+                  } else if (container.querySelector(".topichtml")) {
+                    labelText = container.querySelector(".topichtml").innerText;
+                  } else if (container.querySelector(".field-label")) {
+                    labelText = container.querySelector(".field-label").innerText;
+                  } else if (container.querySelector(".form-auto-ellipsis")) {
+                    labelText = container.querySelector(".form-auto-ellipsis").innerText;
+                  } else if (container.querySelector(".question-title")) {
+                    labelText = container.querySelector(".question-title").innerText;
+                  } else {
+                    const reactLabel = container.querySelector('span[data-reactid*="$bodyMain"]');
+                    const fLabel = container.querySelector(".f-label");
+                    const fItemLabel = container.querySelector(".f-item-label");
+                    if (reactLabel) {
+                      labelText = reactLabel.innerText;
+                    } else if (fLabel) {
+                      labelText = fLabel.innerText;
+                    } else if (fItemLabel) {
+                      labelText = fItemLabel.innerText;
+                    } else {
+                      const title = container.querySelector('label, .title, .question-title, h3, h4, span[class*="label"], div[class*="title"], .label-text');
+                      if (title) labelText = title.innerText;
+                    }
+                  }
+                }
+              }
+              if (!labelText) {
+                const parentDiv = el.closest("div");
+                if (parentDiv) {
+                  const prevDiv = parentDiv.previousElementSibling;
+                  if (prevDiv) {
+                    if (prevDiv.querySelector(".ksapc-question-title-title")) {
+                      labelText = prevDiv.querySelector(".ksapc-question-title-title").innerText;
+                    } else if (prevDiv.querySelector(".topichtml")) {
+                      labelText = prevDiv.querySelector(".topichtml").innerText;
+                    } else if (prevDiv.querySelector(".f-label")) {
+                      labelText = prevDiv.querySelector(".f-label").innerText;
+                    } else if (prevDiv.querySelector(".f-item-label")) {
+                      labelText = prevDiv.querySelector(".f-item-label").innerText;
+                    } else if (prevDiv.innerText && prevDiv.innerText.length < 100) {
+                      const text = prevDiv.innerText.trim();
+                      if (text) labelText = text;
+                    }
+                  }
+                }
+              }
+              if (!labelText) {
+                const prev = el.previousElementSibling;
+                if (prev && ["LABEL", "SPAN", "DIV", "P"].includes(prev.tagName)) {
+                  labelText = prev.innerText;
+                }
+              }
+              return labelText ? labelText.trim().replace(/[*:]/g, "") : "";
+            };
+            const inputs = document.querySelectorAll('input, textarea, select, [role="textbox"], [contenteditable="true"]');
+            inputs.forEach((input) => {
+              if (input.type === "hidden" || input.style.display === "none" || input.disabled) return;
+              const type = inferType(input);
+              if (!type && !input.getAttribute("contenteditable")) return;
+              const label = getLabel(input);
+              if (!label && !input.name) return;
+              const fieldName = label || input.name || "未命名字段";
+              results.push({
+                form_field_name: fieldName,
+                form_field_type: type || "输入框",
+                is_required: input.required || input.getAttribute("aria-required") === "true" || label && label.includes("*"),
+                selector: ""
+              });
+            });
+            return results;
+          });
+          if (fields && fields.length > 0) {
+            console.log(`Frame found ${fields.length} fields`);
+            fields.forEach((f) => {
+              const key = `${f.form_field_name}-${f.form_field_type}`;
+              if (!seenGlobalNames.has(key)) {
+                seenGlobalNames.add(key);
+                allFields.push(f);
+              }
+            });
+          }
+        } catch (e) {
+          console.warn("Error scanning frame:", e);
+        }
+      }
+      console.log(`Total fields found: ${allFields.length}`);
+      return allFields;
+    } catch (e) {
+      console.error("Scan page failed:", e);
+      throw e;
+    }
+  },
+  /**
+   * 扫描表单页面，提取可能的字段
+   * @param {string} url 网页地址
+   * @returns {Promise<Array<{name: string, type: string}>>} 字段列表
+   */
+  async scanForm(url2) {
+    const browser = await playwrightExtra.chromium.launch({ headless: false });
+    const context = await browser.newContext({
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      viewport: { width: 1280, height: 800 }
+    });
+    const page = await context.newPage();
+    try {
+      console.log("Scanning URL:", url2);
+      try {
+        await page.goto(url2, { waitUntil: "domcontentloaded", timeout: 6e4 });
+        await page.waitForLoadState("networkidle", { timeout: 3e4 }).catch(() => console.log("Network idle timeout, proceeding..."));
+      } catch (e) {
+        console.warn("Page load timeout or error:", e);
+      }
+      await page.waitForTimeout(3e3);
+      return await this.scanPage(page);
+    } catch (e) {
+      console.error("Scan failed:", e);
+      throw e;
     } finally {
       await browser.close();
     }
@@ -1020,8 +1496,46 @@ const UserService = {
     }
   }
 };
+const ScheduleService = {
+  // 获取用户某月的所有日程
+  // dateStr: YYYY-MM
+  async getSchedulesByMonth(userId, dateStr) {
+    const sql = `
+      SELECT * FROM schedules 
+      WHERE user_id = ? 
+      AND strftime('%Y-%m', schedule_date) = ?
+      ORDER BY schedule_date ASC, created_at ASC
+    `;
+    return await queryAll(sql, [userId, dateStr]);
+  },
+  // 获取用户某天的所有日程
+  async getSchedulesByDate(userId, dateStr) {
+    const sql = `
+      SELECT * FROM schedules 
+      WHERE user_id = ? 
+      AND schedule_date = ?
+      ORDER BY created_at ASC
+    `;
+    return await queryAll(sql, [userId, dateStr]);
+  },
+  // 添加日程
+  async addSchedule(userId, content, scheduleDate) {
+    const sql = `
+      INSERT INTO schedules (user_id, content, schedule_date) 
+      VALUES (?, ?, ?)
+    `;
+    return await queryRun(sql, [userId, content, scheduleDate]);
+  },
+  // 删除日程
+  async deleteSchedule(id, userId) {
+    const sql = `DELETE FROM schedules WHERE id = ? AND user_id = ?`;
+    return await queryRun(sql, [id, userId]);
+  }
+};
 const __filename$1 = url.fileURLToPath(typeof document === "undefined" ? require("url").pathToFileURL(__filename).href : _documentCurrentScript && _documentCurrentScript.tagName.toUpperCase() === "SCRIPT" && _documentCurrentScript.src || new URL("main.js", document.baseURI).href);
 const __dirname$1 = path.dirname(__filename$1);
+let mainWindow = null;
+let aboutWindow = null;
 initDatabase().then(() => UserService.initAdmin()).catch(console.error);
 if (process.env.VITE_DEV_SERVER_URL) {
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
@@ -1039,7 +1553,7 @@ electron.protocol.registerSchemesAsPrivileged([
   }
 ]);
 function createWindow() {
-  const win = new electron.BrowserWindow({
+  mainWindow = new electron.BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -1050,11 +1564,13 @@ function createWindow() {
     icon: path.join(__dirname$1, "../public/vite.svg")
   });
   if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL);
-    win.webContents.openDevTools();
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    win.loadFile(path.join(__dirname$1, "../dist/index.html"));
+    mainWindow.loadFile(path.join(__dirname$1, "../dist/index.html"));
   }
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 }
 electron.app.whenReady().then(() => {
   electron.protocol.handle("local-resource", (request) => {
@@ -1101,6 +1617,7 @@ electron.ipcMain.handle("form:deleteFolder", (event, id) => FormService.deleteFo
 electron.ipcMain.handle("form:addTemplate", (event, template) => FormService.addTemplate(template));
 electron.ipcMain.handle("form:updateTemplate", (event, id, template) => FormService.updateTemplate(id, template));
 electron.ipcMain.handle("form:deleteTemplate", (event, id) => FormService.deleteTemplate(id));
+electron.ipcMain.handle("form:deleteTemplates", (event, ids) => FormService.deleteTemplates(ids));
 electron.ipcMain.handle("mapping:add", (event, mapping) => FormService.addMapping(mapping));
 electron.ipcMain.handle("mapping:update", (event, id, mapping) => FormService.updateMapping(id, mapping));
 electron.ipcMain.handle("mapping:delete", (event, id) => FormService.deleteMapping(id));
@@ -1123,8 +1640,43 @@ electron.ipcMain.handle("autofill:start", async (event, options) => {
 electron.ipcMain.handle("autofill:pickSelector", async (event, url2) => {
   return await AutoFillService.pickSelector(url2);
 });
+electron.ipcMain.handle("autofill:scan", async (event, url2) => {
+  return await AutoFillService.scanForm(url2);
+});
 electron.ipcMain.handle("app:getVersion", () => electron.app.getVersion());
+electron.ipcMain.on("open-about-dialog", () => {
+  if (aboutWindow) {
+    aboutWindow.focus();
+    return;
+  }
+  aboutWindow = new electron.BrowserWindow({
+    width: 400,
+    height: 300,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    title: "关于",
+    parent: mainWindow || void 0,
+    modal: !!mainWindow,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+  aboutWindow.setMenu(null);
+  if (process.env.VITE_DEV_SERVER_URL) {
+    aboutWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}about.html`);
+  } else {
+    aboutWindow.loadFile(path.join(__dirname$1, "../dist/about.html"));
+  }
+  aboutWindow.on("closed", () => {
+    aboutWindow = null;
+  });
+});
 electron.ipcMain.handle("ping", () => "pong");
+electron.ipcMain.handle("db:run", (event, sql, params) => queryRun(sql, params));
+electron.ipcMain.handle("db:query", (event, sql, params) => queryAll(sql, params));
+electron.ipcMain.handle("db:get", (event, sql, params) => queryGet(sql, params));
 electron.ipcMain.handle("excel:importAccounts", async () => {
   const result = await electron.dialog.showOpenDialog({
     properties: ["openFile"],
@@ -1165,3 +1717,7 @@ electron.ipcMain.handle("auth:verifyReset", async (event, username, phone) => {
 electron.ipcMain.handle("auth:resetPassword", async (event, userId, newPassword) => {
   return await UserService.resetPassword(userId, newPassword);
 });
+electron.ipcMain.handle("schedule:getByMonth", (event, userId, dateStr) => ScheduleService.getSchedulesByMonth(userId, dateStr));
+electron.ipcMain.handle("schedule:getByDate", (event, userId, dateStr) => ScheduleService.getSchedulesByDate(userId, dateStr));
+electron.ipcMain.handle("schedule:add", (event, userId, content, scheduleDate) => ScheduleService.addSchedule(userId, content, scheduleDate));
+electron.ipcMain.handle("schedule:delete", (event, id, userId) => ScheduleService.deleteSchedule(id, userId));

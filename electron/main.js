@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, protocol, net } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initDatabase } from './database.js';
+import { initDatabase, queryRun, queryAll, queryGet } from './database.js';
 import { AccountService } from './services/AccountService.js';
 import { FormService } from './services/FormService.js';
 import { DataService } from './services/DataService.js';
@@ -10,15 +10,17 @@ import { MigrationService } from './services/MigrationService.js';
 import { AutoFillService } from './services/AutoFillService.js';
 import { ExcelService } from './services/ExcelService.js';
 import { UserService } from './services/UserService.js';
-import { seedData } from './seed.js';
+import { ScheduleService } from './services/ScheduleService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+let mainWindow = null;
+let aboutWindow = null;
+
 // 初始化数据库
 initDatabase()
   .then(() => UserService.initAdmin())
-  // .then(() => seedData()) // 禁用自动填充模拟数据，防止用户删除数据后自动恢复
   .catch(console.error);
 
 // 屏蔽安全警告（仅在开发环境，因为 Vite 需要 unsafe-eval）
@@ -41,7 +43,7 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -53,11 +55,16 @@ function createWindow() {
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL);
-    win.webContents.openDevTools();
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    // 开发环境才打开 DevTools
+    // mainWindow.webContents.openDevTools(); 
   } else {
-    win.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
+  
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
 
 app.whenReady().then(() => {
@@ -129,6 +136,7 @@ ipcMain.handle('form:deleteFolder', (event, id) => FormService.deleteFolder(id))
 ipcMain.handle('form:addTemplate', (event, template) => FormService.addTemplate(template));
 ipcMain.handle('form:updateTemplate', (event, id, template) => FormService.updateTemplate(id, template));
 ipcMain.handle('form:deleteTemplate', (event, id) => FormService.deleteTemplate(id));
+ipcMain.handle('form:deleteTemplates', (event, ids) => FormService.deleteTemplates(ids));
 ipcMain.handle('mapping:add', (event, mapping) => FormService.addMapping(mapping));
 ipcMain.handle('mapping:update', (event, id, mapping) => FormService.updateMapping(id, mapping));
 ipcMain.handle('mapping:delete', (event, id) => FormService.deleteMapping(id));
@@ -161,9 +169,53 @@ ipcMain.handle('autofill:pickSelector', async (event, url) => {
   return await AutoFillService.pickSelector(url);
 });
 
+ipcMain.handle('autofill:scan', async (event, url) => {
+  return await AutoFillService.scanForm(url);
+});
+
 // App IPC
 ipcMain.handle('app:getVersion', () => app.getVersion());
+
+ipcMain.on('open-about-dialog', () => {
+  if (aboutWindow) {
+    aboutWindow.focus();
+    return;
+  }
+
+  aboutWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    title: '关于',
+    parent: mainWindow || undefined,
+    modal: !!mainWindow,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+  aboutWindow.setMenu(null);
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    aboutWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}about.html`);
+  } else {
+    aboutWindow.loadFile(path.join(__dirname, '../dist/about.html'));
+  }
+
+  aboutWindow.on('closed', () => {
+    aboutWindow = null;
+  });
+});
+
 ipcMain.handle('ping', () => 'pong');
+
+// DB IPC (generic)
+ipcMain.handle('db:run', (event, sql, params) => queryRun(sql, params));
+ipcMain.handle('db:query', (event, sql, params) => queryAll(sql, params));
+ipcMain.handle('db:get', (event, sql, params) => queryGet(sql, params));
 
 // Excel IPC
 ipcMain.handle('excel:importAccounts', async () => {
@@ -219,3 +271,9 @@ ipcMain.handle('auth:verifyReset', async (event, username, phone) => {
 ipcMain.handle('auth:resetPassword', async (event, userId, newPassword) => {
   return await UserService.resetPassword(userId, newPassword);
 });
+
+// Schedule IPC
+ipcMain.handle('schedule:getByMonth', (event, userId, dateStr) => ScheduleService.getSchedulesByMonth(userId, dateStr));
+ipcMain.handle('schedule:getByDate', (event, userId, dateStr) => ScheduleService.getSchedulesByDate(userId, dateStr));
+ipcMain.handle('schedule:add', (event, userId, content, scheduleDate) => ScheduleService.addSchedule(userId, content, scheduleDate));
+ipcMain.handle('schedule:delete', (event, id, userId) => ScheduleService.deleteSchedule(id, userId));

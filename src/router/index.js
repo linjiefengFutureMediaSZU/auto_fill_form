@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import Layout from '../components/Layout.vue'
 import i18n from '../i18n'
 import { useAccountStore } from '../stores/account'
@@ -49,6 +49,12 @@ const routes = [
         meta: { title: 'routes.formList', requiresAuth: true }
       },
       {
+        path: '/global-mapping',
+        name: 'GlobalMapping',
+        component: () => import('../views/globalMapping/GlobalMapping.vue'),
+        meta: { title: 'routes.globalMapping', requiresAuth: true }
+      },
+      {
         path: '/data',
         name: 'Data',
         component: () => import('../views/data/Data.vue'),
@@ -77,7 +83,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 })
 
@@ -95,11 +101,15 @@ router.beforeEach((to, from, next) => {
   const accountStore = useAccountStore()
   const isLoggedIn = accountStore.isLoggedIn
   
+  console.log(`[Router] Navigating to: ${to.path}, Auth Required: ${requiresAuth}, Logged In: ${isLoggedIn}`)
+
   if (requiresAuth && !isLoggedIn) {
     // 需要登录但未登录，跳转到登录页
+    console.warn('[Router] Redirecting to /login')
     next('/login')
   } else if (to.path === '/login' && isLoggedIn) {
     // 已登录但访问登录页，跳转到首页
+    console.log('[Router] Already logged in, redirecting to /account')
     next('/account')
   } else {
     // 其他情况正常跳转

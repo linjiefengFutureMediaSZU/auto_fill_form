@@ -762,13 +762,16 @@ const handleBatchDelete = () => {
   ElMessageBox.confirm(t('formList.batchDeleteConfirm', { count: selectedFormIds.value.length }), t('common.warning'), {
     confirmButtonText: t('common.confirm'),
     cancelButtonText: t('common.cancel'),
-    type: 'warning'
-  }).then(() => {
-    selectedFormIds.value.forEach(id => {
-      formStore.deleteTemplate(id)
-    })
-    selectedFormIds.value = []
-    ElMessage.success(t('formList.deleteSuccess'))
+    type: 'warning',
+    customClass: 'glass-confirm-box'
+  }).then(async () => {
+    try {
+      await formStore.deleteTemplates(selectedFormIds.value)
+      selectedFormIds.value = []
+      ElMessage.success(t('formList.deleteSuccess'))
+    } catch (error) {
+      ElMessage.error(t('common.operationFailed'))
+    }
   }).catch(() => {
     // 取消删除
   })

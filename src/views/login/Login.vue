@@ -35,6 +35,7 @@
         :model="loginForm"
         :rules="rules"
         class="login-form"
+        @submit.prevent="handleLogin"
       >
         <el-form-item prop="username">
           <el-input
@@ -76,7 +77,6 @@
             class="login-button"
             size="large"
             :loading="loading"
-            @click="handleLogin"
           >
             {{ $t('login.loginBtn') }}
           </el-button>
@@ -103,7 +103,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAccountStore } from '../../stores/account'
 import { useSettingsStore } from '../../stores/settings'
@@ -158,6 +158,8 @@ const rules = {
  * 处理登录逻辑
  */
 const handleLogin = async () => {
+  if (loading.value) return
+
   // 非空校验提示
   if (!loginForm.username || !loginForm.password) {
     ElMessage.warning(t('login.inputRequired'))
@@ -188,8 +190,16 @@ const handleLogin = async () => {
         accountStore.setLoginStatus(true, loginForm.remember)
         
         ElMessage.success(t('login.success'))
+        
+        // 等待状态更新完成后再跳转
+        await nextTick()
+        console.log('Login success, redirecting to account...')
+        
         // 跳转到首页
-        router.push('/account')
+        router.replace({ name: 'Account' }).catch(err => {
+          console.error('Navigation failed:', err)
+          ElMessage.error(t('login.navFailed') + ': ' + err.message)
+        })
       } else {
         // 使用弹窗提示错误（账号不存在或密码错误）
         ElMessageBox.alert(result.message || t('login.failed'), t('common.error'), {

@@ -236,12 +236,54 @@ const scheduleDialogVisible = ref(false)
 const selectedDate = ref(new Date())
 const newScheduleContent = ref('')
 // 存储日程数据：key为日期字符串(YYYY-MM-DD)，value为日程数组
-const schedules = reactive(JSON.parse(localStorage.getItem('user_schedules') || '{}'))
+const schedules = reactive({})
 
-// 监听日程数据变化，保存到本地存储
-watch(schedules, (newVal) => {
-  localStorage.setItem('user_schedules', JSON.stringify(newVal))
-}, { deep: true })
+// 获取日程数据
+const loadSchedules = async (date) => {
+  const d = new Date(date)
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  
+  try {
+    if (!userInfo.value.id) return
+    const result = await window.electronAPI.schedule.getByMonth(userInfo.value.id, dateStr)
+    
+    // 按日期分组
+    const newSchedules = {}
+    result.forEach(item => {
+      // 假设数据库返回的 schedule_date 是 YYYY-MM-DD 格式
+      // 如果是 ISO 格式，可能需要截取
+      const dayKey = item.schedule_date
+      if (!newSchedules[dayKey]) {
+        newSchedules[dayKey] = []
+      }
+      newSchedules[dayKey].push({
+        id: item.id,
+        content: item.content,
+        createdAt: item.created_at
+      })
+    })
+    
+    // 合并到响应式对象 (先清空当前月份的数据？或者直接覆盖)
+    // 为了简单起见，这里我们可能需要更精细的合并策略，
+    // 但鉴于我们每次切换月份都会重新加载，可以直接合并
+    Object.assign(schedules, newSchedules)
+    
+  } catch (error) {
+    console.error('Failed to load schedules:', error)
+  }
+}
+
+// 监听当前日期变化（切换月份时加载数据）
+watch(currentDate, (newVal) => {
+  loadSchedules(newVal)
+}, { immediate: true })
+
+// 监听用户信息变化，加载日程
+watch(() => userInfo.value.id, (newVal) => {
+  if (newVal) {
+    loadSchedules(currentDate.value)
+  }
+})
 
 // 计算属性
 const userInfo = computed(() => accountStore.userInfo)
@@ -410,32 +452,47 @@ const openScheduleDialog = (date) => {
   scheduleDialogVisible.value = true
 }
 
-const saveSchedule = () => {
+const saveSchedule = async () => {
   if (!newScheduleContent.value.trim()) {
     ElMessage.warning('请输入日程内容')
     return
   }
   
   const key = formatDateKey(selectedDate.value)
-  if (!schedules[key]) {
-    schedules[key] = []
+  
+  try {
+    await window.electronAPI.schedule.add(
+      userInfo.value.id,
+      newScheduleContent.value,
+      key // YYYY-MM-DD
+    )
+    
+    // 重新加载数据
+    await loadSchedules(selectedDate.value)
+    
+    newScheduleContent.value = ''
+    ElMessage.success('添加成功')
+  } catch (error) {
+    ElMessage.error('添加失败: ' + error.message)
   }
-  
-  schedules[key].push({
-    content: newScheduleContent.value,
-    createdAt: new Date().toISOString()
-  })
-  
-  newScheduleContent.value = ''
-  ElMessage.success('添加成功')
 }
 
-const deleteSchedule = (date, index) => {
+const deleteSchedule = async (date, index) => {
   const key = formatDateKey(date)
-  if (schedules[key]) {
-    schedules[key].splice(index, 1)
-    if (schedules[key].length === 0) {
-      delete schedules[key]
+  if (schedules[key] && schedules[key][index]) {
+    const item = schedules[key][index]
+    if (item.id) {
+      try {
+        await window.electronAPI.schedule.delete(item.id, userInfo.value.id)
+        // 重新加载或本地移除
+        schedules[key].splice(index, 1)
+        if (schedules[key].length === 0) {
+          delete schedules[key]
+        }
+        ElMessage.success('删除成功')
+      } catch (error) {
+        ElMessage.error('删除失败: ' + error.message)
+      }
     }
   }
 }

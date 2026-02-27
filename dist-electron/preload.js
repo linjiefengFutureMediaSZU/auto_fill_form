@@ -27,7 +27,8 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
     deleteFolder: (id) => electron.ipcRenderer.invoke("form:deleteFolder", id),
     addTemplate: (template) => electron.ipcRenderer.invoke("form:addTemplate", template),
     updateTemplate: (id, template) => electron.ipcRenderer.invoke("form:updateTemplate", id, template),
-    deleteTemplate: (id) => electron.ipcRenderer.invoke("form:deleteTemplate", id)
+    deleteTemplate: (id) => electron.ipcRenderer.invoke("form:deleteTemplate", id),
+    deleteTemplates: (ids) => electron.ipcRenderer.invoke("form:deleteTemplates", ids)
   },
   mapping: {
     add: (mapping) => electron.ipcRenderer.invoke("mapping:add", mapping),
@@ -41,6 +42,11 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
     set: (key, value) => electron.ipcRenderer.invoke("setting:set", key, value)
   },
   // Data
+  db: {
+    run: (sql, params) => electron.ipcRenderer.invoke("db:run", sql, params),
+    query: (sql, params) => electron.ipcRenderer.invoke("db:query", sql, params),
+    get: (sql, params) => electron.ipcRenderer.invoke("db:get", sql, params)
+  },
   log: {
     getAll: (limit) => electron.ipcRenderer.invoke("log:getAll", limit),
     add: (log) => electron.ipcRenderer.invoke("log:add", log),
@@ -61,7 +67,8 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
     start: (options) => electron.ipcRenderer.invoke("autofill:start", options),
     onProgress: (callback) => electron.ipcRenderer.on("autofill:progress", (event, progress) => callback(progress)),
     removeProgressListeners: () => electron.ipcRenderer.removeAllListeners("autofill:progress"),
-    pickSelector: (url) => electron.ipcRenderer.invoke("autofill:pickSelector", url)
+    pickSelector: (url) => electron.ipcRenderer.invoke("autofill:pickSelector", url),
+    scan: (url) => electron.ipcRenderer.invoke("autofill:scan", url)
   },
   auth: {
     login: (credentials) => electron.ipcRenderer.invoke("auth:login", credentials),
@@ -76,5 +83,14 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
     importAccounts: () => electron.ipcRenderer.invoke("excel:importAccounts"),
     exportAccounts: (accounts, fields) => electron.ipcRenderer.invoke("excel:exportAccounts", accounts, fields)
   },
-  app: {}
+  schedule: {
+    getByMonth: (userId, dateStr) => electron.ipcRenderer.invoke("schedule:getByMonth", userId, dateStr),
+    getByDate: (userId, dateStr) => electron.ipcRenderer.invoke("schedule:getByDate", userId, dateStr),
+    add: (userId, content, scheduleDate) => electron.ipcRenderer.invoke("schedule:add", userId, content, scheduleDate),
+    delete: (id, userId) => electron.ipcRenderer.invoke("schedule:delete", id, userId)
+  },
+  app: {
+    getVersion: () => electron.ipcRenderer.invoke("app:getVersion"),
+    openAboutDialog: () => electron.ipcRenderer.send("open-about-dialog")
+  }
 });

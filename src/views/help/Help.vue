@@ -3,6 +3,9 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h2 class="title">{{ $t('help.title') }}</h2>
+      <el-button @click="openAboutDialog" plain>
+        <el-icon style="margin-right: 4px"><InfoFilled /></el-icon> {{ $t('help.about') }}
+      </el-button>
     </div>
 
     <!-- 标签页 -->
@@ -230,11 +233,19 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { Search, User, EditPen, List, DataAnalysis, Setting, Upload, Check } from '@element-plus/icons-vue'
+import { Search, User, EditPen, List, DataAnalysis, Setting, Upload, Check, InfoFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+
+const openAboutDialog = () => {
+  if (window.electronAPI && window.electronAPI.app && window.electronAPI.app.openAboutDialog) {
+    window.electronAPI.app.openAboutDialog()
+  } else {
+    ElMessage.warning('关于功能仅在桌面端可用')
+  }
+}
 
 // 响应式数据
 const activeTab = ref('manual')

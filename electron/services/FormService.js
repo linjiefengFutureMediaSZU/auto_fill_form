@@ -74,6 +74,14 @@ export const FormService = {
     await queryRun('DELETE FROM form_templates WHERE id = ?', [id]);
   },
 
+  // 批量删除模板
+  async deleteTemplates(ids) {
+    if (!ids || ids.length === 0) return;
+    const placeholders = ids.map(() => '?').join(',');
+    await queryRun(`DELETE FROM form_field_mappings WHERE template_id IN (${placeholders})`, ids);
+    await queryRun(`DELETE FROM form_templates WHERE id IN (${placeholders})`, ids);
+  },
+
   // 添加映射规则
   async addMapping(mapping) {
     const { template_id, form_field_name, form_field_type, is_required, account_field_name, is_auto_mapping } = mapping;
@@ -101,5 +109,42 @@ export const FormService = {
   // 删除映射规则
   async deleteMapping(id) {
     await queryRun('DELETE FROM form_field_mappings WHERE id = ?', [id]);
+  },
+
+  // --- 全局映射规则 ---
+
+  // 获取所有全局规则
+  async getAllGlobalMappings() {
+    return await queryAll('SELECT * FROM global_field_mappings ORDER BY created_at DESC');
+  },
+
+  // 添加全局规则
+  async addGlobalMapping(keyword, accountFieldName) {
+    try {
+      const result = await queryRun('INSERT INTO global_field_mappings (keyword, account_field_name) VALUES (?, ?)', [keyword, accountFieldName]);
+      return result.lastID;
+    } catch (e) {
+      if (e.message.includes('UNIQUE constraint failed')) {
+        throw new Error(`关键词 "${keyword}" 已存在`);
+      }
+      throw e;
+    }
+  },
+
+  // 更新全局规则
+  async updateGlobalMapping(id, keyword, accountFieldName) {
+    try {
+      await queryRun('UPDATE global_field_mappings SET keyword = ?, account_field_name = ? WHERE id = ?', [keyword, accountFieldName, id]);
+    } catch (e) {
+      if (e.message.includes('UNIQUE constraint failed')) {
+        throw new Error(`关键词 "${keyword}" 已存在`);
+      }
+      throw e;
+    }
+  },
+
+  // 删除全局规则
+  async deleteGlobalMapping(id) {
+    await queryRun('DELETE FROM global_field_mappings WHERE id = ?', [id]);
   }
 };

@@ -27,6 +27,7 @@
         :model="verifyForm"
         :rules="verifyRules"
         class="forget-form"
+        @submit.prevent
       >
         <el-form-item prop="username">
           <el-input
@@ -72,6 +73,7 @@
         :model="resetForm"
         :rules="resetRules"
         class="forget-form"
+        @submit.prevent
       >
         <el-form-item prop="password">
           <el-input

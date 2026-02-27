@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     addTemplate: (template) => ipcRenderer.invoke('form:addTemplate', template),
     updateTemplate: (id, template) => ipcRenderer.invoke('form:updateTemplate', id, template),
     deleteTemplate: (id) => ipcRenderer.invoke('form:deleteTemplate', id),
+    deleteTemplates: (ids) => ipcRenderer.invoke('form:deleteTemplates', ids),
   },
   mapping: {
     add: (mapping) => ipcRenderer.invoke('mapping:add', mapping),
@@ -45,6 +46,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Data
+  db: {
+    run: (sql, params) => ipcRenderer.invoke('db:run', sql, params),
+    query: (sql, params) => ipcRenderer.invoke('db:query', sql, params),
+    get: (sql, params) => ipcRenderer.invoke('db:get', sql, params),
+  },
   log: {
     getAll: (limit) => ipcRenderer.invoke('log:getAll', limit),
     add: (log) => ipcRenderer.invoke('log:add', log),
@@ -68,6 +74,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onProgress: (callback) => ipcRenderer.on('autofill:progress', (event, progress) => callback(progress)),
     removeProgressListeners: () => ipcRenderer.removeAllListeners('autofill:progress'),
     pickSelector: (url) => ipcRenderer.invoke('autofill:pickSelector', url),
+    scan: (url) => ipcRenderer.invoke('autofill:scan', url),
   },
   auth: {
     login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
@@ -82,5 +89,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     importAccounts: () => ipcRenderer.invoke('excel:importAccounts'),
     exportAccounts: (accounts, fields) => ipcRenderer.invoke('excel:exportAccounts', accounts, fields),
   },
-  app: {}
+  schedule: {
+    getByMonth: (userId, dateStr) => ipcRenderer.invoke('schedule:getByMonth', userId, dateStr),
+    getByDate: (userId, dateStr) => ipcRenderer.invoke('schedule:getByDate', userId, dateStr),
+    add: (userId, content, scheduleDate) => ipcRenderer.invoke('schedule:add', userId, content, scheduleDate),
+    delete: (id, userId) => ipcRenderer.invoke('schedule:delete', id, userId),
+  },
+  app: {
+    getVersion: () => ipcRenderer.invoke('app:getVersion'),
+    openAboutDialog: () => ipcRenderer.send('open-about-dialog'),
+  }
 });

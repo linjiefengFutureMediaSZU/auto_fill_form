@@ -138,20 +138,20 @@ body.dark-theme {
 }
 
 /* Dialog - Glass Style */
-.el-dialog {
-  background: var(--glass-bg);
+.el-dialog, .el-message-box {
+  background: var(--glass-bg) !important;
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--glass-shadow);
   
-  .el-dialog__header .el-dialog__title {
+  .el-dialog__header .el-dialog__title, .el-message-box__title {
     color: var(--text-primary);
   }
-  .el-dialog__body {
+  .el-dialog__body, .el-message-box__message {
     color: var(--text-primary);
   }
-  .el-dialog__footer {
+  .el-dialog__footer, .el-message-box__btns {
     border-top: 1px solid var(--glass-border);
   }
 }

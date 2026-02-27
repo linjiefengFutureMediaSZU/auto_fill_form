@@ -115,6 +115,17 @@ export const useFormStore = defineStore('form', {
         throw error;
       }
     },
+    async deleteTemplates(ids) {
+      if (!window.electronAPI) return;
+      try {
+        await window.electronAPI.form.deleteTemplates(ids);
+        this.templates = this.templates.filter(t => !ids.includes(t.id));
+        this.fieldMappings = this.fieldMappings.filter(m => !ids.includes(m.template_id));
+      } catch (error) {
+        console.error('Failed to delete templates:', error);
+        throw error;
+      }
+    },
 
     // 映射规则操作
     async loadMappings(templateId) {

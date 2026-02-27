@@ -113,6 +113,14 @@ async function createSchema() {
       value TEXT
     );
 
+    -- 全局字段映射规则表
+    CREATE TABLE IF NOT EXISTS global_field_mappings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      keyword TEXT NOT NULL UNIQUE,
+      account_field_name TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- 用户表
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,6 +142,15 @@ async function createSchema() {
       account_count INTEGER,
       template_count INTEGER,
       log_count INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS schedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      content TEXT NOT NULL,
+      schedule_date DATE NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `;
 
@@ -164,6 +181,15 @@ export function queryRun(sql, params = []) {
     db.run(sql, params, function(err) {
       if (err) reject(err);
       else resolve(this);
+    });
+  });
+}
+
+export function queryGet(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
     });
   });
 }

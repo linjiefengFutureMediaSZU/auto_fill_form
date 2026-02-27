@@ -34,13 +34,17 @@
           <el-icon><UserFilled /></el-icon>
           <template #title>{{ $t('menu.account') }}</template>
         </el-menu-item>
+        <el-menu-item index="/form">
+          <el-icon><Document /></el-icon>
+          <template #title>{{ $t('menu.fillForm') }}</template>
+        </el-menu-item>
         <el-menu-item index="/formList">
           <el-icon><List /></el-icon>
           <template #title>{{ $t('menu.formList') }}</template>
         </el-menu-item>
-        <el-menu-item index="/form">
-          <el-icon><Document /></el-icon>
-          <template #title>{{ $t('menu.fillForm') }}</template>
+        <el-menu-item index="/global-mapping">
+          <el-icon><MagicStick /></el-icon>
+          <template #title>{{ $t('menu.globalMapping') }}</template>
         </el-menu-item>
         <el-menu-item index="/data">
           <el-icon><DataAnalysis /></el-icon>
@@ -111,7 +115,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useSettingsStore } from '../stores'
 import { useAccountStore } from '../stores/account'
-import { User, UserFilled, Document, List, DataAnalysis, Setting, HelpFilled, ArrowLeft, ArrowRight, MoonNight, Sunny } from '@element-plus/icons-vue'
+import { User, UserFilled, Document, List, DataAnalysis, Setting, HelpFilled, ArrowLeft, ArrowRight, MoonNight, Sunny, MagicStick } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 // 状态管理
@@ -128,6 +132,8 @@ let timeInterval = null
 
 // 计算属性
 const activeMenu = computed(() => {
+  // 如果是根路径，高亮显示 account 菜单
+  if (route.path === '/') return '/account'
   return route.path
 })
 
@@ -182,7 +188,8 @@ onMounted(() => {
   
   // 检查登录状态
   if (!accountStore.isLoggedIn) {
-    router.push('/login')
+    console.warn('Layout: User not logged in, redirecting to login')
+    // router.push('/login')
   }
   
   updateCurrentTime()
@@ -268,46 +275,67 @@ onUnmounted(() => {
     }
     
     .sidebar-menu {
-      flex: 1;
-      border-right: none;
-      background-color: transparent !important;
-      width: 100%;
-      padding: 0 !important; /* 移除任何默认内边距 */
-      margin: 0 !important;
-      
-      :deep(.el-menu-item) {
-        margin: 4px 10px;
-        border-radius: var(--border-radius-lg);
-        height: 44px;
-        line-height: 44px;
-        color: var(--text-secondary);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        
-        &:hover {
-          background-color: rgba(0, 0, 0, 0.05);
-          color: var(--text-primary);
-          transform: translateX(2px);
-        }
-        
-        &.is-active {
-          background-color: var(--accent-color);
-          color: #ffffff;
-          box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-          font-weight: 500;
-          transform: translateX(2px);
+        flex: 1;
+        border-right: none;
+        background-color: transparent !important;
+        width: 100%;
+        padding: 0 !important; /* 移除任何默认内边距 */
+        margin: 0 !important;
+        display: flex;
+        flex-direction: column;
+        /* 移除 justify-content: center; 让菜单自然从顶部开始，或者使用 space-between 分散 */
+        /* justify-content: center; */ 
+        padding-top: 20px !important; /* 给顶部一点空间 */
+
+        :deep(.el-menu-item) {
+          margin: 4px 10px;
+          border-radius: var(--border-radius-lg);
+          height: 44px;
+          line-height: 44px;
+          color: var(--text-secondary);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          /* 确保内容不换行，且溢出时隐藏 */
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          
+          /* 调整内部布局 */
+          display: flex;
+          align-items: center;
+          padding: 0 12px !important; /* 统一内边距 */
           
           .el-icon {
+            margin-right: 12px; /* 增加图标与文字间距 */
+            color: var(--text-secondary);
+            font-size: 18px;
+            flex-shrink: 0; /* 防止图标被压缩 */
+            transition: color 0.3s;
+          }
+          
+          /* 调整文字样式 */
+          span, template {
+            font-size: 14px;
+            font-weight: 500;
+          }
+
+          &:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--text-primary);
+            transform: translateX(2px);
+          }
+          
+          &.is-active {
+            background-color: var(--accent-color);
             color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            font-weight: 500;
+            transform: translateX(2px);
+            
+            .el-icon {
+              color: #ffffff;
+            }
           }
         }
-        
-        .el-icon {
-          margin-right: 10px;
-          color: var(--text-secondary);
-          font-size: 18px;
-          transition: margin 0.3s;
-        }
-      }
       
       /* 折叠状态下的菜单样式 */
       &.el-menu--collapse {

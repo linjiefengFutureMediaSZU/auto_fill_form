@@ -111,17 +111,7 @@
                 </div>
               </div>
               <div class="form-actions">
-                <el-tooltip :content="$t('form.editMapping')" placement="top">
-                  <el-button
-                    circle
-                    size="small"
-                    type="primary"
-                    plain
-                    @click.stop="editFieldMapping(template)"
-                  >
-                    <el-icon><Edit /></el-icon>
-                  </el-button>
-                </el-tooltip>
+                <!-- 移除了编辑映射按钮 -->
               </div>
             </div>
             <div v-if="filteredTemplates.length === 0" class="empty-state">
@@ -139,16 +129,7 @@
               {{ selectedTemplate ? selectedTemplate.template_name : $t('form.preview') }}
             </h3>
             <div class="header-actions" v-if="selectedTemplate">
-              <el-tooltip :content="$t('form.autoMap')" placement="top">
-                <el-button circle size="small" type="primary" plain @click="autoMapFields">
-                  <el-icon><MagicStick /></el-icon>
-                </el-button>
-              </el-tooltip>
-              <el-tooltip :content="$t('form.previewMap')" placement="top">
-                <el-button circle size="small" type="primary" plain @click="previewMapping">
-                  <el-icon><View /></el-icon>
-                </el-button>
-              </el-tooltip>
+              <!-- 移除了自动匹配和预览匹配按钮 -->
             </div>
           </div>
 
@@ -160,47 +141,13 @@
             </div>
             
             <!-- 表单嵌入预览 -->
-            <div class="form-iframe-preview">
+            <div class="form-iframe-preview full-height">
               <h4 class="preview-title">{{ $t('form.preview') }}</h4>
               <div class="iframe-container">
                 <iframe :src="selectedTemplate.form_url" frameborder="0" class="form-iframe"></iframe>
               </div>
             </div>
             
-            <!-- 字段匹配区 -->
-            <div class="field-mapping">
-              <h4 class="mapping-title">{{ $t('form.mappingRules') }}</h4>
-              <div class="mapping-list">
-                <div
-                  v-for="(mapping, index) in fieldMappings"
-                  :key="mapping.id || index"
-                  class="mapping-item"
-                >
-                  <div class="form-field">
-                    <span class="field-name">{{ mapping.form_field_name }}</span>
-                    <el-tag size="small" v-if="mapping.is_required" type="danger">{{ $t('form.required') }}</el-tag>
-                  </div>
-                  <div class="account-field">
-                    <el-select v-model="mapping.account_field_name" :placeholder="$t('form.selectAccountField')">
-                      <el-option :label="$t('form.bloggerName')" value="blogger_name" />
-                      <el-option :label="$t('form.accountNickname')" value="account_nickname" />
-                      <el-option :label="$t('account.accountType')" value="account_type" />
-                      <el-option :label="$t('form.accountId')" value="account_id" />
-                      <el-option :label="$t('form.homepageUrl')" value="homepage_url" />
-                      <el-option :label="$t('account.fansCount')" value="fans_count" />
-                      <el-option :label="$t('form.avgRead')" value="avg_read_count" />
-                      <el-option :label="$t('form.likeCount')" value="like_count" />
-                      <el-option :label="$t('form.commentCount')" value="comment_count" />
-                      <el-option :label="$t('account.quoteSingle')" value="quote_single" />
-                      <el-option :label="$t('form.quotePackage')" value="quote_package" />
-                      <el-option :label="$t('form.cooperationType')" value="cooperation_type" />
-                      <el-option :label="$t('form.contact')" value="contact" />
-                    </el-select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- 填写设置 -->
             <div class="fill-settings">
               <h4 class="settings-title">{{ $t('form.fillSettings') }}</h4>
@@ -241,7 +188,7 @@
                 class="action-button"
               >
                 <el-icon><CopyDocument /></el-icon>
-                {{ $t('form.batchFill') }}
+                {{ $t('form.submitAndNext') }}
               </el-button>
             </div>
           </div>
@@ -283,6 +230,7 @@
                 <el-option :label="$t('form.selectType')" :value="FIELD_TYPES.SELECT" />
                 <el-option :label="$t('form.radioType')" :value="FIELD_TYPES.RADIO" />
                 <el-option :label="$t('form.checkboxType')" :value="FIELD_TYPES.CHECKBOX" />
+                <el-option :label="$t('form.fileType')" :value="FIELD_TYPES.FILE" />
               </el-select>
             </el-form-item>
             <el-form-item :label="$t('form.isRequired')">
@@ -303,6 +251,20 @@
                 <el-option :label="$t('form.quotePackage')" value="quote_package" />
                 <el-option :label="$t('form.cooperationType')" value="cooperation_type" />
                 <el-option :label="$t('form.contact')" value="contact" />
+
+                 <!-- 扩展字段 -->
+                <el-option-group :label="$t('form.extraFields')">
+                  <el-option :label="$t('account.totalLikeCollect')" value="total_like_collect" />
+                  <el-option :label="$t('account.avgInteraction')" value="avg_interaction_count" />
+                  <el-option :label="$t('account.contentTags')" value="content_tags" />
+                  <el-option :label="$t('account.notePriceVideo')" value="note_price_video" />
+                  <el-option :label="$t('account.shippingAddress')" value="shipping_address" />
+                  <el-option :label="$t('account.idCard')" value="id_card" />
+                  <el-option :label="$t('account.bankCard')" value="bank_card" />
+                  <el-option :label="$t('account.alipayName')" value="alipay_name" />
+                  <el-option :label="$t('account.city')" value="city" />
+                  <el-option :label="$t('account.promotionType')" value="promotion_type" />
+                </el-option-group>
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -356,20 +318,7 @@
             {{ $t('form.progressStats', { success: fillProgress.successCount, fail: fillProgress.failCount, total: selectedAccountIds.length }) }}
           </div>
         </div>
-        <div class="progress-log" v-if="fillProgress.logs.length > 0">
-          <h4 class="log-title">{{ $t('form.fillLog') }}</h4>
-          <div class="log-list">
-            <div
-              v-for="(log, index) in fillProgress.logs"
-              :key="index"
-              class="log-item"
-              :class="{ 'success': log.status === 'success', 'error': log.status === 'error' }"
-            >
-              <span class="log-time">{{ log.time }}</span>
-              <span class="log-content">{{ log.content }}</span>
-            </div>
-          </div>
-        </div>
+        <!-- 日志显示已移除 -->
       </div>
       <template #footer>
         <span class="dialog-footer">
@@ -400,7 +349,8 @@ import { useSettingsStore } from '../../stores/settings'
 import { Refresh, Search, MagicStick, View, Edit, EditPen, CopyDocument, Plus, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { FIELD_TYPES, FORM_TYPES } from '../../constants/form'
+import { FIELD_TYPES, FORM_TYPES, FIELD_MATCH_DICT } from '../../constants/form'
+import { getDefaultAccountFields } from '../../constants/accountFields'
 
 // i18n
 const { t, locale } = useI18n()
@@ -428,6 +378,7 @@ const selectedTemplateId = ref(null)
 const selectedFolderId = ref('')
 const fieldMappingDialogVisible = ref(false)
 const fillProgressDialogVisible = ref(false)
+const isScanning = ref(false) // 扫描状态
 
 // 填写设置
 const fillSettings = reactive({
@@ -445,8 +396,7 @@ const fillProgress = reactive({
   status: '',
   currentStatus: '',
   successCount: 0,
-  failCount: 0,
-  logs: []
+  failCount: 0
 })
 
 // 计算属性
@@ -640,9 +590,141 @@ const saveFieldMappings = async () => {
 }
 
 // 自动匹配字段
-const autoMapFields = () => {
-  // 这里可以添加自动匹配字段的逻辑
-  ElMessage.success(t('form.autoMapped'))
+const autoMapFields = async () => {
+  if (!selectedTemplate.value) {
+    ElMessage.warning(t('form.selectTemplate'))
+    return
+  }
+
+  // 仅在 Electron 环境下可用
+  if (!window.electronAPI) {
+    ElMessage.warning('自动匹配功能仅在桌面端可用')
+    return
+  }
+
+  // 立即开始扫描，不进行确认
+  isScanning.value = true
+  try {
+    // 获取所有可用账号字段
+    const getAllFields = () => {
+      const savedFields = localStorage.getItem('customFields_v8')
+      if (savedFields) {
+        try {
+          return JSON.parse(savedFields)
+        } catch (e) {
+          console.error('Failed to parse custom fields', e)
+        }
+      }
+      return getDefaultAccountFields(t)
+    }
+    const allAccountFields = getAllFields()
+
+    // 发起扫描请求
+    const scannedFields = await window.electronAPI.autofill.scan(selectedTemplate.value.form_url)
+    
+    // 获取当前映射
+    const currentMappings = formStore.getFieldMappingsByTemplate(selectedTemplate.value.id)
+    const updates = []
+    const adds = []
+    
+    let matchCount = 0
+
+    // 辅助函数：查找匹配 (升级版：支持模糊、同义词、无关字符过滤)
+    const findMatch = (formFieldName) => {
+       if (!formFieldName) return '';
+       const formLabel = formFieldName.trim();
+       if (formLabel.length <= 1) return '';
+
+       // 1. 优先使用字典匹配 (同义词库)
+       for (const [accField, keywords] of Object.entries(FIELD_MATCH_DICT)) {
+          // 只要表单题目中包含字典里的任何一个关键词，就算匹配
+          // 例如：题目"您的帐号昵称是什么" 包含 关键词"帐号昵称" -> 匹配
+          if (keywords.some(k => formLabel.includes(k))) {
+             return accField
+          }
+       }
+       
+       // 2. 智能模糊匹配：检查表单问题是否包含我们已有的字段名
+       // 策略：找到所有包含的字段，然后选择 Label 最长的那个（最精确匹配）
+       const potentialMatches = allAccountFields.filter(field => {
+         const fieldLabel = (field.label || '').trim()
+         if (fieldLabel.length <= 1) return false
+
+         // 1. 正向包含：表单问题包含字段名 (User: "您的年龄是多少岁？" contains "年龄")
+         if (formLabel.includes(fieldLabel)) return true
+         
+         // 2. 反向包含：字段名包含表单问题 (Less common but possible)
+         if (fieldLabel.includes(formLabel)) return true 
+         
+         return false
+       })
+       
+       if (potentialMatches.length > 0) {
+         // 按长度降序排序，取最长的匹配
+         potentialMatches.sort((a, b) => b.label.length - a.label.length)
+         return potentialMatches[0].name
+       }
+
+       return ''
+    }
+
+    scannedFields.forEach(field => {
+       // 检查字段是否已存在（按名称）
+       const existing = currentMappings.find(m => m.form_field_name === field.form_field_name)
+       
+       if (existing) {
+          // 如果已存在但未映射账号字段，尝试匹配
+          if (!existing.account_field_name) {
+             const match = findMatch(field.form_field_name)
+             if (match) {
+               updates.push({ ...existing, account_field_name: match, is_auto_mapping: true })
+               matchCount++
+             }
+          }
+          return 
+       }
+
+       // 新字段：尝试匹配
+       const matchedAccountField = findMatch(field.form_field_name)
+       if (matchedAccountField) matchCount++
+
+       adds.push({
+         template_id: selectedTemplate.value.id,
+         form_field_name: field.form_field_name,
+         form_field_type: field.form_field_type,
+         is_required: field.is_required,
+         account_field_name: matchedAccountField, // 匹配到则填入，否则为空
+         is_auto_mapping: !!matchedAccountField
+       })
+    })
+
+    // 执行保存操作
+    const promises = []
+    
+    // 添加新映射
+    adds.forEach(m => promises.push(formStore.addFieldMapping(m)))
+    
+    // 更新现有映射
+    updates.forEach(m => promises.push(formStore.updateFieldMapping(m.id, m)))
+    
+    await Promise.all(promises)
+
+    if (adds.length > 0 || updates.length > 0) {
+      ElMessage.success(`自动匹配完成：新增 ${adds.length} 个字段，自动关联 ${matchCount} 个字段`)
+      // 重新加载映射以刷新 UI
+      await formStore.loadMappings(selectedTemplate.value.id)
+    } else {
+      ElMessage.info('未发现新字段或更好的匹配')
+    }
+    
+    // 不再自动打开弹窗，用户如有需要可手动点击编辑
+
+  } catch (error) {
+    console.error('Auto map failed:', error)
+    ElMessage.error(t('form.errorMsg', { msg: error.message || '扫描失败' }))
+  } finally {
+    isScanning.value = false
+  }
 }
 
 // 预览匹配结果
@@ -711,18 +793,6 @@ const realFillProcess = async (isBatch) => {
     switch (progress.type) {
       case 'start':
         fillProgress.currentStatus = t('form.preparingFill', { name: progress.accountName });
-        fillProgress.logs.push({
-          time: new Date().toLocaleTimeString(),
-          content: t('form.startProcessing', { name: progress.accountName }),
-          status: 'info'
-        });
-        break;
-      case 'log':
-        fillProgress.logs.push({
-          time: new Date().toLocaleTimeString(),
-          content: progress.log,
-          status: 'info'
-        });
         break;
       case 'progress':
         fillProgress.percentage = progress.percentage;
@@ -730,19 +800,32 @@ const realFillProcess = async (isBatch) => {
         fillProgress.failCount = progress.failCount;
         break;
       case 'error':
-        fillProgress.logs.push({
-          time: new Date().toLocaleTimeString(),
-          content: t('form.errorMsg', { msg: progress.message }),
-          status: 'error'
-        });
+        // 错误信息仅显示在状态栏，不再记录详细日志
+        // 可选：使用 ElMessage 提示
+        // ElMessage.error(t('form.errorMsg', { msg: progress.message }));
         break;
     }
   });
 
   try {
+    // 获取所有可用账号字段定义，以便后端在无映射时进行即时自动映射
+    const getAllFields = () => {
+      const savedFields = localStorage.getItem('customFields_v8')
+      if (savedFields) {
+        try {
+          return JSON.parse(savedFields)
+        } catch (e) {
+          console.error('Failed to parse custom fields', e)
+        }
+      }
+      return getDefaultAccountFields(t)
+    }
+    const fieldDefinitions = getAllFields()
+
     const result = await window.electronAPI.autofill.start({
       accountIds: [...selectedAccountIds.value],
       templateId: selectedTemplateId.value,
+      fieldDefinitions: fieldDefinitions, // 传递字段定义
       settings: {
         showBrowser: true,
         submitInterval: fillSettings.submitInterval
@@ -753,21 +836,11 @@ const realFillProcess = async (isBatch) => {
     fillProgress.percentage = 100;
     fillProgress.status = result.failCount === 0 ? 'success' : 'warning';
     fillProgress.currentStatus = t('form.taskFinished');
-    fillProgress.logs.push({
-      time: new Date().toLocaleTimeString(),
-      content: t('form.taskSummary', { success: result.successCount, fail: result.failCount }),
-      status: 'success'
-    });
 
   } catch (error) {
     fillProgress.isRunning = false;
     fillProgress.status = 'exception';
     fillProgress.currentStatus = t('form.taskTerminated');
-    fillProgress.logs.push({
-      time: new Date().toLocaleTimeString(),
-      content: t('form.engineError', { msg: error.message }),
-      status: 'error'
-    });
   } finally {
     window.electronAPI.autofill.removeProgressListeners();
   }
@@ -785,11 +858,6 @@ const simulateFillProcess = (isBatch) => {
       fillProgress.percentage = 100
       fillProgress.status = fillProgress.successCount === totalAccounts ? 'success' : 'warning'
       fillProgress.currentStatus = t('form.fillCompleted')
-      fillProgress.logs.push({
-        time: new Date().toLocaleTimeString(),
-        content: t('form.fillCompletedStats', { success: fillProgress.successCount, fail: fillProgress.failCount }),
-        status: 'success'
-      })
       return
     }
     
@@ -799,11 +867,6 @@ const simulateFillProcess = (isBatch) => {
     // 更新进度
     fillProgress.percentage = Math.round((currentIndex / totalAccounts) * 100)
     fillProgress.currentStatus = t('form.fillingAccount', { name: account.account_nickname })
-    fillProgress.logs.push({
-      time: new Date().toLocaleTimeString(),
-      content: t('form.startFillingAccount', { name: account.account_nickname }),
-      status: 'info'
-    })
     
     // 模拟填写延迟
     setTimeout(() => {
@@ -812,18 +875,8 @@ const simulateFillProcess = (isBatch) => {
       
       if (isSuccess) {
         fillProgress.successCount++
-        fillProgress.logs.push({
-          time: new Date().toLocaleTimeString(),
-          content: t('form.accountFillSuccess', { name: account.account_nickname }),
-          status: 'success'
-        })
       } else {
         fillProgress.failCount++
-        fillProgress.logs.push({
-          time: new Date().toLocaleTimeString(),
-          content: t('form.accountFillFail', { name: account.account_nickname }),
-          status: 'error'
-        })
       }
       
       currentIndex++
@@ -841,11 +894,6 @@ const simulateFillProcess = (isBatch) => {
 const stopFillProcess = () => {
   fillProgress.isRunning = false
   fillProgress.currentStatus = t('form.fillStopped')
-  fillProgress.logs.push({
-    time: new Date().toLocaleTimeString(),
-    content: t('form.fillManualStopped'),
-    status: 'info'
-  })
 }
 
 // 生命周期
@@ -859,6 +907,47 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+/* 全局覆盖：移除右侧栏的滚动条 */
+.form-preview-fill {
+  .glass-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    
+    .form-preview {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden; /* 关键：禁止最外层滚动 */
+      
+      .form-url, .fill-settings, .fill-actions {
+        flex-shrink: 0; /* 禁止这些部分被压缩 */
+      }
+      
+      .form-iframe-preview {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0; /* Flexbox 溢出修复 */
+        
+        &.full-height {
+          .iframe-container {
+            flex: 1;
+            height: 100%;
+            
+            iframe {
+              width: 100%;
+              height: 100%;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 .form-page {
   height: 100%;
   display: flex;
@@ -1234,37 +1323,6 @@ onMounted(() => {
       .fill-stats {
         font-size: var(--font-size-sm);
         color: var(--text-color-secondary);
-      }
-    }
-
-    .log-list {
-      max-height: 200px;
-      overflow-y: auto;
-      border: 1px solid var(--border-color-light);
-      border-radius: var(--border-radius-md);
-      padding: var(--spacing-sm);
-
-      .log-item {
-        display: block;
-        margin-bottom: var(--spacing-xs);
-        padding: var(--spacing-xs);
-        border-radius: var(--border-radius-sm);
-
-        &.success {
-          background-color: rgba(103, 194, 58, 0.1);
-          color: var(--success-color);
-        }
-
-        &.error {
-          background-color: rgba(245, 108, 108, 0.1);
-          color: var(--danger-color);
-        }
-
-        .log-time {
-          font-size: var(--font-size-xs);
-          color: var(--text-color-secondary);
-          margin-right: var(--spacing-sm);
-        }
       }
     }
   }
