@@ -5,10 +5,10 @@ import fs from 'fs';
 import { app } from 'electron';
 
 export const UserService = {
-  /**
-   * 密码加密
-   */
-  hashPassword(password) {
+  hashPassword(password, salt) {
+    return crypto.pbkdf2Sync(password, salt, 150000, 64, 'sha512').toString('hex');
+  },
+  legacyHashPassword(password) {
     const salt = 'autofill_salt_2026';
     return crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
   },
@@ -17,17 +17,29 @@ export const UserService = {
    * 用户登录 (支持用户名或手机号)
    */
   async login(account, password) {
-    const hashedPassword = this.hashPassword(password);
     const users = await queryAll(
-      'SELECT id, username, email, phone, avatar, nickname, role, created_at FROM users WHERE (username = ? OR phone = ?) AND password = ?', 
-      [account, account, hashedPassword]
+      'SELECT id, username, email, phone, avatar, nickname, role, created_at, password, salt FROM users WHERE (username = ? OR phone = ?)',
+      [account, account]
     );
     
-    if (users.length > 0) {
-      return { success: true, user: users[0] };
+    if (users.length === 0) return { success: false, message: '账号或密码错误' };
+    const user = users[0];
+    let ok = false;
+    if (user.salt) {
+      const hashed = this.hashPassword(password, user.salt);
+      ok = hashed === user.password;
     } else {
-      return { success: false, message: '账号或密码错误' };
+      const legacy = this.legacyHashPassword(password);
+      ok = legacy === user.password;
+      if (ok) {
+        const salt = crypto.randomBytes(16).toString('hex');
+        const newHash = this.hashPassword(password, salt);
+        await queryRun('UPDATE users SET password = ?, salt = ? WHERE id = ?', [newHash, salt, user.id]);
+      }
     }
+    if (!ok) return { success: false, message: '账号或密码错误' };
+    const { password: _p, salt: _s, ...safeUser } = user;
+    return { success: true, user: safeUser };
   },
 
   /**
@@ -67,11 +79,12 @@ export const UserService = {
       }
     }
 
-    const hashedPassword = this.hashPassword(password);
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hashedPassword = this.hashPassword(password, salt);
     try {
       const result = await queryRun(
-        'INSERT INTO users (username, password, nickname, email, phone) VALUES (?, ?, ?, ?, ?)',
-        [username, hashedPassword, nickname || username, email || null, phone || null]
+        'INSERT INTO users (username, password, salt, nickname, email, phone) VALUES (?, ?, ?, ?, ?, ?)',
+        [username, hashedPassword, salt, nickname || username, email || null, phone || null]
       );
       return { success: true, userId: result.lastID };
     } catch (error) {
@@ -168,9 +181,14 @@ export const UserService = {
    * 重置密码
    */
   async resetPassword(userId, newPassword) {
-    const hashedPassword = this.hashPassword(newPassword);
     try {
-      await queryRun('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+      const rows = await queryAll('SELECT salt FROM users WHERE id = ?', [userId]);
+      let salt = rows && rows[0] ? rows[0].salt : null;
+      if (!salt) {
+        salt = crypto.randomBytes(16).toString('hex');
+      }
+      const hashedPassword = this.hashPassword(newPassword, salt);
+      await queryRun('UPDATE users SET password = ?, salt = ? WHERE id = ?', [hashedPassword, salt, userId]);
       return { success: true };
     } catch (error) {
       return { success: false, message: '重置密码失败: ' + error.message };
@@ -183,10 +201,11 @@ export const UserService = {
   async initAdmin() {
     const admin = await queryAll('SELECT id FROM users WHERE username = ?', ['admin']);
     if (admin.length === 0) {
-      const hashedPassword = this.hashPassword('123456');
+      const salt = crypto.randomBytes(16).toString('hex');
+      const hashedPassword = this.hashPassword('123456', salt);
       await queryRun(
-        'INSERT INTO users (username, password, nickname, role, phone) VALUES (?, ?, ?, ?, ?)',
-        ['admin', hashedPassword, '超级管理员', 'admin', '13800000000']
+        'INSERT INTO users (username, password, salt, nickname, role, phone) VALUES (?, ?, ?, ?, ?, ?)',
+        ['admin', hashedPassword, salt, '超级管理员', 'admin', '13800000000']
       );
       console.log('Default admin account created (admin/123456, phone: 13800000000)');
     }

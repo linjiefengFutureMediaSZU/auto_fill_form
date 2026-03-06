@@ -14,6 +14,17 @@ export const ExcelService = {
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(worksheet);
 
+    function parseNumber(val) {
+      if (!val) return 0;
+      const num = parseFloat(String(val).replace(/[^\d.]/g, ''));
+      return isNaN(num) ? 0 : num;
+    }
+
+    function parseBoolean(val) {
+      if (!val) return 0;
+      return String(val).includes('是') || String(val).toLowerCase() === 'yes' || String(val) === '1' ? 1 : 0;
+    }
+
     return data.map(row => {
       // 构建 extra_json
       const extra = {
@@ -61,19 +72,6 @@ export const ExcelService = {
         provide_raw_face: parseBoolean(row['提供素颜'] || row['是否可提供脸部素颜图/对比图']),
         accept_face_show: parseBoolean(row['接受露脸'] || row['是否接受露脸拍摄']),
         receiver_name: row['收件人'] || row['收件人姓名'] || ''
-      };
-
-      // 解析数值
-      const parseNumber = (val) => {
-        if (!val) return 0;
-        const num = parseFloat(String(val).replace(/[^\d.]/g, ''));
-        return isNaN(num) ? 0 : num;
-      };
-
-      // 解析布尔/是否
-      const parseBoolean = (val) => {
-        if (!val) return 0;
-        return String(val).includes('是') || String(val).toLowerCase() === 'yes' || String(val) === '1' ? 1 : 0;
       };
 
       return {

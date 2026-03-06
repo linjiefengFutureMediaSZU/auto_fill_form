@@ -126,6 +126,7 @@ async function createSchema() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
+      salt TEXT,
       email TEXT,
       phone TEXT UNIQUE,
       avatar TEXT,
@@ -156,8 +157,13 @@ async function createSchema() {
 
   return new Promise((resolve, reject) => {
     db.exec(schema, (err) => {
-      if (err) reject(err);
-      else resolve();
+      if (err) {
+        reject(err);
+      } else {
+        db.run('ALTER TABLE users ADD COLUMN salt TEXT', () => {
+          resolve();
+        });
+      }
     });
   });
 }

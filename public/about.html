@@ -80,11 +80,12 @@
   </div>
   <div class="copyright">Copyright © 2024 AutoFill Team. All rights reserved.</div>
   <script>
-    // 自动更新版本号（如果需要的话，可以通过 IPC 获取）
-    const { ipcRenderer } = require('electron');
-    ipcRenderer.invoke('app:getVersion').then(version => {
-      document.querySelector('.version').textContent = `版本 ${version}`;
-    }).catch(console.error);
+    if (window.electronAPI && window.electronAPI.app && window.electronAPI.app.getVersion) {
+      window.electronAPI.app.getVersion().then(function(version){
+        var el = document.querySelector('.version');
+        if (el) el.textContent = '版本 ' + version;
+      });
+    }
   </script>
 </body>
 </html>

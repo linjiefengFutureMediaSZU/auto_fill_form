@@ -46,11 +46,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Data
-  db: {
-    run: (sql, params) => ipcRenderer.invoke('db:run', sql, params),
-    query: (sql, params) => ipcRenderer.invoke('db:query', sql, params),
-    get: (sql, params) => ipcRenderer.invoke('db:get', sql, params),
-  },
   log: {
     getAll: (limit) => ipcRenderer.invoke('log:getAll', limit),
     add: (log) => ipcRenderer.invoke('log:add', log),

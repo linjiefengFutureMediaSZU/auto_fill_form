@@ -71,30 +71,28 @@ app.whenReady().then(() => {
   // 注册自定义协议以读取本地文件
   protocol.handle('local-resource', (request) => {
     try {
-      // 移除协议前缀，支持 local-resource:// 和 local-resource:///
       let urlPath = request.url.replace(/^local-resource:\/*/, '');
-      
-      // 解码 URL
       urlPath = decodeURIComponent(urlPath);
-      
-      // 在 Windows 上，如果路径以盘符开始（例如 c/Users/...），我们需要将其转换为 c:/Users/...
-      // 或者如果它是 /c/Users/...，我们需要保留它
-      
-      // 处理 Windows 盘符路径：如果路径以 'c/Users' 开头（没有冒号），我们需要添加冒号
-      // 这里的 urlPath 可能是 "c/Users/..." 或者 "C/Users/..."
       if (/^[a-zA-Z]\/Users\//.test(urlPath)) {
         urlPath = urlPath.charAt(0) + ':' + urlPath.slice(1);
       }
-      
-      // 构造 file: 协议 URL
-      // 注意：file:/// 后紧跟盘符是标准格式
-      const fileUrl = 'file:///' + urlPath;
-      
-      console.log(`[LocalResource] Loading: ${request.url} -> ${fileUrl}`);
-      
+      const userData = app.getPath('userData');
+      const allowedRoots = [
+        path.join(userData, 'avatars'),
+        path.join(userData, 'sessions'),
+      ];
+      const normalizedPath = path.normalize(urlPath);
+      const resolvedPath = path.resolve(normalizedPath);
+      const isAllowed = allowedRoots.some(root => {
+        const r = path.resolve(root);
+        return resolvedPath.startsWith(r + path.sep) || resolvedPath === r;
+      });
+      if (!isAllowed) {
+        return new Response('Forbidden', { status: 403 });
+      }
+      const fileUrl = 'file:///' + resolvedPath.replace(/\\/g, '/');
       return net.fetch(fileUrl);
     } catch (error) {
-      console.error('[LocalResource] Failed:', error);
       return new Response('Not Found', { status: 404 });
     }
   });
@@ -192,8 +190,9 @@ ipcMain.on('open-about-dialog', () => {
     parent: mainWindow || undefined,
     modal: !!mainWindow,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
     }
   });
 
@@ -211,11 +210,6 @@ ipcMain.on('open-about-dialog', () => {
 });
 
 ipcMain.handle('ping', () => 'pong');
-
-// DB IPC (generic)
-ipcMain.handle('db:run', (event, sql, params) => queryRun(sql, params));
-ipcMain.handle('db:query', (event, sql, params) => queryAll(sql, params));
-ipcMain.handle('db:get', (event, sql, params) => queryGet(sql, params));
 
 // Excel IPC
 ipcMain.handle('excel:importAccounts', async () => {
