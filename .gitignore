@@ -30,8 +30,9 @@ dist-ssr
 /playwright/.cache/
 /playwright/.auth/
 
+# Local data (SQLite database)
+data/
 
 # Documents
 .trae/documents/*.xlsx
 .trae/documents/*.xls
-
