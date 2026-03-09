@@ -153,6 +153,18 @@ async function createSchema() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
+
+    -- 用户反馈表
+    CREATE TABLE IF NOT EXISTS feedbacks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      type TEXT NOT NULL,
+      contact TEXT,
+      description TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
   `;
 
   return new Promise((resolve, reject) => {

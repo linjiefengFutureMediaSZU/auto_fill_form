@@ -84,7 +84,7 @@ export const useSettingsStore = defineStore('settings', {
       if (!window.electronAPI) return;
       try {
         const newSettings = { ...this.deployment.local, ...settings };
-        const fullDeployment = { ...this.deployment, local: newSettings };
+        const fullDeployment = JSON.parse(JSON.stringify({ ...this.deployment, local: newSettings }));
         await window.electronAPI.setting.set('deployment', fullDeployment);
         this.deployment.local = newSettings;
       } catch (error) {

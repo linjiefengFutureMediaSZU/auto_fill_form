@@ -83,11 +83,11 @@ onMounted(async () => {
   // 初始化登录状态
   accountStore.initLoginStatus()
   
-  // 如果已登录，跳转到首页；否则跳转到登录页（由路由守卫处理）
+  // 如果已登录，跳转到个人中心；否则跳转到登录页（由路由守卫处理）
   if (accountStore.isLoggedIn) {
     // 只有在当前是根路径或登录页时才跳转，避免覆盖用户的直接访问
     if (router.currentRoute.value.path === '/' || router.currentRoute.value.path === '/login') {
-      router.push('/account')
+      router.push('/profile')
     }
   }
   

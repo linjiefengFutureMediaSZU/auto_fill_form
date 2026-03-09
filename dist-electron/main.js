@@ -141,6 +141,7 @@ async function createSchema() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
+      salt TEXT,
       email TEXT,
       phone TEXT UNIQUE,
       avatar TEXT,
@@ -167,11 +168,28 @@ async function createSchema() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
+
+    -- 用户反馈表
+    CREATE TABLE IF NOT EXISTS feedbacks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER,
+      type TEXT NOT NULL,
+      contact TEXT,
+      description TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
   `;
   return new Promise((resolve, reject) => {
     db.exec(schema, (err) => {
-      if (err) reject(err);
-      else resolve();
+      if (err) {
+        reject(err);
+      } else {
+        db.run("ALTER TABLE users ADD COLUMN salt TEXT", () => {
+          resolve();
+        });
+      }
     });
   });
 }
@@ -191,14 +209,12 @@ function queryRun(sql, params = []) {
     });
   });
 }
-function queryGet(sql, params = []) {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-}
+const database = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  initDatabase,
+  queryAll,
+  queryRun
+}, Symbol.toStringTag, { value: "Module" }));
 const AccountService = {
   // 获取所有账号
   async getAllAccounts() {
@@ -1201,6 +1217,15 @@ const ExcelService = {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX__namespace.utils.sheet_to_json(worksheet);
+    function parseNumber(val) {
+      if (!val) return 0;
+      const num = parseFloat(String(val).replace(/[^\d.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    }
+    function parseBoolean(val) {
+      if (!val) return 0;
+      return String(val).includes("是") || String(val).toLowerCase() === "yes" || String(val) === "1" ? 1 : 0;
+    }
     return data.map((row) => {
       const extra = {
         authorization: row["授权"] || "",
@@ -1254,15 +1279,6 @@ const ExcelService = {
         provide_raw_face: parseBoolean(row["提供素颜"] || row["是否可提供脸部素颜图/对比图"]),
         accept_face_show: parseBoolean(row["接受露脸"] || row["是否接受露脸拍摄"]),
         receiver_name: row["收件人"] || row["收件人姓名"] || ""
-      };
-      const parseNumber = (val) => {
-        if (!val) return 0;
-        const num = parseFloat(String(val).replace(/[^\d.]/g, ""));
-        return isNaN(num) ? 0 : num;
-      };
-      const parseBoolean = (val) => {
-        if (!val) return 0;
-        return String(val).includes("是") || String(val).toLowerCase() === "yes" || String(val) === "1" ? 1 : 0;
       };
       return {
         blogger_name: row["博主姓名"] || row["博主昵称"] || "",
@@ -1325,10 +1341,10 @@ const ExcelService = {
   }
 };
 const UserService = {
-  /**
-   * 密码加密
-   */
-  hashPassword(password) {
+  hashPassword(password, salt) {
+    return crypto.pbkdf2Sync(password, salt, 15e4, 64, "sha512").toString("hex");
+  },
+  legacyHashPassword(password) {
     const salt = "autofill_salt_2026";
     return crypto.pbkdf2Sync(password, salt, 1e3, 64, "sha512").toString("hex");
   },
@@ -1336,16 +1352,28 @@ const UserService = {
    * 用户登录 (支持用户名或手机号)
    */
   async login(account, password) {
-    const hashedPassword = this.hashPassword(password);
     const users = await queryAll(
-      "SELECT id, username, email, phone, avatar, nickname, role, created_at FROM users WHERE (username = ? OR phone = ?) AND password = ?",
-      [account, account, hashedPassword]
+      "SELECT id, username, email, phone, avatar, nickname, role, created_at, password, salt FROM users WHERE (username = ? OR phone = ?)",
+      [account, account]
     );
-    if (users.length > 0) {
-      return { success: true, user: users[0] };
+    if (users.length === 0) return { success: false, message: "账号或密码错误" };
+    const user = users[0];
+    let ok = false;
+    if (user.salt) {
+      const hashed = this.hashPassword(password, user.salt);
+      ok = hashed === user.password;
     } else {
-      return { success: false, message: "账号或密码错误" };
+      const legacy = this.legacyHashPassword(password);
+      ok = legacy === user.password;
+      if (ok) {
+        const salt = crypto.randomBytes(16).toString("hex");
+        const newHash = this.hashPassword(password, salt);
+        await queryRun("UPDATE users SET password = ?, salt = ? WHERE id = ?", [newHash, salt, user.id]);
+      }
     }
+    if (!ok) return { success: false, message: "账号或密码错误" };
+    const { password: _p, salt: _s, ...safeUser } = user;
+    return { success: true, user: safeUser };
   },
   /**
    * 获取用户信息
@@ -1380,11 +1408,12 @@ const UserService = {
         return { success: false, message: "手机号已被注册" };
       }
     }
-    const hashedPassword = this.hashPassword(password);
+    const salt = crypto.randomBytes(16).toString("hex");
+    const hashedPassword = this.hashPassword(password, salt);
     try {
       const result = await queryRun(
-        "INSERT INTO users (username, password, nickname, email, phone) VALUES (?, ?, ?, ?, ?)",
-        [username, hashedPassword, nickname || username, email || null, phone || null]
+        "INSERT INTO users (username, password, salt, nickname, email, phone) VALUES (?, ?, ?, ?, ?, ?)",
+        [username, hashedPassword, salt, nickname || username, email || null, phone || null]
       );
       return { success: true, userId: result.lastID };
     } catch (error) {
@@ -1395,9 +1424,17 @@ const UserService = {
    * 更新用户资料
    */
   async updateProfile(userId, data) {
-    const { nickname, email, phone, avatar } = data;
+    const { username, nickname, email, phone, avatar } = data;
     const fields = [];
     const params = [];
+    if (username !== void 0) {
+      const existing = await queryAll("SELECT id FROM users WHERE username = ? AND id != ?", [username, userId]);
+      if (existing.length > 0) {
+        return { success: false, message: "用户名已存在" };
+      }
+      fields.push("username = ?");
+      params.push(username);
+    }
     if (nickname !== void 0) {
       fields.push("nickname = ?");
       params.push(nickname);
@@ -1473,9 +1510,14 @@ const UserService = {
    * 重置密码
    */
   async resetPassword(userId, newPassword) {
-    const hashedPassword = this.hashPassword(newPassword);
     try {
-      await queryRun("UPDATE users SET password = ? WHERE id = ?", [hashedPassword, userId]);
+      const rows = await queryAll("SELECT salt FROM users WHERE id = ?", [userId]);
+      let salt = rows && rows[0] ? rows[0].salt : null;
+      if (!salt) {
+        salt = crypto.randomBytes(16).toString("hex");
+      }
+      const hashedPassword = this.hashPassword(newPassword, salt);
+      await queryRun("UPDATE users SET password = ?, salt = ? WHERE id = ?", [hashedPassword, salt, userId]);
       return { success: true };
     } catch (error) {
       return { success: false, message: "重置密码失败: " + error.message };
@@ -1487,10 +1529,11 @@ const UserService = {
   async initAdmin() {
     const admin = await queryAll("SELECT id FROM users WHERE username = ?", ["admin"]);
     if (admin.length === 0) {
-      const hashedPassword = this.hashPassword("123456");
+      const salt = crypto.randomBytes(16).toString("hex");
+      const hashedPassword = this.hashPassword("123456", salt);
       await queryRun(
-        "INSERT INTO users (username, password, nickname, role, phone) VALUES (?, ?, ?, ?, ?)",
-        ["admin", hashedPassword, "超级管理员", "admin", "13800000000"]
+        "INSERT INTO users (username, password, salt, nickname, role, phone) VALUES (?, ?, ?, ?, ?, ?)",
+        ["admin", hashedPassword, salt, "超级管理员", "admin", "13800000000"]
       );
       console.log("Default admin account created (admin/123456, phone: 13800000000)");
     }
@@ -1580,11 +1623,23 @@ electron.app.whenReady().then(() => {
       if (/^[a-zA-Z]\/Users\//.test(urlPath)) {
         urlPath = urlPath.charAt(0) + ":" + urlPath.slice(1);
       }
-      const fileUrl = "file:///" + urlPath;
-      console.log(`[LocalResource] Loading: ${request.url} -> ${fileUrl}`);
+      const userData = electron.app.getPath("userData");
+      const allowedRoots = [
+        path.join(userData, "avatars"),
+        path.join(userData, "sessions")
+      ];
+      const normalizedPath = path.normalize(urlPath);
+      const resolvedPath = path.resolve(normalizedPath);
+      const isAllowed = allowedRoots.some((root) => {
+        const r = path.resolve(root);
+        return resolvedPath.startsWith(r + path.sep) || resolvedPath === r;
+      });
+      if (!isAllowed) {
+        return new Response("Forbidden", { status: 403 });
+      }
+      const fileUrl = "file:///" + resolvedPath.replace(/\\/g, "/");
       return electron.net.fetch(fileUrl);
     } catch (error) {
-      console.error("[LocalResource] Failed:", error);
       return new Response("Not Found", { status: 404 });
     }
   });
@@ -1621,6 +1676,10 @@ electron.ipcMain.handle("form:deleteTemplates", (event, ids) => FormService.dele
 electron.ipcMain.handle("mapping:add", (event, mapping) => FormService.addMapping(mapping));
 electron.ipcMain.handle("mapping:update", (event, id, mapping) => FormService.updateMapping(id, mapping));
 electron.ipcMain.handle("mapping:delete", (event, id) => FormService.deleteMapping(id));
+electron.ipcMain.handle("globalMapping:getAll", () => FormService.getAllGlobalMappings());
+electron.ipcMain.handle("globalMapping:add", (event, keyword, accountFieldName) => FormService.addGlobalMapping(keyword, accountFieldName));
+electron.ipcMain.handle("globalMapping:update", (event, id, keyword, accountFieldName) => FormService.updateGlobalMapping(id, keyword, accountFieldName));
+electron.ipcMain.handle("globalMapping:delete", (event, id) => FormService.deleteGlobalMapping(id));
 electron.ipcMain.handle("setting:get", (event, key) => SettingService.getSetting(key));
 electron.ipcMain.handle("setting:getAll", () => SettingService.getAllSettings());
 electron.ipcMain.handle("setting:set", (event, key, value) => SettingService.setSetting(key, value));
@@ -1659,8 +1718,9 @@ electron.ipcMain.on("open-about-dialog", () => {
     parent: mainWindow || void 0,
     modal: !!mainWindow,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname$1, "preload.js")
     }
   });
   aboutWindow.setMenu(null);
@@ -1674,9 +1734,6 @@ electron.ipcMain.on("open-about-dialog", () => {
   });
 });
 electron.ipcMain.handle("ping", () => "pong");
-electron.ipcMain.handle("db:run", (event, sql, params) => queryRun(sql, params));
-electron.ipcMain.handle("db:query", (event, sql, params) => queryAll(sql, params));
-electron.ipcMain.handle("db:get", (event, sql, params) => queryGet(sql, params));
 electron.ipcMain.handle("excel:importAccounts", async () => {
   const result = await electron.dialog.showOpenDialog({
     properties: ["openFile"],
@@ -1721,3 +1778,26 @@ electron.ipcMain.handle("schedule:getByMonth", (event, userId, dateStr) => Sched
 electron.ipcMain.handle("schedule:getByDate", (event, userId, dateStr) => ScheduleService.getSchedulesByDate(userId, dateStr));
 electron.ipcMain.handle("schedule:add", (event, userId, content, scheduleDate) => ScheduleService.addSchedule(userId, content, scheduleDate));
 electron.ipcMain.handle("schedule:delete", (event, id, userId) => ScheduleService.deleteSchedule(id, userId));
+electron.ipcMain.handle("feedback:add", async (event, userId, feedback) => {
+  const { queryRun: queryRun2 } = await Promise.resolve().then(() => database);
+  try {
+    const result = await queryRun2(
+      "INSERT INTO feedbacks (user_id, type, contact, description) VALUES (?, ?, ?, ?)",
+      [userId, feedback.type, feedback.contact, feedback.description]
+    );
+    return { success: true, id: result.lastID };
+  } catch (error) {
+    console.error("Failed to add feedback:", error);
+    return { success: false, message: error.message };
+  }
+});
+electron.ipcMain.handle("feedback:getAll", async (event, userId) => {
+  const { queryAll: queryAll2 } = await Promise.resolve().then(() => database);
+  try {
+    const feedbacks = await queryAll2("SELECT * FROM feedbacks WHERE user_id = ? ORDER BY created_at DESC", [userId]);
+    return { success: true, feedbacks };
+  } catch (error) {
+    console.error("Failed to get feedbacks:", error);
+    return { success: false, message: error.message };
+  }
+});

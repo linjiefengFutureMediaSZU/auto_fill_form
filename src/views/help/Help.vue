@@ -225,6 +225,43 @@
               </el-form-item>
             </el-form>
           </div>
+
+          <!-- 反馈历史列表 -->
+          <div class="glass-card feedback-history">
+            <div class="section-header">
+              <h3 class="subtitle">反馈历史</h3>
+              <el-button size="small" @click="loadFeedbacks" :loading="feedbackLoading">
+                <el-icon><Refresh /></el-icon>
+                刷新
+              </el-button>
+            </div>
+            
+            <el-table :data="feedbackList" v-loading="feedbackLoading" stripe>
+              <el-table-column prop="type" label="类型" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="getFeedbackTypeTag(row.type)" size="small">
+                    {{ getFeedbackTypeLabel(row.type) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="description" label="内容" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="contact" label="联系方式" width="120" />
+              <el-table-column prop="status" label="状态" width="100">
+                <template #default="{ row }">
+                  <el-tag :type="getStatusTag(row.status)" size="small">
+                    {{ getStatusLabel(row.status) }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="created_at" label="提交时间" width="180">
+                <template #default="{ row }">
+                  {{ formatDate(row.created_at) }}
+                </template>
+              </el-table-column>
+            </el-table>
+            
+            <el-empty v-if="!feedbackLoading && feedbackList.length === 0" description="暂无反馈记录" />
+          </div>
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -233,11 +270,13 @@
 
 <script setup>
 import { ref, computed, reactive } from 'vue'
-import { Search, User, EditPen, List, DataAnalysis, Setting, Upload, Check, InfoFilled } from '@element-plus/icons-vue'
+import { Search, User, EditPen, List, DataAnalysis, Setting, Upload, Check, InfoFilled, Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import { useAccountStore } from '../../stores'
 
 const { t } = useI18n()
+const accountStore = useAccountStore()
 
 const openAboutDialog = () => {
   if (window.electronAPI && window.electronAPI.app && window.electronAPI.app.openAboutDialog) {
@@ -260,6 +299,79 @@ const feedbackForm = reactive({
   description: '',
   files: []
 })
+
+// 反馈历史
+const feedbackList = ref([])
+const feedbackLoading = ref(false)
+
+// 加载反馈历史
+const loadFeedbacks = async () => {
+  const userId = accountStore.userInfo?.id
+  if (!userId) return
+  
+  feedbackLoading.value = true
+  try {
+    const result = await window.electronAPI.feedback.getAll(userId)
+    if (result.success) {
+      feedbackList.value = result.feedbacks
+    }
+  } catch (error) {
+    console.error('Failed to load feedbacks:', error)
+  } finally {
+    feedbackLoading.value = false
+  }
+}
+
+// 获取反馈类型标签
+const getFeedbackTypeLabel = (type) => {
+  const map = {
+    'suggestion': '建议',
+    'bug': 'Bug',
+    'question': '问题',
+    'other': '其他'
+  }
+  return map[type] || type
+}
+
+const getFeedbackTypeTag = (type) => {
+  const map = {
+    'suggestion': 'success',
+    'bug': 'danger',
+    'question': 'warning',
+    'other': 'info'
+  }
+  return map[type] || 'info'
+}
+
+// 获取状态标签
+const getStatusTag = (status) => {
+  const map = {
+    'pending': 'warning',
+    'processing': 'primary',
+    'resolved': 'success',
+    'rejected': 'danger'
+  }
+  return map[status] || 'info'
+}
+
+const getStatusLabel = (status) => {
+  const map = {
+    'pending': '待处理',
+    'processing': '处理中',
+    'resolved': '已解决',
+    'rejected': '已拒绝'
+  }
+  return map[status] || status
+}
+
+// 格式化日期
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleString('zh-CN')
+}
+
+// 初始加载反馈历史
+loadFeedbacks()
 
 // 反馈表单验证规则
 const feedbackRules = computed(() => ({
@@ -351,17 +463,35 @@ const submitFeedback = async () => {
   try {
     await feedbackFormRef.value.validate()
     
-    // 模拟提交反馈
-    ElMessage.success(t('help.feedbackMessages.success'))
+    const userId = accountStore.userInfo.id
+    if (!userId) {
+      ElMessage.warning('请先登录')
+      return
+    }
     
-    // 重置表单
-    Object.keys(feedbackForm).forEach(key => {
-      if (Array.isArray(feedbackForm[key])) {
-        feedbackForm[key] = []
-      } else {
-        feedbackForm[key] = ''
-      }
+    const result = await window.electronAPI.feedback.add(userId, {
+      type: feedbackForm.type,
+      contact: feedbackForm.contact,
+      description: feedbackForm.description
     })
+    
+    if (result.success) {
+      ElMessage.success(t('help.feedbackMessages.success'))
+      
+      // 重置表单
+      Object.keys(feedbackForm).forEach(key => {
+        if (Array.isArray(feedbackForm[key])) {
+          feedbackForm[key] = []
+        } else {
+          feedbackForm[key] = ''
+        }
+      })
+      
+      // 刷新反馈列表
+      loadFeedbacks()
+    } else {
+      ElMessage.error(result.message || '提交失败')
+    }
   } catch (error) {
     console.error('Form validation failed:', error)
     ElMessage.error(t('help.feedbackMessages.validateError'))
@@ -528,6 +658,10 @@ const submitFeedback = async () => {
     color: var(--text-color-secondary);
     line-height: 1.2;
     margin-top: 4px;
+  }
+
+  .feedback-history {
+    margin-top: var(--spacing-lg);
   }
 }
 </style>

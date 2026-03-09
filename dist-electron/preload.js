@@ -35,6 +35,12 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
     update: (id, mapping) => electron.ipcRenderer.invoke("mapping:update", id, mapping),
     delete: (id) => electron.ipcRenderer.invoke("mapping:delete", id)
   },
+  globalMapping: {
+    getAll: () => electron.ipcRenderer.invoke("globalMapping:getAll"),
+    add: (keyword, accountFieldName) => electron.ipcRenderer.invoke("globalMapping:add", keyword, accountFieldName),
+    update: (id, keyword, accountFieldName) => electron.ipcRenderer.invoke("globalMapping:update", id, keyword, accountFieldName),
+    delete: (id) => electron.ipcRenderer.invoke("globalMapping:delete", id)
+  },
   // Setting
   setting: {
     get: (key) => electron.ipcRenderer.invoke("setting:get", key),
@@ -42,11 +48,6 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
     set: (key, value) => electron.ipcRenderer.invoke("setting:set", key, value)
   },
   // Data
-  db: {
-    run: (sql, params) => electron.ipcRenderer.invoke("db:run", sql, params),
-    query: (sql, params) => electron.ipcRenderer.invoke("db:query", sql, params),
-    get: (sql, params) => electron.ipcRenderer.invoke("db:get", sql, params)
-  },
   log: {
     getAll: (limit) => electron.ipcRenderer.invoke("log:getAll", limit),
     add: (log) => electron.ipcRenderer.invoke("log:add", log),
@@ -85,9 +86,13 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   },
   schedule: {
     getByMonth: (userId, dateStr) => electron.ipcRenderer.invoke("schedule:getByMonth", userId, dateStr),
-    getByDate: (userId, dateStr) => electron.ipcRenderer.invoke("schedule:getByDate", userId, dateStr),
+    getDate: (userId, dateStr) => electron.ipcRenderer.invoke("schedule:getByDate", userId, dateStr),
     add: (userId, content, scheduleDate) => electron.ipcRenderer.invoke("schedule:add", userId, content, scheduleDate),
     delete: (id, userId) => electron.ipcRenderer.invoke("schedule:delete", id, userId)
+  },
+  feedback: {
+    add: (userId, feedback) => electron.ipcRenderer.invoke("feedback:add", userId, feedback),
+    getAll: (userId) => electron.ipcRenderer.invoke("feedback:getAll", userId)
   },
   app: {
     getVersion: () => electron.ipcRenderer.invoke("app:getVersion"),

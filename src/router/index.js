@@ -1,7 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import Layout from '../components/Layout.vue'
 import i18n from '../i18n'
-import { useAccountStore } from '../stores/account'
 
 const routes = [
   {
@@ -97,9 +96,8 @@ router.beforeEach((to, from, next) => {
   // 检查是否需要登录
   const requiresAuth = to.meta.requiresAuth !== false
   
-  // 从 store 中获取登录状态
-  const accountStore = useAccountStore()
-  const isLoggedIn = accountStore.isLoggedIn
+  // 直接从 localStorage 检查登录状态，避免 store 初始化时机问题
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
   
   console.log(`[Router] Navigating to: ${to.path}, Auth Required: ${requiresAuth}, Logged In: ${isLoggedIn}`)
 
@@ -108,9 +106,9 @@ router.beforeEach((to, from, next) => {
     console.warn('[Router] Redirecting to /login')
     next('/login')
   } else if (to.path === '/login' && isLoggedIn) {
-    // 已登录但访问登录页，跳转到首页
-    console.log('[Router] Already logged in, redirecting to /account')
-    next('/account')
+    // 已登录但访问登录页，跳转到个人中心
+    console.log('[Router] Already logged in, redirecting to /profile')
+    next('/profile')
   } else {
     // 其他情况正常跳转
     next()

@@ -194,7 +194,10 @@ export const useAccountStore = defineStore('account', {
     },
     setLoginStatus(status, remember = false) {
       this.isLoggedIn = status
-      if (remember && status) {
+      // 登录成功时设置 localStorage，便于路由守卫检查
+      if (status) {
+        localStorage.setItem('isLoggedIn', 'true')
+      } else if (remember) {
         localStorage.setItem('isLoggedIn', 'true')
       } else {
         localStorage.removeItem('isLoggedIn')

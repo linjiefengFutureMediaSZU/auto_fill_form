@@ -41,347 +41,23 @@
               </div>
             </div>
 
-            <!-- 每日填报数量折线图 -->
+            <!-- 填报数量图表 -->
             <div class="fill-chart">
-              <h4 class="chart-title">{{ t('data.dailyFillCount') }}</h4>
+              <div class="chart-header">
+                <h4 class="chart-title">{{ getChartTitle() }}</h4>
+                <el-radio-group v-model="viewMode" @change="handleViewModeChange" size="small">
+                  <el-radio-button value="daily">{{ t('data.daily') }}</el-radio-button>
+                  <el-radio-button value="weekly">{{ t('data.weekly') }}</el-radio-button>
+                  <el-radio-button value="monthly">{{ t('data.monthly') }}</el-radio-button>
+                  <el-radio-button value="yearly">{{ t('data.yearly') }}</el-radio-button>
+                </el-radio-group>
+              </div>
               <div ref="fillDataChartRef" class="chart-container"></div>
             </div>
           </div>
         </div>
       </el-tab-pane>
-
-      <!-- 备份管理标签页 -->
-      <el-tab-pane :label="t('data.backupManagement')" name="backup">
-        <div class="backup-management">
-          <div class="glass-card">
-            <div class="section-header">
-              <h3 class="subtitle">{{ t('data.backupList') }}</h3>
-              <div class="header-actions">
-                <el-button type="primary" @click="handleManualBackup">
-                  <el-icon><Upload /></el-icon>
-                  {{ t('data.manualBackup') }}
-                </el-button>
-                <el-button @click="openBackupSettingsDialog">
-                  <el-icon><Setting /></el-icon>
-                  {{ t('data.backupSettings') }}
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 备份列表 -->
-            <div class="backup-list">
-              <el-table
-                v-loading="backupLoading"
-                :data="backups"
-                style="width: 100%"
-                border
-                height="100%"
-              >
-                <el-table-column prop="backup_time" :label="t('data.backupTime')" width="180">
-                  <template #default="scope">
-                    {{ formatDateTime(scope.row.backup_time) }}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="backup_path" :label="t('data.backupPath')" min-width="250">
-                  <template #default="scope">
-                    <el-popover
-                      placement="top"
-                      :width="400"
-                      trigger="hover"
-                    >
-                      <template #reference>
-                        <span class="backup-path">{{ scope.row.backup_path }}</span>
-                      </template>
-                      <div class="backup-path-popover">
-                        <p>{{ scope.row.backup_path }}</p>
-                        <el-button
-                          size="small"
-                          type="primary"
-                          @click="copyBackupPath(scope.row.backup_path)"
-                        >
-                          <el-icon><DocumentCopy /></el-icon>
-                          {{ t('data.copyPath') }}
-                        </el-button>
-                      </div>
-                    </el-popover>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="backup_size" :label="t('data.backupSize')" width="100">
-                  <template #default="scope">
-                    {{ scope.row.backup_size }}
-                  </template>
-                </el-table-column>
-                <el-table-column :label="t('data.includedData')" width="200">
-                  <template #default="scope">
-                    <div class="backup-data-info">
-                      <div>{{ t('data.account') }}: {{ scope.row.account_count }} </div>
-                      <div>{{ t('data.form') }}: {{ scope.row.template_count }} </div>
-                      <div>{{ t('data.log') }}: {{ scope.row.log_count }} </div>
-                    </div>
-                  </template>
-                </el-table-column>
-                <el-table-column :label="t('data.operation')" width="150" fixed="right">
-                  <template #default="scope">
-                    <el-button
-                      size="small"
-                      type="primary"
-                      @click="handleRestoreBackup(scope.row)"
-                    >
-                      <el-icon><Download /></el-icon>
-                      {{ t('data.restore') }}
-                    </el-button>
-                    <el-button
-                      size="small"
-                      type="danger"
-                      @click="handleDeleteBackup(scope.row.id)"
-                    >
-                      <el-icon><Delete /></el-icon>
-                      {{ t('data.delete') }}
-                    </el-button>
-                  </template>
-                </el-table-column>
-              </el-table>
-              
-              <!-- 空状态 -->
-              <div v-if="backups.length === 0" class="empty-state">
-                <el-empty :description="t('data.noBackup')" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </el-tab-pane>
-
-      <!-- 日志管理标签页 -->
-      <el-tab-pane :label="t('data.logManagement')" name="log">
-        <div class="log-management">
-          <div class="glass-card">
-            <div class="section-header">
-              <h3 class="subtitle">{{ t('data.fillLog') }}</h3>
-              <div class="header-actions">
-                <el-button @click="handleExportLogs">
-                  <el-icon><Download /></el-icon>
-                  {{ t('data.exportLog') }}
-                </el-button>
-                <el-button type="danger" @click="handleCleanLogs">
-                  <el-icon><Delete /></el-icon>
-                  {{ t('data.cleanLog') }}
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 日志搜索筛选 -->
-            <el-form :inline="true" :model="logSearchForm" class="log-search-form">
-              <el-form-item :label="t('data.resultFilter')">
-                <el-select v-model="logSearchForm.fill_result" :placeholder="t('data.selectResult')" clearable>
-                  <el-option :label="t('data.success')" value="成功" />
-                  <el-option :label="t('data.fail')" value="失败" />
-                </el-select>
-              </el-form-item>
-              <el-form-item :label="t('data.timeRange')">
-                <el-date-picker
-                  v-model="logSearchForm.timeRange"
-                  type="daterange"
-                  :range-separator="t('to')"
-                  :start-placeholder="t('data.startDate')"
-                  :end-placeholder="t('data.endDate')"
-                  format="YYYY-MM-DD"
-                  value-format="YYYY-MM-DD"
-                />
-              </el-form-item>
-              <el-form-item>
-                <el-button type="primary" @click="handleLogSearch">
-                  <el-icon><Search /></el-icon>
-                  {{ t('data.search') }}
-                </el-button>
-                <el-button @click="resetLogSearch">
-                  <el-icon><Refresh /></el-icon>
-                  {{ t('data.reset') }}
-                </el-button>
-              </el-form-item>
-            </el-form>
-
-            <!-- 日志列表 -->
-            <div class="log-list">
-              <div class="table-wrapper">
-                <el-table
-                  v-loading="logLoading"
-                  :data="paginatedLogs"
-                  style="width: 100%"
-                  border
-                  height="100%"
-                >
-                  <el-table-column prop="fill_time" :label="t('data.fillTime')" width="180">
-                    <template #default="scope">
-                      {{ formatDateTime(scope.row.fill_time) }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column :label="t('data.accountInfo')" width="150">
-                    <template #default="scope">
-                      <div class="account-info">
-                        {{ getAccountInfo(scope.row.account_id) }}
-                      </div>
-                    </template>
-                  </el-table-column>
-                  <el-table-column :label="t('data.formInfo')" width="200">
-                    <template #default="scope">
-                      <div class="form-info">
-                        {{ getFormInfo(scope.row.template_id) }}
-                      </div>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="fill_result" :label="t('data.fillResult')" width="100">
-                    <template #default="scope">
-                      <el-tag
-                        :type="scope.row.fill_result === '成功' ? 'success' : 'danger'"
-                        size="small"
-                      >
-                        {{ scope.row.fill_result === '成功' ? t('data.success') : t('data.fail') }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="fail_reason" :label="t('data.failReason')" min-width="200">
-                    <template #default="scope">
-                      {{ scope.row.fail_reason || '-' }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="submit_count" :label="t('data.submitCount')" width="100">
-                    <template #default="scope">
-                      {{ scope.row.submit_count }}
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </div>
-              
-              <!-- 空状态 -->
-              <div v-if="filteredLogs.length === 0" class="empty-state">
-                <el-empty :description="t('data.noLog')" />
-              </div>
-
-              <!-- 分页组件 -->
-              <div v-if="filteredLogs.length > 0" class="pagination-container">
-                <el-pagination
-                  v-model:current-page="currentPage"
-                  v-model:page-size="pageSize"
-                  :page-sizes="[10, 20, 50, 100]"
-                  :background="true"
-                  layout="total, sizes, prev, pager, next, jumper"
-                  :total="filteredLogs.length"
-                  @size-change="handleSizeChange"
-                  @current-change="handleCurrentChange"
-                />
-              </div>
-            </div>
-
-            <!-- 每日填报数量折线图 -->
-            <div class="fill-chart">
-              <h4 class="chart-title">{{ t('data.dailyFillCount') }}</h4>
-              <div ref="fillChartRef" class="chart-container"></div>
-            </div>
-          </div>
-        </div>
-      </el-tab-pane>
     </el-tabs>
-
-    <!-- 备份设置弹窗 -->
-    <el-dialog
-      v-model="backupSettingsDialogVisible"
-      :title="t('data.backupSettings')"
-      width="500px"
-    >
-      <el-form
-        :model="backupSettings"
-        :rules="backupSettingsRules"
-        ref="backupSettingsFormRef"
-        label-width="120px"
-      >
-        <el-form-item :label="t('data.scheduledBackup')">
-          <el-switch v-model="backupSettings.enabled" />
-        </el-form-item>
-        <el-form-item :label="t('data.backupTime')" v-if="backupSettings.enabled">
-          <el-time-picker
-            v-model="backupSettings.time"
-            format="HH:mm"
-            value-format="HH:mm"
-            :placeholder="t('data.selectBackupTime')"
-          />
-        </el-form-item>
-        <el-form-item :label="t('data.backupFrequency')" v-if="backupSettings.enabled">
-          <el-select v-model="backupSettings.frequency" :placeholder="t('data.selectBackupFrequency')">
-            <el-option :label="t('data.daily')" value="daily" />
-            <el-option :label="t('data.weekly')" value="weekly" />
-            <el-option :label="t('data.monthly')" value="monthly" />
-          </el-select>
-        </el-form-item>
-        <el-form-item :label="t('data.backupPath')" v-if="backupSettings.enabled">
-          <el-input v-model="backupSettings.path" :placeholder="t('data.enterBackupPath')" />
-          <div class="form-tip">{{ t('data.pathTip') }}</div>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="backupSettingsDialogVisible = false">{{ t('data.cancel') }}</el-button>
-          <el-button type="primary" @click="saveBackupSettings">{{ t('data.save') }}</el-button>
-        </span>
-      </template>
-    </el-dialog>
-
-    <!-- 恢复备份弹窗 -->
-    <el-dialog
-      v-model="restoreDialogVisible"
-      :title="t('data.restore')"
-      width="500px"
-      :close-on-click-modal="false"
-    >
-      <div class="restore-dialog">
-        <div class="backup-info">
-          <h4>{{ t('data.backupInfo') }}</h4>
-          <div class="info-item">
-            <span class="label">{{ t('data.backupTime') }}：</span>
-            <span class="value">{{ selectedBackup?.backup_time }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">{{ t('data.backupPath') }}：</span>
-            <span class="value">{{ selectedBackup?.backup_path }}</span>
-          </div>
-          <div class="info-item">
-            <span class="label">{{ t('data.includedData') }}：</span>
-            <span class="value">
-              {{ t('data.account') }} {{ selectedBackup?.account_count }} ,
-              {{ t('data.form') }} {{ selectedBackup?.template_count }} ,
-              {{ t('data.log') }} {{ selectedBackup?.log_count }} 
-            </span>
-          </div>
-        </div>
-        <div class="restore-warning">
-          <el-alert
-            :title="t('data.restoreWarning')"
-            type="warning"
-            :closable="false"
-            show-icon
-          >
-            <template #default>
-              <p>{{ t('data.restoreWarningContent') }}</p>
-              <p>{{ t('data.restoreSuggestion') }}</p>
-            </template>
-          </el-alert>
-        </div>
-        <div class="restore-options">
-          <h4>{{ t('data.restoreOptions') }}</h4>
-          <el-checkbox v-model="restoreOptions.allData">{{ t('data.restoreAll') }}</el-checkbox>
-          <el-checkbox-group v-model="restoreOptions.dataTypes" v-if="!restoreOptions.allData">
-            <el-checkbox label="accounts">{{ t('data.accountInfo') }}</el-checkbox>
-            <el-checkbox label="templates">{{ t('data.formTemplate') }}</el-checkbox>
-            <el-checkbox label="logs">{{ t('data.fillLog') }}</el-checkbox>
-          </el-checkbox-group>
-        </div>
-      </div>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="restoreDialogVisible = false">{{ t('data.cancel') }}</el-button>
-          <el-button type="danger" @click="confirmRestore">{{ t('data.confirmRestore') }}</el-button>
-        </span>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -404,6 +80,7 @@ const settingsStore = useSettingsStore()
 
 // 响应式数据
 const activeTab = ref('fillData')
+const viewMode = ref('daily')
 const backupLoading = ref(false)
 const logLoading = ref(false)
 const backupSettingsDialogVisible = ref(false)
@@ -411,6 +88,22 @@ const restoreDialogVisible = ref(false)
 const selectedBackup = ref(null)
 const fillChartRef = ref(null)
 const fillDataChartRef = ref(null)
+
+// 获取图表标题
+const getChartTitle = () => {
+  const titles = {
+    daily: t('data.dailyFillCount'),
+    weekly: t('data.weeklyFillCount'),
+    monthly: t('data.monthlyFillCount'),
+    yearly: t('data.yearlyFillCount')
+  }
+  return titles[viewMode.value] || t('data.dailyFillCount')
+}
+
+// 处理视图模式切换
+const handleViewModeChange = () => {
+  updateFillDataChart()
+}
 let fillChart = null
 let fillDataChart = null
 
@@ -529,20 +222,141 @@ const dailyFillData = computed(() => {
   const sortedData = Array.from(dailyMap.entries())
     .sort((a, b) => new Date(a[0]) - new Date(b[0]))
   
-  // 生成最近7天的数据（如果没有数据则填充0）
-  const last7Days = []
+  // 生成最近30天的数据（如果没有数据则填充0）
+  const last30Days = []
   const today = new Date()
   
-  for (let i = 6; i >= 0; i--) {
+  for (let i = 29; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(today.getDate() - i)
     const dateStr = date.toISOString().split('T')[0]
     
     const count = dailyMap.get(dateStr) || 0
-    last7Days.push({ date: dateStr, count })
+    last30Days.push({ date: dateStr, count })
   }
   
-  return last7Days
+  return last30Days
+})
+
+// 按周汇总数据
+const weeklyFillData = computed(() => {
+  const weeklyMap = new Map()
+  
+  if (!logs.value || !Array.isArray(logs.value)) return []
+
+  logs.value.forEach(log => {
+    if (!log || !log.fill_time) return
+    try {
+      const dateObj = new Date(log.fill_time)
+      if (isNaN(dateObj.getTime())) return
+      
+      // 获取周的起始日期（周一）
+      const day = dateObj.getDay() || 7
+      const weekStart = new Date(dateObj)
+      weekStart.setDate(dateObj.getDate() - day + 1)
+      const weekStr = weekStart.toISOString().split('T')[0]
+      
+      if (weeklyMap.has(weekStr)) {
+        weeklyMap.set(weekStr, weeklyMap.get(weekStr) + 1)
+      } else {
+        weeklyMap.set(weekStr, 1)
+      }
+    } catch (e) {
+      console.warn('Error parsing log date:', log, e)
+    }
+  })
+  
+  // 生成最近12周的数据
+  const last12Weeks = []
+  const today = new Date()
+  const dayOfWeek = today.getDay() || 7
+  
+  for (let i = 11; i >= 0; i--) {
+    const weekStart = new Date(today)
+    weekStart.setDate(today.getDate() - dayOfWeek - (i * 7) + 1)
+    const weekStr = weekStart.toISOString().split('T')[0]
+    
+    const count = weeklyMap.get(weekStr) || 0
+    last12Weeks.push({ date: weekStr, count })
+  }
+  
+  return last12Weeks
+})
+
+// 按月汇总数据
+const monthlyFillData = computed(() => {
+  const monthlyMap = new Map()
+  
+  if (!logs.value || !Array.isArray(logs.value)) return []
+
+  logs.value.forEach(log => {
+    if (!log || !log.fill_time) return
+    try {
+      const dateObj = new Date(log.fill_time)
+      if (isNaN(dateObj.getTime())) return
+      const monthStr = dateObj.toISOString().slice(0, 7)
+      
+      if (monthlyMap.has(monthStr)) {
+        monthlyMap.set(monthStr, monthlyMap.get(monthStr) + 1)
+      } else {
+        monthlyMap.set(monthStr, 1)
+      }
+    } catch (e) {
+      console.warn('Error parsing log date:', log, e)
+    }
+  })
+  
+  // 生成最近12个月的数据
+  const last12Months = []
+  const today = new Date()
+  
+  for (let i = 11; i >= 0; i--) {
+    const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1)
+    const monthStr = monthDate.toISOString().slice(0, 7)
+    
+    const count = monthlyMap.get(monthStr) || 0
+    last12Months.push({ date: monthStr, count })
+  }
+  
+  return last12Months
+})
+
+// 按年汇总数据
+const yearlyFillData = computed(() => {
+  const yearlyMap = new Map()
+  
+  if (!logs.value || !Array.isArray(logs.value)) return []
+
+  logs.value.forEach(log => {
+    if (!log || !log.fill_time) return
+    try {
+      const dateObj = new Date(log.fill_time)
+      if (isNaN(dateObj.getTime())) return
+      const yearStr = dateObj.getFullYear().toString()
+      
+      if (yearlyMap.has(yearStr)) {
+        yearlyMap.set(yearStr, yearlyMap.get(yearStr) + 1)
+      } else {
+        yearlyMap.set(yearStr, 1)
+      }
+    } catch (e) {
+      console.warn('Error parsing log date:', log, e)
+    }
+  })
+  
+  // 生成最近5年的数据
+  const last5Years = []
+  const today = new Date()
+  
+  for (let i = 4; i >= 0; i--) {
+    const year = today.getFullYear() - i
+    const yearStr = year.toString()
+    
+    const count = yearlyMap.get(yearStr) || 0
+    last5Years.push({ date: yearStr, count })
+  }
+  
+  return last5Years
 })
 
 // 方法
@@ -840,7 +654,37 @@ const updateFillDataChart = () => {
   if (!fillDataChart) return
   
   try {
-    const data = dailyFillData.value
+    // 根据视图模式获取对应的数据
+    let data = []
+    let seriesName = ''
+    let boundaryGap = false
+    
+    switch (viewMode.value) {
+      case 'daily':
+        data = dailyFillData.value
+        seriesName = t('data.dailyFillCount')
+        boundaryGap = false
+        break
+      case 'weekly':
+        data = weeklyFillData.value
+        seriesName = t('data.weeklyFillCount')
+        boundaryGap = true
+        break
+      case 'monthly':
+        data = monthlyFillData.value
+        seriesName = t('data.monthlyFillCount')
+        boundaryGap = true
+        break
+      case 'yearly':
+        data = yearlyFillData.value
+        seriesName = t('data.yearlyFillCount')
+        boundaryGap = true
+        break
+      default:
+        data = dailyFillData.value
+        seriesName = t('data.dailyFillCount')
+    }
+    
     const dates = data.map(item => item.date)
     const counts = data.map(item => item.count)
     
@@ -861,9 +705,9 @@ const updateFillDataChart = () => {
       },
       xAxis: {
         type: 'category',
-        boundaryGap: false,
+        boundaryGap: boundaryGap,
         data: dates,
-        axisLabel: { color: textColor },
+        axisLabel: { color: textColor, rotate: viewMode.value === 'yearly' ? 0 : 0 },
         axisLine: { lineStyle: { color: splitLineColor } }
       },
       yAxis: {
@@ -874,7 +718,7 @@ const updateFillDataChart = () => {
       },
       series: [
         {
-          name: t('data.dailyFillCount'),
+          name: seriesName,
           type: 'line',
           data: counts,
           smooth: true,
@@ -1121,8 +965,17 @@ onUnmounted(() => {
   min-height: 300px;
 }
 
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .chart-title {
-  margin: 0 0 20px;
+  margin: 0;
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);

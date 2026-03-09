@@ -46,19 +46,20 @@
 
           <!-- 账号列表 -->
           <div class="account-list">
-            <el-checkbox
-              v-for="account in filteredAccounts"
-              :key="account.id"
-              v-model="selectedAccountIds"
-              :label="account.id"
-              :disabled="account.status !== 1"
-              class="account-item"
-            >
-              <div class="account-info" :class="{ 'inactive': account.status !== 1 }">
-                <div class="account-name">{{ account.account_nickname }}</div>
-                <div class="account-type">{{ account.account_type }}</div>
-              </div>
-            </el-checkbox>
+            <el-checkbox-group v-model="selectedAccountIds">
+              <el-checkbox
+                v-for="account in filteredAccounts"
+                :key="account.id"
+                :value="account.id"
+                :disabled="account.status !== 1"
+                class="account-item"
+              >
+                <div class="account-info" :class="{ 'inactive': account.status !== 1 }">
+                  <div class="account-name">{{ account.account_nickname }}</div>
+                  <div class="account-type">{{ account.account_type }}</div>
+                </div>
+              </el-checkbox>
+            </el-checkbox-group>
             <div v-if="filteredAccounts.length === 0" class="empty-state">
               <el-empty :description="$t('form.noAccount')" />
             </div>
@@ -197,7 +198,7 @@
           <div v-else class="no-template-selected">
             <el-empty
               :description="$t('form.selectTemplate')"
-              image-size="200"
+              :image-size="200"
             >
               <el-button type="primary" @click="$router.push('/formList')">
                 {{ $t('form.gotoList') }}

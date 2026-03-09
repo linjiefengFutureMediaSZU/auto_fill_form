@@ -139,6 +139,12 @@ ipcMain.handle('mapping:add', (event, mapping) => FormService.addMapping(mapping
 ipcMain.handle('mapping:update', (event, id, mapping) => FormService.updateMapping(id, mapping));
 ipcMain.handle('mapping:delete', (event, id) => FormService.deleteMapping(id));
 
+// Global Mapping IPC
+ipcMain.handle('globalMapping:getAll', () => FormService.getAllGlobalMappings());
+ipcMain.handle('globalMapping:add', (event, keyword, accountFieldName) => FormService.addGlobalMapping(keyword, accountFieldName));
+ipcMain.handle('globalMapping:update', (event, id, keyword, accountFieldName) => FormService.updateGlobalMapping(id, keyword, accountFieldName));
+ipcMain.handle('globalMapping:delete', (event, id) => FormService.deleteGlobalMapping(id));
+
 // Setting IPC
 ipcMain.handle('setting:get', (event, key) => SettingService.getSetting(key));
 ipcMain.handle('setting:getAll', () => SettingService.getAllSettings());
@@ -271,3 +277,29 @@ ipcMain.handle('schedule:getByMonth', (event, userId, dateStr) => ScheduleServic
 ipcMain.handle('schedule:getByDate', (event, userId, dateStr) => ScheduleService.getSchedulesByDate(userId, dateStr));
 ipcMain.handle('schedule:add', (event, userId, content, scheduleDate) => ScheduleService.addSchedule(userId, content, scheduleDate));
 ipcMain.handle('schedule:delete', (event, id, userId) => ScheduleService.deleteSchedule(id, userId));
+
+// Feedback IPC
+ipcMain.handle('feedback:add', async (event, userId, feedback) => {
+  const { queryRun } = await import('./database.js');
+  try {
+    const result = await queryRun(
+      'INSERT INTO feedbacks (user_id, type, contact, description) VALUES (?, ?, ?, ?)',
+      [userId, feedback.type, feedback.contact, feedback.description]
+    );
+    return { success: true, id: result.lastID };
+  } catch (error) {
+    console.error('Failed to add feedback:', error);
+    return { success: false, message: error.message };
+  }
+});
+
+ipcMain.handle('feedback:getAll', async (event, userId) => {
+  const { queryAll } = await import('./database.js');
+  try {
+    const feedbacks = await queryAll('SELECT * FROM feedbacks WHERE user_id = ? ORDER BY created_at DESC', [userId]);
+    return { success: true, feedbacks };
+  } catch (error) {
+    console.error('Failed to get feedbacks:', error);
+    return { success: false, message: error.message };
+  }
+});

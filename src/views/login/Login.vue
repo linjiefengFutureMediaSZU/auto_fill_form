@@ -195,8 +195,8 @@ const handleLogin = async () => {
         await nextTick()
         console.log('Login success, redirecting to account...')
         
-        // 跳转到首页
-        router.replace({ name: 'Account' }).catch(err => {
+        // 跳转到个人中心
+        router.push({ name: 'Profile' }).catch(err => {
           console.error('Navigation failed:', err)
           ElMessage.error(t('login.navFailed') + ': ' + err.message)
         })

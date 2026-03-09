@@ -49,6 +49,10 @@
             </div>
             
             <div class="info-actions" style="margin-top: 24px;">
+              <el-button type="primary" @click="openEditProfileDialog">
+                <el-icon style="margin-right: 4px;"><Edit /></el-icon>
+                编辑资料
+              </el-button>
               <el-button type="primary" plain @click="securityDialogVisible = true">
                 <el-icon style="margin-right: 4px;"><Lock /></el-icon>
                 {{ t('profile.securitySettings') }}
@@ -123,6 +127,41 @@
               @click="handleSecuritySave"
             >
               {{ t('common.save') || '保存' }}
+            </el-button>
+          </span>
+        </template>
+      </el-dialog>
+      
+      <!-- 编辑资料弹窗 -->
+      <el-dialog
+        v-model="editProfileDialogVisible"
+        title="编辑资料"
+        width="500px"
+        destroy-on-close
+      >
+        <el-form
+          ref="editProfileFormRef"
+          :model="editProfileForm"
+          :rules="editProfileRules"
+          label-width="80px"
+        >
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model="editProfileForm.username" placeholder="请输入用户名" />
+          </el-form-item>
+          
+          <el-form-item label="手机号" prop="phone">
+            <el-input v-model="editProfileForm.phone" placeholder="请输入手机号" />
+          </el-form-item>
+          
+          <el-form-item label="邮箱" prop="email">
+            <el-input v-model="editProfileForm.email" placeholder="请输入邮箱" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="editProfileDialogVisible = false">取消</el-button>
+            <el-button type="primary" :loading="editProfileLoading" @click="handleEditProfileSave">
+              保存
             </el-button>
           </span>
         </template>
@@ -205,7 +244,7 @@
 <script setup>
 import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useAccountStore } from '../../stores/account'
-import { Lock, Message, Plus, Delete } from '@element-plus/icons-vue'
+import { Lock, Message, Plus, Delete, Edit } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 
@@ -229,6 +268,29 @@ const securityLoading = ref(false)
 const avatarLoading = ref(false)
 const securityFormRef = ref(null)
 const fileInput = ref(null)
+
+// 编辑资料弹窗
+const editProfileDialogVisible = ref(false)
+const editProfileLoading = ref(false)
+const editProfileFormRef = ref(null)
+const editProfileForm = reactive({
+  username: '',
+  phone: '',
+  email: ''
+})
+
+const editProfileRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, max: 20, message: '用户名长度在 2 到 20 个字符', trigger: 'blur' }
+  ],
+  phone: [
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+  ],
+  email: [
+    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+  ]
+}
 
 // 日程相关状态
 const currentDate = ref(new Date())
@@ -273,20 +335,20 @@ const loadSchedules = async (date) => {
   }
 }
 
+// 计算属性
+const userInfo = computed(() => accountStore.userInfo)
+
 // 监听当前日期变化（切换月份时加载数据）
 watch(currentDate, (newVal) => {
   loadSchedules(newVal)
 }, { immediate: true })
 
 // 监听用户信息变化，加载日程
-watch(() => userInfo.value.id, (newVal) => {
+watch(() => userInfo.value?.id, (newVal) => {
   if (newVal) {
     loadSchedules(currentDate.value)
   }
 })
-
-// 计算属性
-const userInfo = computed(() => accountStore.userInfo)
 
 const userInitial = computed(() => {
   if (userInfo.value.nickname) {
@@ -421,6 +483,55 @@ const handleSecuritySave = async () => {
   } finally {
     securityLoading.value = false
   }
+}
+
+/**
+ * 处理编辑资料保存
+ */
+const handleEditProfileSave = async () => {
+  if (!editProfileFormRef.value) return
+  
+  try {
+    await editProfileFormRef.value.validate()
+    editProfileLoading.value = true
+    
+    const updateData = {
+      username: editProfileForm.username,
+      phone: editProfileForm.phone,
+      email: editProfileForm.email
+    }
+    
+    const result = await window.electronAPI.auth.updateProfile(userInfo.value.id, updateData)
+    
+    if (result.success) {
+      ElMessage.success('资料更新成功')
+      
+      // 更新本地 store
+      accountStore.setUserInfo({
+        ...userInfo.value,
+        username: updateData.username,
+        phone: updateData.phone,
+        email: updateData.email
+      })
+      
+      editProfileDialogVisible.value = false
+    } else {
+      ElMessage.error(result.message || '更新失败')
+    }
+  } catch (error) {
+    console.error('Failed to save profile:', error)
+    ElMessage.error(error.message || '保存失败')
+  } finally {
+    editProfileLoading.value = false
+  }
+}
+
+// 打开编辑资料弹窗时初始化表单
+const openEditProfileDialog = () => {
+  editProfileForm.username = userInfo.value.username || ''
+  editProfileForm.phone = userInfo.value.phone || ''
+  editProfileForm.email = userInfo.value.email || ''
+  editProfileDialogVisible.value = true
 }
 
 // 日程相关计算属性和方法

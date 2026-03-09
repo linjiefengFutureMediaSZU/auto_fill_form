@@ -104,7 +104,7 @@
 
       <!-- 内容区域 -->
       <el-main class="content-area">
-        <router-view />
+        <router-view :key="route.fullPath" />
       </el-main>
     </el-container>
   </div>
@@ -132,8 +132,8 @@ let timeInterval = null
 
 // 计算属性
 const activeMenu = computed(() => {
-  // 如果是根路径，高亮显示 account 菜单
-  if (route.path === '/') return '/account'
+  // 如果是根路径，高亮显示 profile 菜单
+  if (route.path === '/') return '/profile'
   return route.path
 })
 

@@ -26,10 +26,14 @@
 
     <div class="content-wrapper glass-card">
       <div class="table-container">
+        <!-- 骨架屏加载 -->
+        <template v-if="loading">
+          <el-skeleton :rows="5" animated />
+        </template>
         <el-table
+          v-else
           :data="rules"
           style="width: 100%"
-          v-loading="loading"
           stripe
           height="100%"
           @selection-change="handleSelectionChange"
@@ -192,7 +196,7 @@ const getFieldType = (fieldName) => {
   }
   
   // 预定义的 Element Plus tag 类型
-  const types = ['', 'success', 'warning', 'danger', 'info']
+  const types = ['primary', 'success', 'warning', 'danger', 'info']
   
   // 取模得到索引
   const index = Math.abs(hash) % types.length
@@ -203,7 +207,7 @@ const getFieldType = (fieldName) => {
 const loadRules = async () => {
   loading.value = true
   try {
-    const result = await window.electronAPI.db.query('SELECT * FROM global_field_mappings ORDER BY created_at DESC')
+    const result = await window.electronAPI.globalMapping.getAll()
     rules.value = result || []
   } catch (error) {
     ElMessage.error(t('common.loadFailed') + ': ' + error.message)
@@ -239,9 +243,10 @@ const handleSubmit = async () => {
       submitting.value = true
       try {
         if (isEdit.value) {
-          await window.electronAPI.db.run(
-            'UPDATE global_field_mappings SET keyword = ?, account_field_name = ? WHERE id = ?', 
-            [form.keyword, form.account_field_name, form.id]
+          await window.electronAPI.globalMapping.update(
+            form.id,
+            form.keyword, 
+            form.account_field_name
           )
           ElMessage.success(t('common.updateSuccess'))
         } else {
@@ -249,9 +254,9 @@ const handleSubmit = async () => {
           if (parts.length === 0) throw new Error('EMPTY_KEYWORDS')
           for (const k of parts) {
             try {
-              await window.electronAPI.db.run(
-                'INSERT INTO global_field_mappings (keyword, account_field_name) VALUES (?, ?)', 
-                [k, form.account_field_name]
+              await window.electronAPI.globalMapping.add(
+                k, 
+                form.account_field_name
               )
             } catch (e) {
               if (!e.message.includes('UNIQUE constraint')) throw e
@@ -286,7 +291,7 @@ const handleDelete = (row) => {
     }
   ).then(async () => {
     try {
-      await window.electronAPI.db.run('DELETE FROM global_field_mappings WHERE id = ?', [row.id])
+      await window.electronAPI.globalMapping.delete(row.id)
       ElMessage.success(t('common.deleteSuccess'))
       loadRules()
     } catch (error) {
@@ -312,7 +317,7 @@ const handleBulkDelete = () => {
     try {
       const ids = selectedRules.value.map(row => row.id)
       for (const id of ids) {
-        await window.electronAPI.db.run('DELETE FROM global_field_mappings WHERE id = ?', [id])
+        await window.electronAPI.globalMapping.delete(id)
       }
       ElMessage.success(t('common.deleteSuccess'))
       loadRules()

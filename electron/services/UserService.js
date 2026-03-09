@@ -96,10 +96,18 @@ export const UserService = {
    * 更新用户资料
    */
   async updateProfile(userId, data) {
-    const { nickname, email, phone, avatar } = data;
+    const { username, nickname, email, phone, avatar } = data;
     const fields = [];
     const params = [];
 
+    if (username !== undefined) {
+      const existing = await queryAll('SELECT id FROM users WHERE username = ? AND id != ?', [username, userId]);
+      if (existing.length > 0) {
+        return { success: false, message: '用户名已存在' };
+      }
+      fields.push('username = ?');
+      params.push(username);
+    }
     if (nickname !== undefined) { fields.push('nickname = ?'); params.push(nickname); }
     if (email !== undefined) { fields.push('email = ?'); params.push(email); }
     if (phone !== undefined) { fields.push('phone = ?'); params.push(phone); }

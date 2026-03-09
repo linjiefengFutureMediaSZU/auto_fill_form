@@ -37,6 +37,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     update: (id, mapping) => ipcRenderer.invoke('mapping:update', id, mapping),
     delete: (id) => ipcRenderer.invoke('mapping:delete', id),
   },
+  globalMapping: {
+    getAll: () => ipcRenderer.invoke('globalMapping:getAll'),
+    add: (keyword, accountFieldName) => ipcRenderer.invoke('globalMapping:add', keyword, accountFieldName),
+    update: (id, keyword, accountFieldName) => ipcRenderer.invoke('globalMapping:update', id, keyword, accountFieldName),
+    delete: (id) => ipcRenderer.invoke('globalMapping:delete', id),
+  },
 
   // Setting
   setting: {
@@ -86,9 +92,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   schedule: {
     getByMonth: (userId, dateStr) => ipcRenderer.invoke('schedule:getByMonth', userId, dateStr),
-    getByDate: (userId, dateStr) => ipcRenderer.invoke('schedule:getByDate', userId, dateStr),
+    getDate: (userId, dateStr) => ipcRenderer.invoke('schedule:getByDate', userId, dateStr),
     add: (userId, content, scheduleDate) => ipcRenderer.invoke('schedule:add', userId, content, scheduleDate),
     delete: (id, userId) => ipcRenderer.invoke('schedule:delete', id, userId),
+  },
+  feedback: {
+    add: (userId, feedback) => ipcRenderer.invoke('feedback:add', userId, feedback),
+    getAll: (userId) => ipcRenderer.invoke('feedback:getAll', userId),
   },
   app: {
     getVersion: () => ipcRenderer.invoke('app:getVersion'),

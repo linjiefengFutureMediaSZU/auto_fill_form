@@ -122,8 +122,12 @@
 
           <!-- 表单列表 -->
           <div class="form-table-container">
+            <!-- 骨架屏加载 -->
+            <template v-if="formLoading">
+              <el-skeleton :rows="5" animated />
+            </template>
             <el-table
-              v-loading="formLoading"
+              v-else
               :data="filteredAndSortedForms"
               style="width: 100%; height: 100%;"
               height="100%"
@@ -503,7 +507,7 @@ const formatDate = (dateString) => {
 // 获取表单类型标签样式
 const getFormTypeTagType = (type) => {
   const map = {
-    [FORM_TYPES.TENCENT]: '', // 默认蓝色
+    [FORM_TYPES.TENCENT]: 'primary', // 蓝色
     [FORM_TYPES.WENJUANXING]: 'warning', // 橙色
     [FORM_TYPES.SHIMO]: 'info', // 灰色
     [FORM_TYPES.MIKE]: 'success', // 绿色
@@ -511,7 +515,7 @@ const getFormTypeTagType = (type) => {
     [FORM_TYPES.MINIPROGRAM]: 'success', // 绿色
     [FORM_TYPES.OTHER]: 'info' // 灰色
   }
-  return map[type] || ''
+  return map[type] || 'info'
 }
 
 // 获取表单类型显示标签

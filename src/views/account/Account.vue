@@ -103,9 +103,13 @@
 
     <!-- 账号列表 -->
     <div class="account-list-area glass-card">
+      <!-- 骨架屏加载 -->
+      <template v-if="loading">
+        <el-skeleton :rows="5" animated />
+      </template>
       <!-- 账号表格 -->
       <el-table
-        v-loading="loading"
+        v-else
         :data="filteredAccounts"
         style="width: 100%; height: 100%;"
         height="100%"
