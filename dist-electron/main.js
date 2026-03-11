@@ -573,6 +573,12 @@ const MigrationService = {
   }
 };
 playwrightExtra.chromium.use(stealth());
+const getChromePath = () => {
+  if (process.platform === "darwin") {
+    return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  }
+  return null;
+};
 const FIELD_MATCH_DICT = {
   "blogger_name": ["博主姓名", "姓名", "Name", "Blogger", "博主", "达人"],
   "account_nickname": ["账号昵称", "昵称", "Nickname", "博主昵称", "达人昵称"],
@@ -613,7 +619,12 @@ const AutoFillService = {
       if (browser2.isConnected()) return browser2;
       this.activeBrowsers.delete(id);
     }
-    const browser = await playwrightExtra.chromium.launch({ headless });
+    const chromePath = getChromePath();
+    const launchOptions = { headless };
+    if (chromePath && !headless) {
+      launchOptions.executablePath = chromePath;
+    }
+    const browser = await playwrightExtra.chromium.launch(launchOptions);
     this.activeBrowsers.set(id, browser);
     browser.on("disconnected", () => {
       if (this.activeBrowsers.get(id) === browser) {
@@ -980,7 +991,12 @@ const AutoFillService = {
    * @returns {Promise<string>} 选择器
    */
   async pickSelector(url2) {
-    const browser = await playwrightExtra.chromium.launch({ headless: false });
+    const chromePath = getChromePath();
+    const launchOptions = { headless: false };
+    if (chromePath) {
+      launchOptions.executablePath = chromePath;
+    }
+    const browser = await playwrightExtra.chromium.launch(launchOptions);
     const context = await browser.newContext();
     const page = await context.newPage();
     try {
@@ -1182,7 +1198,12 @@ const AutoFillService = {
    * @returns {Promise<Array<{name: string, type: string}>>} 字段列表
    */
   async scanForm(url2) {
-    const browser = await playwrightExtra.chromium.launch({ headless: false });
+    const chromePath = getChromePath();
+    const launchOptions = { headless: false };
+    if (chromePath) {
+      launchOptions.executablePath = chromePath;
+    }
+    const browser = await playwrightExtra.chromium.launch(launchOptions);
     const context = await browser.newContext({
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       viewport: { width: 1280, height: 800 }
@@ -1602,7 +1623,8 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname$1, "preload.js"),
       nodeIntegration: false,
-      contextIsolation: true
+      contextIsolation: true,
+      webviewTag: true
     },
     icon: path.join(__dirname$1, "../public/vite.svg")
   });

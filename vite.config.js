@@ -7,7 +7,11 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
+    vue({
+      compilerOptions: {
+        isCustomElement: (tag) => tag === 'webview'
+      }
+    }),
     electron([
       {
         // 主进程入口文件

@@ -141,11 +141,21 @@
               <a :href="selectedTemplate.form_url" target="_blank" class="form-link">{{ selectedTemplate.form_url }}</a>
             </div>
             
-            <!-- 表单嵌入预览 -->
+            <!-- 表单嵌入预览 - 使用 webview -->
             <div class="form-iframe-preview full-height">
               <h4 class="preview-title">{{ $t('form.preview') }}</h4>
-              <div class="iframe-container">
-                <iframe :src="selectedTemplate.form_url" frameborder="0" class="form-iframe"></iframe>
+              <div class="iframe-container" v-if="selectedTemplate">
+                <webview 
+                  v-if="webviewVisible"
+                  :src="selectedTemplate.form_url" 
+                  class="form-iframe"
+                ></webview>
+                <iframe 
+                  v-else 
+                  :src="selectedTemplate.form_url" 
+                  frameborder="0" 
+                  class="form-iframe"
+                ></iframe>
               </div>
             </div>
             
@@ -174,22 +184,22 @@
               <el-button
                 type="primary"
                 size="large"
-                :disabled="selectedAccountIds.length === 0"
-                @click="startSingleFill"
+                :disabled="selectedAccountIds.length === 0 || !selectedTemplate"
+                @click="autoFillOnly"
                 class="action-button"
               >
                 <el-icon><EditPen /></el-icon>
-                {{ $t('form.singleFill') }}
+                自动填写
               </el-button>
               <el-button
                 type="success"
                 size="large"
-                :disabled="selectedAccountIds.length === 0"
-                @click="startBatchFill"
+                :disabled="selectedAccountIds.length === 0 || !selectedTemplate"
+                @click="submitAndNext"
                 class="action-button"
               >
-                <el-icon><CopyDocument /></el-icon>
-                {{ $t('form.submitAndNext') }}
+                <el-icon><Right /></el-icon>
+                提交并切换下一份
               </el-button>
             </div>
           </div>
@@ -347,7 +357,7 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAccountStore, useFormStore } from '../../stores'
 import { useSettingsStore } from '../../stores/settings'
-import { Refresh, Search, MagicStick, View, Edit, EditPen, CopyDocument, Plus, Delete } from '@element-plus/icons-vue'
+import { Refresh, Search, MagicStick, View, Edit, EditPen, CopyDocument, Plus, Delete, Right } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { FIELD_TYPES, FORM_TYPES, FIELD_MATCH_DICT } from '../../constants/form'
@@ -379,7 +389,8 @@ const selectedTemplateId = ref(null)
 const selectedFolderId = ref('')
 const fieldMappingDialogVisible = ref(false)
 const fillProgressDialogVisible = ref(false)
-const isScanning = ref(false) // 扫描状态
+const isScanning = ref(false)
+const webviewVisible = ref(true) // 使用 webview 替代 iframe
 
 // 填写设置
 const fillSettings = reactive({
@@ -734,7 +745,527 @@ const previewMapping = () => {
   ElMessage.info(t('form.previewDev'))
 }
 
-// 开始单个填写
+// 预览表单（webview 已自动加载）
+const previewInApp = () => {
+  if (!selectedTemplate.value?.form_url) {
+    ElMessage.warning('请先选择表单')
+    return
+  }
+  ElMessage.success('表单已在下方加载')
+}
+
+// 自动填写（只填表，不提交）
+const autoFillOnly = async () => {
+  if (selectedAccountIds.value.length === 0) {
+    ElMessage.warning('请选择至少一个账号')
+    return
+  }
+  if (!selectedTemplateId.value) {
+    ElMessage.warning('请选择表单')
+    return
+  }
+  
+  const webview = document.querySelector('webview')
+  if (!webview) {
+    ElMessage.warning('表单正在加载，请稍等片刻后再试')
+    return
+  }
+  
+  const accountId = selectedAccountIds.value[0]
+  const account = accounts.value.find(a => a.id === accountId)
+  
+  if (!account) {
+    ElMessage.error('账号不存在')
+    return
+  }
+  
+  // 先获取全局字段映射规则
+  const globalMappings = JSON.parse(localStorage.getItem('globalFieldMappings') || '[]')
+  
+  const mappings = formStore.getFieldMappingsByTemplate(selectedTemplateId.value)
+  console.log('字段映射配置:', mappings)
+  
+  if (!mappings || mappings.length === 0) {
+    ElMessage.warning('当前表单没有配置字段映射，请先在"字段匹配规则"页面配置')
+    return
+  }
+  
+  let filledCount = 0
+  
+  // 先列出页面所有输入框，帮你了解表单结构
+  const debugScript = `
+    (function() {
+      const inputs = document.querySelectorAll('input, textarea, select');
+      const result = [];
+      for (let i = 0; i < Math.min(inputs.length, 30); i++) {
+        const inp = inputs[i];
+        // 尝试找到最近的标签文本
+        let labelText = '';
+        const label = inp.closest('.question, li, tr, div[id^="div_"], .topic, .field-item, .question-wrap, .ui-question');
+        if (label) {
+          const titleEl = label.querySelector('.title, .topic-title, .question-title, h3, h4, .field-label, strong');
+          labelText = titleEl?.textContent?.substring(0, 50) || label.textContent?.substring(0, 50) || '';
+        }
+        result.push({
+          tag: inp.tagName,
+          name: inp.name || '',
+          id: inp.id || '',
+          placeholder: inp.placeholder || '',
+          type: inp.type || '',
+          label: labelText
+        });
+      }
+      return JSON.stringify(result);
+    })();
+  `
+  const pageInputs = await webview.executeJavaScript(debugScript).catch(() => '[]')
+  const inputs = JSON.parse(pageInputs)
+  console.log('页面输入框结构:', inputs)
+  
+  // 显示所有输入框的详细信息
+  for (const inp of inputs) {
+    console.log('[' + inp.tag + '] name="' + inp.name + '" id="' + inp.id + '" placeholder="' + inp.placeholder + '" label="' + inp.label + '"')
+  }
+  
+  // 方式1: 按题目关键字匹配（通过表单字段名在页面中搜索）
+  console.log('尝试按题目关键字匹配...')
+  
+  // 先获取页面所有文本内容，帮你调试
+  const pageTextScript = `
+    (function() {
+      // 问卷星页面结构特殊，需要用不同方式查找
+      // 查找所有可能的问题容器
+      const questions = document.querySelectorAll(
+        '.question, .topic, .topic-item, .question-wrap, .question-item, .ui-question, .field, .form-field, .field-item, li, tr, div[id^="div_"]'
+      );
+      const result = [];
+      
+      questions.forEach((q, idx) => {
+        if (idx > 20) return;
+        const text = q.textContent?.substring(0, 100) || '';
+        const inputs = q.querySelectorAll('input[name], select, textarea');
+        const inputNames = Array.from(inputs).map(i => i.name || i.id || i.type).join(',');
+        const tagName = q.tagName;
+        const className = q.className || '';
+        result.push({ tag: tagName, class: className.substring(0, 30), text: text.replace(/\\s+/g, ' '), inputs: inputNames });
+      });
+      
+      return JSON.stringify(result);
+    })();
+  `
+  const pageQuestions = await webview.executeJavaScript(pageTextScript).catch(() => '[]')
+  console.log('页面问题结构:', JSON.parse(pageQuestions))
+  
+  for (const m of mappings) {
+    if (!m.form_field_name || !m.account_field_name) continue
+    
+    const accountFieldValue = account[m.account_field_name]
+    if (!accountFieldValue) continue
+    
+    const fieldValue = String(accountFieldValue)
+    const safeValue = fieldValue.replace(/'/g, "\\'").replace(/`/g, "\\`")
+    const formFieldName = m.form_field_name // 如"博主姓名"、"账号昵称"
+    
+    // 改进的关键字搜索
+    const keywordScript = `
+      (function() {
+        const keyword = '${formFieldName}'.replace(/[?？:：\\[\\]【】\\s]/g, '');  // 去掉标点和空格
+        const targetValue = '${safeValue}';
+        
+        // 1. 用更宽泛的方式搜索问题元素
+        // 问卷星可能使用的各种容器选择器
+        const containers = document.querySelectorAll(
+          '.question', '.field-item', 'li[data-qn]', 'div[id^="div_q"]',
+          '.topic', '.topic-item', '.question-wrap', '.question-item',
+          '.ui-question', '.field', '.form-field',
+          'li', 'tr', 'div'
+        );
+        
+        let foundContainer = null;
+        let containerText = '';
+        
+        for (const container of containers) {
+          const text = container.textContent || '';
+          const cleanText = text.replace(/[?？:：\\[\\]【】\\s]/g, '');
+          
+          // 检查是否包含关键字
+          if (cleanText.includes(keyword) || keyword.length >= 2 && cleanText.includes(keyword.substring(0, Math.min(keyword.length, 4)))) {
+            foundContainer = container;
+            containerText = text.substring(0, 50);
+            break;
+          }
+        }
+        
+        if (!foundContainer) {
+          // 尝试更宽松的搜索：查找包含关键字的任意元素
+          const allElements = document.querySelectorAll('*');
+          for (const el of allElements) {
+            const text = el.textContent || '';
+            if (text.includes('${formFieldName}') || text.includes(keyword)) {
+              // 找到包含关键字的元素，尝试找父容器或附近的输入框
+              foundContainer = el.closest('.question, li, tr, div[id^="div_"], .topic, .field-item, .question-wrap') || el.parentElement;
+              containerText = foundContainer?.textContent?.substring(0, 50) || text.substring(0, 50);
+              if (foundContainer) break;
+            }
+          }
+        }
+        
+        if (foundContainer) {
+          // 找到问题容器了，现在找输入框
+          
+          // 文本输入框 - 多种可能的选择器
+          const textInput = foundContainer.querySelector('input[type="text"], input:not([type]), textarea, input[name^="q"], input.ui-input, input.input');
+          if (textInput && textInput.name) {
+            textInput.value = targetValue;
+            textInput.dispatchEvent(new Event('input', { bubbles: true }));
+            textInput.dispatchEvent(new Event('change', { bubbles: true }));
+            return 'ok:text:' + formFieldName + '->' + textInput.name;
+          }
+          
+          // 单选按钮 - 多种可能的选择器
+          const radios = foundContainer.querySelectorAll('input[type="radio"], input.ui-radio');
+          for (const radio of radios) {
+            const label = document.querySelector('label[for="' + radio.id + '"]') || radio.closest('label') || radio.parentElement;
+            const labelText = label?.textContent?.trim() || '';
+            if (labelText.includes(targetValue) || targetValue.includes(labelText)) {
+              radio.checked = true;
+              radio.dispatchEvent(new Event('change', { bubbles: true }));
+              return 'ok:radio:' + formFieldName;
+            }
+          }
+          
+          // 复选框
+          const checkboxes = foundContainer.querySelectorAll('input[type="checkbox"], input.ui-checkbox');
+          if (checkboxes.length > 0) {
+            let matched = 0;
+            const values = targetValue.split(',');
+            for (const cb of checkboxes) {
+              const label = document.querySelector('label[for="' + cb.id + '"]') || cb.closest('label') || cb.parentElement;
+              const labelText = label?.textContent?.trim() || '';
+              for (const v of values) {
+                if (labelText.includes(v.trim()) || v.trim().includes(labelText)) {
+                  cb.checked = true;
+                  cb.dispatchEvent(new Event('change', { bubbles: true }));
+                  matched++;
+                }
+              }
+            }
+            if (matched > 0) return 'ok:checkbox:' + formFieldName;
+          }
+          
+          // 下拉框
+          const select = foundContainer.querySelector('select, .ui-select');
+          if (select) {
+            const opts = select.querySelectorAll('option');
+            for (const opt of opts) {
+              if (opt.textContent?.includes(targetValue)) {
+                select.value = opt.value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                return 'ok:select:' + formFieldName;
+              }
+            }
+          }
+          
+          return 'found-question:' + containerText;
+        }
+        
+        return 'no-question-found';
+      })();
+    `
+    
+    const result = await webview.executeJavaScript(keywordScript).catch(() => 'error')
+    console.log(`关键字匹配[${formFieldName}]=${fieldValue}: ${result}`)
+    
+    if (result && result.startsWith('ok:')) {
+      filledCount++
+    }
+  }
+  
+  // 方式2: 如果关键字匹配失败，尝试按位置自动匹配作为备选
+  if (filledCount === 0 && mappings.length > 0 && inputs.length > 0) {
+    console.log('关键字匹配失败，尝试按位置自动匹配...')
+    // ...省略位置匹配代码，保持不变
+  }
+  
+  // 等待一小段时间确保页面渲染完成
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  for (const m of mappings) {
+    if (m.form_field_name && m.account_field_name) {
+      const accountFieldValue = account[m.account_field_name]
+      if (!accountFieldValue) continue
+      
+      const value = String(accountFieldValue)
+      const safeValue = value.replace(/'/g, "\\'").replace(/`/g, "\\`")
+      const fieldName = m.form_field_name
+      
+      const script = `
+        (function() {
+          const fieldName = '${fieldName}';
+          const fieldValue = '${safeValue}';
+          const fieldValues = fieldValue.split(','); // 多选题可能是逗号分隔
+          
+          // ===== 1. 处理选择题（单选、多选、下拉） =====
+          
+          // 方式A: 查找问题容器中包含字段名的选择题
+          const questions = document.querySelectorAll('.question, li.question-item, div.field-item, div.form-item, div.topic');
+          for (const q of questions) {
+            const qText = q.textContent || '';
+            if (qText.includes(fieldName)) {
+              // 查找单选按钮
+              const radios = q.querySelectorAll('input[type="radio"]');
+              for (const radio of radios) {
+                const label = q.querySelector('label[for="' + radio.id + '"]') || radio.closest('label');
+                const labelText = label?.textContent?.trim() || '';
+                // 匹配选项文本
+                for (const val of fieldValues) {
+                  if (labelText.includes(val.trim()) || val.trim().includes(labelText)) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                    return 'ok:radio';
+                  }
+                }
+              }
+              
+              // 查找复选框（多选题）
+              const checkboxes = q.querySelectorAll('input[type="checkbox"]');
+              for (const checkbox of checkboxes) {
+                const label = q.querySelector('label[for="' + checkbox.id + '"]') || checkbox.closest('label');
+                const labelText = label?.textContent?.trim() || '';
+                for (const val of fieldValues) {
+                  if (labelText.includes(val.trim()) || val.trim().includes(labelText)) {
+                    checkbox.checked = true;
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    return 'ok:checkbox';
+                  }
+                }
+              }
+              
+              // 查找下拉框
+              const select = q.querySelector('select');
+              if (select) {
+                const options = select.querySelectorAll('option');
+                for (const opt of options) {
+                  for (const val of fieldValues) {
+                    if (opt.textContent?.includes(val.trim()) || val.trim().includes(opt.textContent?.trim())) {
+                      select.value = opt.value;
+                      select.dispatchEvent(new Event('change', { bubbles: true }));
+                      return 'ok:select';
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
+          // 方式B: 用 name 精确匹配选择题
+          const radioByName = document.querySelectorAll('input[name="' + fieldName + '"][type="radio"]');
+          for (const radio of radioByName) {
+            const label = document.querySelector('label[for="' + radio.id + '"]') || radio.closest('label');
+            const labelText = label?.textContent?.trim() || '';
+            for (const val of fieldValues) {
+              if (labelText.includes(val.trim()) || val.trim().includes(labelText)) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+                return 'ok:radio-name';
+              }
+            }
+          }
+          
+          const checkboxByName = document.querySelectorAll('input[name="' + fieldName + '"][type="checkbox"]');
+          for (const checkbox of checkboxByName) {
+            const label = document.querySelector('label[for="' + checkbox.id + '"]') || checkbox.closest('label');
+            const labelText = label?.textContent?.trim() || '';
+            for (const val of fieldValues) {
+              if (labelText.includes(val.trim()) || val.trim().includes(labelText)) {
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                return 'ok:checkbox-name';
+              }
+            }
+          }
+          
+          // 查找下拉框
+          let el = document.querySelector('select[name="' + fieldName + '"]');
+          if (el) {
+            const options = el.querySelectorAll('option');
+            for (const opt of options) {
+              for (const val of fieldValues) {
+                if (opt.textContent?.includes(val.trim()) || val.trim().includes(opt.textContent?.trim())) {
+                  el.value = opt.value;
+                  el.dispatchEvent(new Event('change', { bubbles: true }));
+                  return 'ok:select-name';
+                }
+              }
+            }
+          }
+          
+          // ===== 2. 处理文本输入框 =====
+          
+          // 方式1: 用 name 属性精确匹配
+          el = document.querySelector('input[name="' + fieldName + '"], textarea[name="' + fieldName + '"]');
+          if (el && el.type !== 'radio' && el.type !== 'checkbox') {
+            el.value = fieldValue;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            return 'ok:text-name';
+          }
+          
+          // 方式2: 用 id 匹配
+          el = document.querySelector('input[id="' + fieldName + '"], textarea[id="' + fieldName + '"]');
+          if (el && el.type !== 'radio' && el.type !== 'checkbox') {
+            el.value = fieldValue;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            return 'ok:text-id';
+          }
+          
+          // 方式3: 查找包含字段名的 label，然后找其内部的输入框
+          const allLabels = document.querySelectorAll('label, .question-title, .field-label, .field-title, span.topic, span.title');
+          for (const lbl of allLabels) {
+            const text = lbl.textContent?.trim() || '';
+            if (text.includes(fieldName) || fieldName.includes(text.replace(/[?：:\s]/g, ''))) {
+              const input = lbl.querySelector('input:not([type=radio]):not([type=checkbox]), textarea');
+              if (input) {
+                input.value = fieldValue;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                return 'ok:text-label';
+              }
+            }
+          }
+          
+          return 'not-found';
+        })();
+      `
+      
+      const result = await webview.executeJavaScript(script).catch(() => 'error')
+      console.log(`字段[${fieldName}] -> 账号[${m.account_field_name}]=${value}: ${result}`)
+      if (result && result.startsWith('ok:')) {
+        filledCount++
+      }
+    }
+  }
+  
+  if (filledCount > 0) {
+    ElMessage.success(`已自动填写 ${filledCount} 个字段，请检查后手动提交`)
+  } else {
+    ElMessage.warning('未能匹配到任何字段，请查看控制台了解表单结构后配置正确的映射')
+  }
+}
+
+// 提交并切换下一份
+const submitAndNext = async () => {
+  if (selectedAccountIds.value.length === 0) {
+    ElMessage.warning('请选择至少一个账号')
+    return
+  }
+  if (!selectedTemplateId.value) {
+    ElMessage.warning('请选择表单')
+    return
+  }
+  
+  const webview = document.querySelector('webview')
+  if (!webview) {
+    ElMessage.warning('表单正在加载，请稍等片刻后再试')
+    return
+  }
+  
+  // 先执行自动填写
+  await autoFillOnly()
+  
+  // 等待填写完成
+  await new Promise(resolve => setTimeout(resolve, 500))
+  
+  // 尝试提交
+  const submitScript = `
+    (function() {
+      // 问卷星常见提交按钮选择器
+      const selectors = [
+        // 标准类型
+        'button[type="submit"]',
+        'input[type="submit"]',
+        'button:submit',
+        // 问卷星特有
+        '.submit-btn',
+        '.submit-button',
+        '#submit_button',
+        'input.submit',
+        'button.submit',
+        // 常见类名
+        '.btn-submit',
+        '.submitBtn',
+        'a.submit-btn',
+        // 文本匹配（包含"提交"或"确定"的按钮）
+        'button',
+        'a',
+        'input[type="button"]'
+      ];
+      
+      // 先尝试精确匹配
+      for (const sel of selectors.slice(0, 10)) {
+        const btn = document.querySelector(sel);
+        if (btn) {
+          const text = btn.textContent?.trim().toLowerCase() || '';
+          const value = btn.value?.toLowerCase() || '';
+          if (text.includes('提交') || text.includes('确定') || text.includes('submit') || 
+              value.includes('提交') || value.includes('确定') || value.includes('submit')) {
+            btn.click();
+            return 'clicked: ' + (text || value);
+          }
+        }
+      }
+      
+      // 遍历所有按钮/链接
+      const allButtons = document.querySelectorAll('button, a, input[type="button"], input[type="submit"]');
+      for (const btn of allButtons) {
+        const text = btn.textContent?.trim().toLowerCase() || '';
+        const value = btn.value?.toLowerCase() || '';
+        if (text.includes('提交') || text.includes('确定') || text.includes('next') ||
+            value.includes('提交') || value.includes('确定') || value.includes('next')) {
+          btn.click();
+          return 'clicked by text: ' + (text || value);
+        }
+      }
+      
+      // 尝试获取第一个submit类型的input
+      const submitInput = document.querySelector('input[type="submit"]');
+      if (submitInput) {
+        submitInput.click();
+        return 'clicked input submit';
+      }
+      
+      return 'not found';
+    })();
+  `
+  
+  const submitted = await webview.executeJavaScript(submitScript).catch(() => 'error')
+  console.log('提交按钮结果:', submitted)
+
+  if (submitted && submitted.startsWith('clicked')) {
+    ElMessage.success('提交成功！')
+    
+    // 如果有多个账号，处理下一个
+    if (selectedAccountIds.value.length > 1) {
+      // 移除第一个账号
+      selectedAccountIds.value.shift()
+      
+      // 延迟后继续
+      setTimeout(() => {
+        ElMessage.info('将在2秒后自动填写下一份...')
+        setTimeout(() => {
+          submitAndNext()
+        }, 2000)
+      }, 500)
+    } else {
+      ElMessage.success('恭喜你，填完了所有的表单！')
+    }
+  } else {
+    ElMessage.warning('未找到提交按钮，请手动提交')
+  }
+}
+
+// 开始单个填写（外部浏览器）
 const startSingleFill = () => {
   if (selectedAccountIds.value.length === 0) {
     ElMessage.warning(t('form.selectOneAccount'))
@@ -826,10 +1357,11 @@ const realFillProcess = async (isBatch) => {
     const result = await window.electronAPI.autofill.start({
       accountIds: [...selectedAccountIds.value],
       templateId: selectedTemplateId.value,
-      fieldDefinitions: fieldDefinitions, // 传递字段定义
+      fieldDefinitions: fieldDefinitions,
       settings: {
         showBrowser: true,
-        submitInterval: fillSettings.submitInterval
+        submitInterval: fillSettings.submitInterval,
+        autoSubmit: fillSettings.autoSubmit
       }
     });
 
@@ -839,8 +1371,11 @@ const realFillProcess = async (isBatch) => {
     fillProgress.currentStatus = t('form.taskFinished');
 
   } catch (error) {
+    console.error('自动填写失败:', error)
     fillProgress.isRunning = false;
     fillProgress.status = 'exception';
+    fillProgress.currentStatus = '填写失败: ' + (error.message || '未知错误');
+    ElMessage.error('填写失败: ' + (error.message || '未知错误'))
     fillProgress.currentStatus = t('form.taskTerminated');
   } finally {
     window.electronAPI.autofill.removeProgressListeners();

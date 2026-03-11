@@ -10,6 +10,14 @@ import fs from 'fs';
 // 使用 stealth 插件
 chromium.use(stealth());
 
+// macOS 系统 Chrome 路径
+const getChromePath = () => {
+  if (process.platform === 'darwin') {
+    return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  }
+  return null;
+};
+
 // 字段自动匹配字典 (需与前端保持同步，或通过 IPC 传递，这里硬编码作为备份)
 const FIELD_MATCH_DICT = {
   'blogger_name': ['博主姓名', '姓名', 'Name', 'Blogger', '博主', '达人'],
@@ -54,7 +62,15 @@ export const AutoFillService = {
       this.activeBrowsers.delete(id);
     }
     
-    const browser = await chromium.launch({ headless });
+    const chromePath = getChromePath();
+    const launchOptions = { headless };
+    
+    // 使用系统 Chrome
+    if (chromePath && !headless) {
+      launchOptions.executablePath = chromePath;
+    }
+    
+    const browser = await chromium.launch(launchOptions);
     this.activeBrowsers.set(id, browser);
     
     // 监听关闭事件
@@ -496,7 +512,12 @@ export const AutoFillService = {
    * @returns {Promise<string>} 选择器
    */
   async pickSelector(url) {
-    const browser = await chromium.launch({ headless: false });
+    const chromePath = getChromePath();
+    const launchOptions = { headless: false };
+    if (chromePath) {
+      launchOptions.executablePath = chromePath;
+    }
+    const browser = await chromium.launch(launchOptions);
     const context = await browser.newContext();
     const page = await context.newPage();
 
@@ -780,7 +801,12 @@ export const AutoFillService = {
    */
   async scanForm(url) {
     // 启动浏览器（有头模式，绕过反爬）
-    const browser = await chromium.launch({ headless: false }); 
+    const chromePath = getChromePath();
+    const launchOptions = { headless: false };
+    if (chromePath) {
+      launchOptions.executablePath = chromePath;
+    }
+    const browser = await chromium.launch(launchOptions); 
     const context = await browser.newContext({
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       viewport: { width: 1280, height: 800 }
