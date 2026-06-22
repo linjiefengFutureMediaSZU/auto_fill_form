@@ -43,16 +43,24 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 function createWindow() {
+  // 开发环境使用 SVG 图标，生产环境不设置图标（使用默认）
+  const iconPath = process.env.VITE_DEV_SERVER_URL
+    ? path.join(__dirname, '../public/vite.svg')
+    : null;
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    minWidth: 900,
+    minHeight: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       webviewTag: true,
     },
-    icon: path.join(__dirname, '../public/vite.svg'),
+    icon: iconPath,
+    show: false, // 先隐藏，等加载完成后再显示
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -65,6 +73,11 @@ function createWindow() {
   
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  // 窗口准备好后显示，避免加载时的闪烁
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
   });
 }
 

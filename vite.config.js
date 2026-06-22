@@ -19,7 +19,7 @@ export default defineConfig({
         vite: {
           build: {
             rollupOptions: {
-              external: ['sqlite3', 'playwright-extra', 'puppeteer-extra-plugin-stealth', 'xlsx', 'electron'],
+              external: ['sqlite3', 'playwright', 'playwright-extra', 'puppeteer-extra-plugin-stealth', 'xlsx', 'electron'],
               output: {
                 format: 'cjs',
               },

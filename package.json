@@ -1,21 +1,26 @@
 {
-  "name": "auto_fill",
-  "private": true,
-  "version": "0.0.0",
+  "name": "auto-fill-form",
+  "productName": "AutoFill表单自动填写工具",
+  "version": "1.0.0",
+  "description": "多账号表单自动填写工具 - 基于 Electron + Vue 3",
+  "author": "AutoFill Team",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "electron:rebuild": "electron-rebuild -f -w sqlite3",
-    "package": "npm run build && electron-builder",
-    "gen:poster": "node scripts/generate_poster.js"
+    "postinstall": "electron-builder install-app-deps",
+    "package": "npm run build && electron-builder --win --x64",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:dir": "npm run build && electron-builder --win --x64 --dir"
   },
   "build": {
     "appId": "com.autofill.app",
     "productName": "AutoFill",
+    "copyright": "Copyright © 2024 AutoFill Team",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist",
@@ -28,16 +33,58 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "node_modules/playwright-core/.local-browsers",
+        "to": "playwright/.local-browsers",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Utility"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AutoFill表单填写工具"
     },
-    "asar": true
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/sqlite3/**/*",
+      "node_modules/playwright-extra/**/*",
+      "node_modules/puppeteer-extra-plugin-stealth/**/*",
+      "node_modules/playwright-core/**/*"
+    ]
   },
   "dependencies": {
     "echarts": "^6.0.0",

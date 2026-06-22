@@ -10,10 +10,21 @@ import fs from 'fs';
 // 使用 stealth 插件
 chromium.use(stealth());
 
-// macOS 系统 Chrome 路径
+// 获取系统 Chrome 路径
 const getChromePath = () => {
   if (process.platform === 'darwin') {
     return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  } else if (process.platform === 'win32') {
+    // Windows 默认安装路径
+    const paths = [
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe'
+    ];
+    const fs = require('fs');
+    for (const p of paths) {
+      if (fs.existsSync(p)) return p;
+    }
   }
   return null;
 };
@@ -61,26 +72,30 @@ export const AutoFillService = {
       if (browser.isConnected()) return browser;
       this.activeBrowsers.delete(id);
     }
-    
-    const chromePath = getChromePath();
+
     const launchOptions = { headless };
-    
-    // 使用系统 Chrome
-    if (chromePath && !headless) {
-      launchOptions.executablePath = chromePath;
+
+    // 优先使用系统 Chrome（确保已安装 Chrome）
+    const systemChromePath = getChromePath();
+    if (systemChromePath) {
+      launchOptions.executablePath = systemChromePath;
     }
-    
-    const browser = await chromium.launch(launchOptions);
-    this.activeBrowsers.set(id, browser);
-    
-    // 监听关闭事件
-    browser.on('disconnected', () => {
-      if (this.activeBrowsers.get(id) === browser) {
-        this.activeBrowsers.delete(id);
-      }
-    });
-    
-    return browser;
+
+    try {
+      const browser = await chromium.launch(launchOptions);
+      this.activeBrowsers.set(id, browser);
+
+      browser.on('disconnected', () => {
+        if (this.activeBrowsers.get(id) === browser) {
+          this.activeBrowsers.delete(id);
+        }
+      });
+
+      return browser;
+    } catch (error) {
+      console.error('启动浏览器失败:', error.message);
+      throw new Error(`无法启动浏览器: ${error.message}。请确保已安装 Google Chrome。`);
+    }
   },
 
   /**
